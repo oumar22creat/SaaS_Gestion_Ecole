@@ -17,7 +17,7 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] Configurer Flyway pour les migrations versionnées
 - [x] Initialiser le squelette Angular avec Angular Material installé et thème de base
 - [x] Initialiser le squelette Ionic/Capacitor
-- [ ] Mettre en place le pipeline GitHub Actions de base (build + tests sur chaque push)
+- [x] Mettre en place le pipeline GitHub Actions de base (build + tests sur chaque push)
 - [ ] Configurer les environnements dev / staging / prod (fichiers de config séparés)
 - [ ] Définir les design tokens (couleurs neutres, typographie, espacement) — voir `docs/DESIGN.md`
 - [ ] Implémenter le chargement dynamique du branding tenant (logo + couleurs) au démarrage Web et Mobile

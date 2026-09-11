@@ -138,3 +138,21 @@ Toujours vérifier le contenu de la réponse (pas juste le code HTTP) quand un p
 très commun est utilisé sur une machine de dev partagée.
 **Prochaine étape :** ROADMAP.md → Phase 0, tâche "Mettre en place le pipeline GitHub Actions
 de base (build + tests sur chaque push)".
+
+## [2026-09-11] — Session (suite 5)
+**Tâche(s) réalisée(s) :** Pipeline GitHub Actions de base (`.github/workflows/ci.yml`),
+3 jobs indépendants (backend/web/mobile) déclenchés sur chaque push et sur les PR vers
+`main` : `./mvnw verify` (backend, Java 21 Temurin), `npm ci && npm run build && ng test
+--browsers=ChromeHeadless` (web et mobile, Node 22).
+**Décisions prises (et pourquoi) :** Pas de filtrage par chemin (`paths:`) pour l'instant —
+les 3 jobs tournent à chaque push même si un seul dossier a changé. Le monorepo est encore
+petit, l'optimisation n'apporte rien maintenant et ajoute de la complexité ; à reconsidérer
+si les temps de CI deviennent gênants. Build Android/iOS natifs volontairement exclus du
+pipeline (nécessiteraient Android SDK/Xcode sur le runner, hors scope Phase 0 — seule la
+couche Angular/Ionic est buildée et testée en CI).
+**Problèmes rencontrés / points de vigilance :** Les 3 jobs ont été validés en rejouant
+localement exactement les commandes du workflow (`./mvnw -B verify`, `npm ci && npm run
+build && npx ng test --watch=false --browsers=ChromeHeadless`) mais pas encore exécutés sur
+un vrai runner GitHub Actions (pas de push effectué) — à confirmer au premier push.
+**Prochaine étape :** ROADMAP.md → Phase 0, tâche "Configurer les environnements dev /
+staging / prod (fichiers de config séparés)".

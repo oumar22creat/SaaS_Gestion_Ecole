@@ -1,45 +1,54 @@
 /*
- * Palette Ionic par défaut (neutre, non brandée).
- * Le chargement dynamique du branding tenant (logo + couleurs) remplacera ces valeurs
- * par des variables CSS injectées au runtime — voir docs/DESIGN.md et docs/ROADMAP.md
- * (tâche "chargement dynamique du branding tenant").
+ * Design tokens partagés — voir docs/DESIGN.md §2.
+ * Couleurs neutres : identiques à web/src/styles/tokens.scss (contraste >= 4.5:1 sur fond
+ * blanc, WCAG AA). Pas de package partagé entre les deux workspaces Angular pour
+ * l'instant : les valeurs sont dupliquées intentionnellement.
+ * --ion-color-primary/secondary sont mappés sur --tenant-primary/--tenant-secondary :
+ * le futur service de branding tenant écrasera ces deux variables au runtime.
  */
 
 :root {
-  --ion-color-primary: #3880ff;
+  /* Couleurs de marque du tenant (défaut neutre, remplacé au runtime) */
+  --tenant-primary: #3880ff;
+  --tenant-secondary: #3dc2ff;
+  --tenant-on-primary: #ffffff;
+
+  --ion-color-primary: var(--tenant-primary);
   --ion-color-primary-rgb: 56, 128, 255;
-  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast: var(--tenant-on-primary);
   --ion-color-primary-contrast-rgb: 255, 255, 255;
   --ion-color-primary-shade: #3171e0;
   --ion-color-primary-tint: #4c8dff;
 
-  --ion-color-secondary: #3dc2ff;
+  --ion-color-secondary: var(--tenant-secondary);
   --ion-color-secondary-rgb: 61, 194, 255;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
   --ion-color-secondary-shade: #36abe0;
   --ion-color-secondary-tint: #50c8ff;
 
-  --ion-color-success: #2dd36f;
-  --ion-color-success-rgb: 45, 211, 111;
+  /* Couleurs sémantiques neutres — identiques à web/src/styles/tokens.scss,
+   * ne changent jamais avec le tenant (voir docs/DESIGN.md §2). */
+  --ion-color-success: #2e7d32;
+  --ion-color-success-rgb: 46, 125, 50;
   --ion-color-success-contrast: #ffffff;
   --ion-color-success-contrast-rgb: 255, 255, 255;
-  --ion-color-success-shade: #28ba62;
-  --ion-color-success-tint: #42d77d;
+  --ion-color-success-shade: #1b5e20;
+  --ion-color-success-tint: #388e3c;
 
-  --ion-color-warning: #ffc409;
-  --ion-color-warning-rgb: 255, 196, 9;
-  --ion-color-warning-contrast: #000000;
-  --ion-color-warning-contrast-rgb: 0, 0, 0;
-  --ion-color-warning-shade: #e0ac08;
-  --ion-color-warning-tint: #ffca22;
+  --ion-color-warning: #7a4a00;
+  --ion-color-warning-rgb: 122, 74, 0;
+  --ion-color-warning-contrast: #ffffff;
+  --ion-color-warning-contrast-rgb: 255, 255, 255;
+  --ion-color-warning-shade: #5c3800;
+  --ion-color-warning-tint: #965d00;
 
-  --ion-color-danger: #eb445a;
-  --ion-color-danger-rgb: 235, 68, 90;
+  --ion-color-danger: #c62828;
+  --ion-color-danger-rgb: 198, 40, 40;
   --ion-color-danger-contrast: #ffffff;
   --ion-color-danger-contrast-rgb: 255, 255, 255;
-  --ion-color-danger-shade: #cf3c4f;
-  --ion-color-danger-tint: #ed576b;
+  --ion-color-danger-shade: #b71c1c;
+  --ion-color-danger-tint: #e53935;
 
   --ion-color-medium: #92949c;
   --ion-color-medium-rgb: 146, 148, 156;
@@ -54,4 +63,32 @@
   --ion-color-light-contrast-rgb: 0, 0, 0;
   --ion-color-light-shade: #d7d8da;
   --ion-color-light-tint: #f5f6f9;
+
+  /* Couleurs neutres additionnelles pour le texte/les bordures (identiques au Web) */
+  --color-text: #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-border: #d0d0d0;
+
+  /* Espacement — grille de 4px (nom = multiple de 4px, ex. --space-4 = 16px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Rayon de bordure unique pour tous les composants */
+  --radius: 8px;
+
+  /* Typographie — une seule famille, échelle limitée (identique au Web) */
+  --font-family-base: Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-title-1: 28px;
+  --font-size-title-2: 22px;
+  --font-size-title-3: 18px;
+  --font-size-body: 16px;
+  --font-size-caption: 13px;
+
+  --ion-font-family: var(--font-family-base);
 }

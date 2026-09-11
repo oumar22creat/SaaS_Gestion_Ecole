@@ -182,3 +182,30 @@ consommateur de `environment.apiUrl`, ce qui permettra de vérifier que le méca
 remplacement de fichier fonctionne bout en bout (pas seulement "le build ne plante pas").
 **Prochaine étape :** ROADMAP.md → Phase 0, tâche "Définir les design tokens (couleurs
 neutres, typographie, espacement)".
+
+## [2026-09-11] — Session (suite 7)
+**Tâche(s) réalisée(s) :** Design tokens définis (`docs/DESIGN.md` §2) : couleurs neutres
+sémantiques (texte, bordure, succès/avertissement/danger, vérifiées ≥ 4.5:1 sur fond blanc),
+`--tenant-primary`/`--tenant-secondary`/`--tenant-on-primary` (valeurs neutres par défaut,
+prêtes à être écrasées au runtime), grille d'espacement 4px (`--space-1`…`--space-16`),
+rayon de bordure unique (`--radius`), typographie (police unique Roboto, 3 tailles de
+titre + corps + légende). Implémentés dans `web/src/styles/tokens.scss` (importé dans
+`styles.scss`) et `mobile/src/theme/variables.scss`, mêmes valeurs dupliquées dans les deux
+(pas de package partagé entre les deux workspaces Angular pour l'instant).
+**Décisions prises (et pourquoi) :**
+- `--mat-sys-primary`/`--mat-sys-on-primary` (Web) et `--ion-color-primary`/`-secondary`
+  (Mobile) sont explicitement mappés sur `--tenant-primary`/`--tenant-secondary` : c'est le
+  point d'accroche que la prochaine tâche (branding tenant dynamique) utilisera pour
+  recolorer l'app au runtime, sans toucher aux composants.
+- Limite assumée et documentée en commentaire : côté Web (Material 3), seuls
+  primary/on-primary suivent le tenant — les rôles dérivés (primary-container, etc.) restent
+  ceux du thème compilé au build (une régénération complète de palette au runtime dépasse le
+  cadre du squelette Phase 0).
+- Couleurs sémantiques success/warning/danger alignées à l'identique entre Web et Mobile
+  (au lieu de garder les valeurs par défaut Ionic, différentes de celles choisies pour Web)
+  pour une vraie cohérence cross-plateforme, conformément à l'esprit de docs/DESIGN.md §2.
+**Problèmes rencontrés / points de vigilance :** Aucun. Tokens vérifiés par un test dans
+chaque app (`web/src/styles/tokens.spec.ts`, `mobile/src/theme/tokens.spec.ts`) qui lit les
+valeurs calculées via `getComputedStyle` — pas juste "le build ne plante pas".
+**Prochaine étape :** ROADMAP.md → Phase 0, tâche "Implémenter le chargement dynamique du
+branding tenant (logo + couleurs) au démarrage Web et Mobile".

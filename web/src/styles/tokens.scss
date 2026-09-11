@@ -1,0 +1,54 @@
+/*
+ * Design tokens partagés — voir docs/DESIGN.md §2.
+ * Couleurs neutres : fixes, ne changent jamais selon le tenant connecté.
+ * --tenant-* : valeurs de secours (neutres) avant le chargement du branding réel.
+ * Le futur service de branding tenant écrasera --tenant-primary/--tenant-secondary/
+ * --tenant-on-primary au runtime via document.documentElement.style.setProperty(...).
+ * Les mêmes valeurs sont dupliquées dans mobile/src/theme/variables.scss (pas de package
+ * partagé entre les deux workspaces Angular pour l'instant).
+ */
+
+:root {
+  /* Couleurs neutres sémantiques (contraste >= 4.5:1 sur fond blanc, WCAG AA) */
+  --color-text: #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-border: #d0d0d0;
+  --color-success: #2e7d32;
+  --color-warning: #7a4a00;
+  --color-danger: #c62828;
+
+  /* Couleurs de marque du tenant (défaut neutre, remplacé au runtime) */
+  --tenant-primary: #3880ff;
+  --tenant-secondary: #3dc2ff;
+  --tenant-on-primary: #ffffff;
+
+  /* Espacement — grille de 4px (nom = multiple de 4px, ex. --space-4 = 16px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Rayon de bordure unique pour tous les composants */
+  --radius: 8px;
+
+  /* Typographie — une seule famille, échelle limitée (titres, corps, légende) */
+  --font-family-base: Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-title-1: 28px;
+  --font-size-title-2: 22px;
+  --font-size-title-3: 18px;
+  --font-size-body: 16px;
+  --font-size-caption: 13px;
+
+  /* Largeur de contenu maximale sur desktop */
+  --content-max-width: 1200px;
+
+  /* Recolore les tokens système Angular Material avec la couleur du tenant.
+   * Limite connue : seuls primary/on-primary suivent le tenant ; les rôles dérivés
+   * (primary-container, etc.) restent ceux du thème M3 compilé au build. */
+  --mat-sys-primary: var(--tenant-primary);
+  --mat-sys-on-primary: var(--tenant-on-primary);
+}

@@ -142,5 +142,6 @@ pour le détail du mécanisme). En production, le tenant est résolu via le sous
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — modèle de données
 - [`docs/API_CONVENTIONS.md`](docs/API_CONVENTIONS.md) — conventions REST
 - [`docs/DESIGN.md`](docs/DESIGN.md) — système de design
+- [`docs/MOCKUPS.md`](docs/MOCKUPS.md) — maquettes basse fidélité des écrans clés
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — backlog du projet (état d'avancement)
 - [`docs/SESSION_LOG.md`](docs/SESSION_LOG.md) — historique des sessions de travail

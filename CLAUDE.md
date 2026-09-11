@@ -42,6 +42,7 @@ spec fonctionnelle complète.
 - `docs/DATA_MODEL.md` → entités, champs clés, relations
 - `docs/API_CONVENTIONS.md` → conventions REST, format d'erreurs, auth
 - `docs/DESIGN.md` → système de design, tokens, theming multi-tenant, écrans clés par rôle
+- `docs/MOCKUPS.md` → maquettes basse fidélité (wireframes) des écrans clés avant leur développement
 - `docs/ROADMAP.md` → backlog des tâches, source de vérité de l'avancement
 - `docs/SESSION_LOG.md` → historique des sessions passées (décisions, blocages)
 - `docs/PROMPTS.md` → prompts prêts à l'emploi pour piloter Claude Code phase par phase

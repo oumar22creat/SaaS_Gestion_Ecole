@@ -20,3 +20,8 @@ html,
 body {
   font-family: var(--font-family-base);
 }
+
+.tenant-logo {
+  height: 28px;
+  margin-inline-end: var(--space-2);
+}

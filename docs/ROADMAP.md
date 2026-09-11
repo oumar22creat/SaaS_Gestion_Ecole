@@ -21,7 +21,7 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] Configurer les environnements dev / staging / prod (fichiers de config séparés)
 - [x] Définir les design tokens (couleurs neutres, typographie, espacement) — voir `docs/DESIGN.md`
 - [x] Implémenter le chargement dynamique du branding tenant (logo + couleurs) au démarrage Web et Mobile
-- [ ] Maquetter (même basse fidélité) les 6-7 écrans clés listés dans `docs/DESIGN.md` §5
+- [x] Maquetter (même basse fidélité) les 6-7 écrans clés listés dans `docs/DESIGN.md` §5
 
 ## Phase 1 — MVP SaaS
 

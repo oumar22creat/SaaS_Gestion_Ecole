@@ -242,3 +242,22 @@ genre de duplication continue de grossir en Phase 1+, envisager un package parta
 (nx/workspace lib) plutôt que de continuer à dupliquer fichier par fichier.
 **Prochaine étape :** ROADMAP.md → Phase 0, tâche "Maquetter (même basse fidélité) les 6-7
 écrans clés listés dans docs/DESIGN.md §5" — dernière tâche de la Phase 0.
+
+## [2026-09-11] — Session (suite 9)
+**Tâche(s) réalisée(s) :** Maquettes basse fidélité des 7 écrans clés de `docs/DESIGN.md`
+§5, dans un nouveau `docs/MOCKUPS.md` (référencé depuis `README.md` et `CLAUDE.md`).
+**Décisions prises (et pourquoi) :** Choix de wireframes texte/ASCII (zones, hiérarchie,
+composants Material/Ionic à utiliser, points d'attention), pas de code Angular/Ionic réel
+pour ces écrans. Raison : `docs/DESIGN.md` §7 traite explicitement cette tâche comme un
+travail de cadrage *avant* le développement des écrans ("à défaut de maquettes Figma,
+décrire précisément la disposition attendue... avant de laisser Claude Code générer le
+HTML/Angular") ; les écrans réels (feuille d'appel, notes, emploi du temps, dashboards,
+wizard d'import) sont des livrables explicites de Phase 1/2 dans `docs/ROADMAP.md`. Coder
+des pages maintenant aurait dupliqué/anticipé ce travail sans backend/données réelles
+derrière, au risque de devoir tout refaire (règle CLAUDE.md : ne pas sauter de phase, pas
+d'implémentation à moitié finie).
+**Problèmes rencontrés / points de vigilance :** Aucun — tâche documentaire, pas de code ni
+de test associé (n'entre pas dans le champ de la règle CLAUDE.md sur la couverture de test).
+**Phase 0 terminée** : les 13 tâches de `docs/ROADMAP.md` sont cochées. **Prochaine étape :**
+ROADMAP.md → Phase 1.1 (fondations multi-tenant) — table `tenants`, colonne `school_id`
+sur les tables métier, Row-Level Security, Hibernate Filter, tests d'isolation.

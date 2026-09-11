@@ -1,0 +1,17 @@
+logging:
+  level:
+    root: WARN
+    com.schoolsaas: INFO
+
+spring:
+  jpa:
+    show-sql: false
+
+server:
+  error:
+    include-stacktrace: never
+
+management:
+  endpoint:
+    health:
+      show-details: never

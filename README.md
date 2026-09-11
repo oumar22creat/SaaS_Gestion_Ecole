@@ -98,6 +98,24 @@ Copier `backend/.env.example` vers `backend/.env` et ajuster :
 **Ne jamais committer de fichier `.env` réel.** Seul `.env.example` (sans valeurs sensibles)
 doit être versionné.
 
+## Environnements (dev / staging / prod)
+
+Chaque application a ses propres fichiers de config par environnement, jamais de couleur/URL
+en dur dans le code partagé.
+
+- **Backend** : profils Spring (`application-dev.yml`, `application-staging.yml`,
+  `application-prod.yml`). `dev` est actif par défaut ; changer via la variable
+  `SPRING_PROFILES_ACTIVE` (ex. `SPRING_PROFILES_ACTIVE=prod ./mvnw spring-boot:run`).
+  `dev` active les logs SQL et les détails du endpoint `/actuator/health` ; `staging`/`prod`
+  les désactivent et masquent les stacktraces d'erreur.
+- **Web / Mobile** : fichiers `src/environments/environment*.ts`, sélectionnés via la
+  configuration Angular au build (`ng build --configuration=staging`,
+  `ng build --configuration=production`). En `staging`/`production`, l'URL d'API est relative
+  (`/api/v1`) côté Web (reverse proxy Nginx sur le même domaine, voir `docs/ARCHITECTURE.md`) ;
+  côté Mobile elle doit être absolue (app compilée, pas de "même origine") — actuellement un
+  domaine placeholder (`*.schoolsaas.example`) en attendant que l'hébergement staging/prod
+  soit choisi (point ouvert dans `docs/ARCHITECTURE.md`).
+
 ## Tests
 
 ```bash

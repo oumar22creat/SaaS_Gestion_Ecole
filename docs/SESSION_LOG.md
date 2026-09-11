@@ -156,3 +156,29 @@ build && npx ng test --watch=false --browsers=ChromeHeadless`) mais pas encore e
 un vrai runner GitHub Actions (pas de push effectué) — à confirmer au premier push.
 **Prochaine étape :** ROADMAP.md → Phase 0, tâche "Configurer les environnements dev /
 staging / prod (fichiers de config séparés)".
+
+## [2026-09-11] — Session (suite 6)
+**Tâche(s) réalisée(s) :** Fichiers de config séparés par environnement pour les 3 apps.
+Backend : profils Spring `dev`/`staging`/`prod` (`application-{profil}.yml`), `dev` actif par
+défaut via `SPRING_PROFILES_ACTIVE`. Web et Mobile : `src/environments/environment*.ts` +
+configurations Angular (`fileReplacements` sur `production` et nouvelle configuration
+`staging` ajoutée dans `angular.json`).
+**Décisions prises (et pourquoi) :**
+- Web (staging/prod) : `apiUrl` relative (`/api/v1`), en cohérence avec le reverse proxy
+  Nginx documenté dans `docs/ARCHITECTURE.md`/`CLAUDE.md` (Web et API derrière le même
+  domaine).
+- Mobile (staging/prod) : `apiUrl` doit être absolue (une appli compilée n'a pas de "même
+  origine" avec une API) — utilise un domaine placeholder `*.schoolsaas.example` (TLD
+  réservé à la documentation, RFC 2606, pour ne pas laisser croire à une vraie URL) en
+  attendant que l'hébergement staging/prod soit tranché (point ouvert dans
+  `docs/ARCHITECTURE.md`).
+- `dev`/`staging`/`prod` backend ont des différences réelles et vérifiées (pas juste des
+  fichiers vides) : logs SQL + détails `/actuator/health` en dev, stacktraces d'erreur
+  masquées et détails de santé cachés en staging/prod.
+**Problèmes rencontrés / points de vigilance :** `environment.ts` n'est pour l'instant
+consommé nulle part dans le code Web/Mobile (aucun service ne l'importe encore) — la
+prochaine tâche (chargement dynamique du branding tenant) sera le premier vrai
+consommateur de `environment.apiUrl`, ce qui permettra de vérifier que le mécanisme de
+remplacement de fichier fonctionne bout en bout (pas seulement "le build ne plante pas").
+**Prochaine étape :** ROADMAP.md → Phase 0, tâche "Définir les design tokens (couleurs
+neutres, typographie, espacement)".

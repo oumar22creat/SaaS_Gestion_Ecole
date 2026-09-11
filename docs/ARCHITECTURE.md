@@ -46,6 +46,7 @@ pas bloquant pour le MVP.
   /student
   /teacher
   /class
+  /schoolclass
   /timetable
   /attendance
   /grade
@@ -73,6 +74,11 @@ même dépôt) + GitHub Actions pour la CI/CD. Bibliothèque UI Web : Angular Ma
 personnalisée avec les tokens du tenant (voir `docs/DESIGN.md`).
 **Raison** : simplicité de navigation pour un agent de code (Claude Code) travaillant seul
 sur le projet, un seul historique Git à suivre, un seul pipeline à maintenir.
+
+### ADR-007 — Nom de package pour le domaine "classes scolaires" (décidé)
+**Décision** : le package Java du domaine "classes scolaires" s'appelle `schoolclass`
+(et non `class`).
+**Raison** : `class` est un mot réservé du langage Java, invalide comme nom de package.
 
 ---
 

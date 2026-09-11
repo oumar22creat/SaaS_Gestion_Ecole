@@ -60,7 +60,7 @@ spec fonctionnelle complète.
 
 ## Conventions de code
 - Backend organisé par domaine fonctionnel (voir cahier des charges §26) :
-  `auth/`, `tenant/`, `billing/`, `student/`, `teacher/`, `class/`, `timetable/`,
+  `auth/`, `tenant/`, `billing/`, `student/`, `teacher/`, `schoolclass/`, `timetable/`,
   `attendance/`, `grade/`, `reportcard/`, `homework/`, `document/`, `messaging/`,
   `notification/`, `discipline/`, `statistics/`.
 - Chaque module backend : `controller/`, `service/`, `repository/`, `entity/`, `dto/`, `mapper/`.

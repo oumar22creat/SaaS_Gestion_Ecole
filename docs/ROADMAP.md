@@ -12,8 +12,8 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] CI/CD : GitHub Actions
 - [x] Bibliothèque UI Web : Angular Material
 - [ ] Créer `README.md` fonctionnel à jour (déjà rédigé, à ajuster une fois les projets initialisés)
-- [ ] Initialiser le squelette Spring Boot (Java, Maven/Gradle, structure par domaine)
-- [ ] Initialiser PostgreSQL via docker-compose (environnement local)
+- [x] Initialiser le squelette Spring Boot (Java, Maven/Gradle, structure par domaine)
+- [x] Initialiser PostgreSQL via docker-compose (environnement local, avec Redis)
 - [ ] Configurer Flyway pour les migrations versionnées
 - [ ] Initialiser le squelette Angular avec Angular Material installé et thème de base
 - [ ] Initialiser le squelette Ionic/Capacitor

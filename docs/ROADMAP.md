@@ -20,7 +20,7 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] Mettre en place le pipeline GitHub Actions de base (build + tests sur chaque push)
 - [x] Configurer les environnements dev / staging / prod (fichiers de config séparés)
 - [x] Définir les design tokens (couleurs neutres, typographie, espacement) — voir `docs/DESIGN.md`
-- [ ] Implémenter le chargement dynamique du branding tenant (logo + couleurs) au démarrage Web et Mobile
+- [x] Implémenter le chargement dynamique du branding tenant (logo + couleurs) au démarrage Web et Mobile
 - [ ] Maquetter (même basse fidélité) les 6-7 écrans clés listés dans `docs/DESIGN.md` §5
 
 ## Phase 1 — MVP SaaS

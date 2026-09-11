@@ -209,3 +209,36 @@ chaque app (`web/src/styles/tokens.spec.ts`, `mobile/src/theme/tokens.spec.ts`) 
 valeurs calculées via `getComputedStyle` — pas juste "le build ne plante pas".
 **Prochaine étape :** ROADMAP.md → Phase 0, tâche "Implémenter le chargement dynamique du
 branding tenant (logo + couleurs) au démarrage Web et Mobile".
+
+## [2026-09-11] — Session (suite 8)
+**Tâche(s) réalisée(s) :** Chargement dynamique du branding tenant (Web et Mobile), suivant
+exactement le mécanisme décrit dans `docs/DESIGN.md` §4 : `TenantBrandingService` (dans
+`app/branding/`, dupliqué à l'identique entre Web et Mobile) qui, au démarrage de l'app
+(`provideAppInitializer`) : (1) applique immédiatement le branding en cache
+(`sessionStorage`) ou neutre par défaut, sans jamais bloquer le premier rendu ; (2) appelle
+`GET {apiUrl}/tenants/current/branding` en arrière-plan ; (3) si succès, recolore l'app
+(`--tenant-primary`/`--tenant-secondary`/`--tenant-on-primary` sur `:root`, déjà câblés sur
+les tokens Material/Ionic depuis la tâche précédente) et met en cache ; (4) si échec,
+conserve silencieusement le branding neutre déjà affiché. Le nom et le logo du tenant
+s'affichent dans la barre de titre (`mat-toolbar` Web, `ion-toolbar` Mobile).
+**Décisions prises (et pourquoi) :**
+- L'endpoint `/api/v1/tenants/current/branding` n'existe pas encore côté backend (la table
+  `tenants` est une tâche de Phase 1.1) — l'appel échouera donc systématiquement pour
+  l'instant, ce qui est le comportement correct et attendu : le fallback neutre (point 5 du
+  §4) est exactement ce qui doit se produire tant que Phase 1.1 n'est pas faite. Aucun mock
+  ni endpoint factice ajouté : l'intégration est réelle, elle s'activera d'elle-même une fois
+  le backend prêt.
+- Couleur de texte sur fond tenant (`--tenant-on-primary`) calculée par une fonction de
+  luminance simple (`contrast-color.ts`) plutôt que codée en dur à blanc, pour éviter un
+  texte illisible si un tenant choisit une couleur primaire claire.
+- `provideAppInitializer` (API fonctionnelle moderne, remplace le token `APP_INITIALIZER`)
+  ne bloque le rendu que le temps d'appliquer le cache/défaut (synchrone) ; l'appel réseau
+  n'est pas attendu par l'initializer (fire-and-forget), pour ne jamais retarder le premier
+  affichage à cause d'un réseau lent.
+**Problèmes rencontrés / points de vigilance :** Aucun code partagé entre `web/` et
+`mobile/` (deux workspaces Angular indépendants) → le service de branding est dupliqué à
+l'identique dans les deux, comme déjà fait pour les design tokens. À surveiller : si ce
+genre de duplication continue de grossir en Phase 1+, envisager un package partagé
+(nx/workspace lib) plutôt que de continuer à dupliquer fichier par fichier.
+**Prochaine étape :** ROADMAP.md → Phase 0, tâche "Maquetter (même basse fidélité) les 6-7
+écrans clés listés dans docs/DESIGN.md §5" — dernière tâche de la Phase 0.

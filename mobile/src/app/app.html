@@ -1,3 +1,12 @@
 <ion-app>
+  <ion-header>
+    <ion-toolbar>
+      @if (branding().logoUrl) {
+        <img [src]="branding().logoUrl" alt="" class="tenant-logo" slot="start" />
+      }
+      <ion-title>{{ branding().name }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
   <ion-router-outlet />
 </ion-app>

@@ -1,3 +1,8 @@
-<mat-toolbar>{{ title() }}</mat-toolbar>
+<mat-toolbar>
+  @if (branding().logoUrl) {
+    <img [src]="branding().logoUrl" alt="" class="tenant-logo" />
+  }
+  {{ branding().name }}
+</mat-toolbar>
 
 <router-outlet />

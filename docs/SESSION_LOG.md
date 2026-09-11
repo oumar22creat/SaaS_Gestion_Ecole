@@ -119,3 +119,22 @@ tenant).
   justifié pour un souci modéré côté outillage seul.
 **Prochaine étape :** ROADMAP.md → Phase 0, tâche "Mettre en place le pipeline GitHub Actions
 de base (build + tests sur chaque push)".
+
+## [2026-09-11] — Session (suite 4)
+**Tâche(s) réalisée(s) :** Finalisation du README (tous les squelettes backend/web/mobile
+étant maintenant initialisés). Ajout de `springdoc-openapi-starter-webmvc-ui` au backend
+pour que la doc Swagger promise par le README (`/swagger-ui/index.html`) soit réellement
+disponible (requis aussi par `docs/API_CONVENTIONS.md` §"chaque endpoint documenté via
+OpenAPI/Swagger").
+**Décisions prises (et pourquoi) :** Le port 8080 par défaut du backend n'est pas changé
+dans la config (reste la convention Spring Boot standard) — un conflit de port local
+(rencontré sur cette machine de dev à cause d'un autre projet déjà lancé) est documenté
+dans le README via `SERVER_PORT=<port> ./mvnw spring-boot:run`, sans toucher au défaut du
+projet.
+**Problèmes rencontrés / points de vigilance :** En testant le endpoint `/v3/api-docs`, la
+première tentative a répondu avec une tout autre API ("EFFORT ATHLETIC") — ce n'était pas
+notre backend mais un autre projet déjà démarré sur le port 8080 de la machine partagée.
+Toujours vérifier le contenu de la réponse (pas juste le code HTTP) quand un port par défaut
+très commun est utilisé sur une machine de dev partagée.
+**Prochaine étape :** ROADMAP.md → Phase 0, tâche "Mettre en place le pipeline GitHub Actions
+de base (build + tests sur chaque push)".

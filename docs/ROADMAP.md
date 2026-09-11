@@ -11,7 +11,7 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] Structure de repo : mono-repo GitHub avec `backend/`, `web/`, `mobile/`
 - [x] CI/CD : GitHub Actions
 - [x] Bibliothèque UI Web : Angular Material
-- [ ] Créer `README.md` fonctionnel à jour (déjà rédigé, à ajuster une fois les projets initialisés)
+- [x] Créer `README.md` fonctionnel à jour (déjà rédigé, à ajuster une fois les projets initialisés)
 - [x] Initialiser le squelette Spring Boot (Java, Maven/Gradle, structure par domaine)
 - [x] Initialiser PostgreSQL via docker-compose (environnement local, avec Redis)
 - [x] Configurer Flyway pour les migrations versionnées

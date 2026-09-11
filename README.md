@@ -62,9 +62,10 @@ Le port PostgreSQL exposé peut être changé via la variable `DB_PORT` dans un 
 cd backend
 ./mvnw spring-boot:run
 ```
-L'API est disponible sur `http://localhost:8080`.
+L'API est disponible sur `http://localhost:8080` (si ce port est déjà utilisé par un autre
+projet sur ta machine, lance avec `SERVER_PORT=8090 ./mvnw spring-boot:run`).
 Les migrations Flyway s'exécutent automatiquement au démarrage.
-Documentation Swagger : `http://localhost:8080/swagger-ui.html`.
+Documentation Swagger : `http://localhost:8080/swagger-ui/index.html`.
 
 ### 4. Lancer l'application Web
 ```bash

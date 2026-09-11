@@ -50,8 +50,11 @@ cd <nom-du-repo>
 ```bash
 docker compose up -d
 ```
-Ceci démarre PostgreSQL sur le port `5432` et Redis sur le port `6379`.
+Ceci démarre PostgreSQL sur le port `5433` (et non `5432`, pour éviter un conflit avec une
+éventuelle installation PostgreSQL native sur la machine) et Redis sur le port `6379`.
 Voir `docker-compose.yml` pour les identifiants par défaut (à ne jamais utiliser en production).
+Le port PostgreSQL exposé peut être changé via la variable `DB_PORT` dans un fichier `.env`
+à la racine du repo.
 
 ### 3. Lancer le backend
 ```bash
@@ -83,7 +86,7 @@ Copier `backend/.env.example` vers `backend/.env` et ajuster :
 
 | Variable | Description | Exemple local |
 |---|---|---|
-| `DB_URL` | URL de connexion PostgreSQL | `jdbc:postgresql://localhost:5432/school_saas` |
+| `DB_URL` | URL de connexion PostgreSQL | `jdbc:postgresql://localhost:5433/school_saas` |
 | `DB_USER` / `DB_PASSWORD` | Identifiants base de données | voir `docker-compose.yml` |
 | `JWT_SECRET` | Clé de signature des tokens | générer une valeur aléatoire, ne jamais committer |
 | `REDIS_URL` | URL Redis | `redis://localhost:6379` |

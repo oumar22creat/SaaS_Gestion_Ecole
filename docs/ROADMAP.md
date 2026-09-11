@@ -16,7 +16,7 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] Initialiser PostgreSQL via docker-compose (environnement local, avec Redis)
 - [x] Configurer Flyway pour les migrations versionnées
 - [x] Initialiser le squelette Angular avec Angular Material installé et thème de base
-- [ ] Initialiser le squelette Ionic/Capacitor
+- [x] Initialiser le squelette Ionic/Capacitor
 - [ ] Mettre en place le pipeline GitHub Actions de base (build + tests sur chaque push)
 - [ ] Configurer les environnements dev / staging / prod (fichiers de config séparés)
 - [ ] Définir les design tokens (couleurs neutres, typographie, espacement) — voir `docs/DESIGN.md`

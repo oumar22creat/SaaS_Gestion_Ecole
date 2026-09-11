@@ -86,3 +86,36 @@ un test vérifiant qu'il s'affiche.
   `--browsers=ChromeHeadless` (et `CHROME_BIN` si nécessaire selon l'image du runner) —
   la commande par défaut ouvre un vrai Chrome, ce qui ne marche pas en CI headless.
 **Prochaine étape :** ROADMAP.md → Phase 0, tâche "Initialiser le squelette Ionic/Capacitor".
+
+## [2026-09-11] — Session (suite 3)
+**Tâche(s) réalisée(s) :** Squelette Ionic/Capacitor (`mobile/`), Angular standalone + Ionic
+Angular 9, plateformes natives Android et iOS ajoutées (`android/`, `ios/`), thème Ionic
+neutre par défaut (`src/theme/variables.scss`, palette Ionic standard, pas de branding
+tenant).
+**Décisions prises (et pourquoi) :**
+- Le starter officiel `ionic start ... --capacitor` embarque lui aussi Vitest par défaut
+  (même contrainte que pour `web/`, cf. entrée précédente) → écarté. À la place : socle
+  Angular généré avec `--test-runner=karma` (identique à `web/`), puis Ionic Angular
+  (`@ionic/angular`, `ionicons`) et Capacitor (`@capacitor/core`, `@capacitor/cli`,
+  `@capacitor/android`, `@capacitor/ios`) ajoutés par-dessus manuellement (workflow standard
+  "add Ionic to an existing Angular app").
+- Projet Angular renommé `mobile` → `app` dans `angular.json` : c'est la convention attendue
+  par l'intégration Capacitor de l'Ionic CLI (`ionic serve`/`ionic build` cherchent un projet
+  nommé `app` par défaut, sinon il faut passer `--project=mobile` à chaque commande).
+  `capacitor.config.ts` (`webDir`) mis à jour en conséquence (`dist/app/browser`).
+- `ionic.config.json` créé à la main (le projet n'a pas été généré via `ionic start`, donc ce
+  fichier — nécessaire pour que `ionic serve`/`ionic capacitor` fonctionnent — n'existait
+  pas).
+**Problèmes rencontrés / points de vigilance :**
+- Build Gradle Android en échec en local (`Unsupported class file major version 69`) : le
+  Java système de la machine est la version 25, trop récente pour la version de Gradle
+  utilisée par le plugin Android de Capacitor. Ce n'est pas bloquant pour le squelette (les
+  fichiers du projet Android sont bien générés) mais il faudra ouvrir le projet avec Android
+  Studio (qui embarque son propre JDK compatible, typiquement 21) pour compiler réellement
+  l'APK — ne pas essayer de "corriger" ça en changeant le Java système par défaut.
+- `npm audit` signale 3 vulnérabilités modérées, toutes transitives via `@capacitor/cli`
+  (dépendance dev uniquement, non embarquée dans l'app) → non corrigées maintenant, le fix
+  proposé (`npm audit fix --force`) forcerait un downgrade cassant de `@capacitor/cli`, pas
+  justifié pour un souci modéré côté outillage seul.
+**Prochaine étape :** ROADMAP.md → Phase 0, tâche "Mettre en place le pipeline GitHub Actions
+de base (build + tests sur chaque push)".

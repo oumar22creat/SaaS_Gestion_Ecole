@@ -34,9 +34,10 @@ pour les règles de développement.
 ## Prérequis
 
 - Java 21+ et Maven (ou le wrapper `./mvnw` fourni dans `backend/`)
-- Node.js 20+ et npm
+- Node.js 22+ et npm (requis par Angular CLI 22)
 - Docker et Docker Compose
 - Ionic CLI (`npm install -g @ionic/cli`) pour le mobile
+- Google Chrome installé (utilisé en mode headless par les tests unitaires Web/Karma)
 
 ## Démarrage rapide (environnement local)
 

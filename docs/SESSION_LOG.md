@@ -61,3 +61,28 @@ réellement (piège rencontré : un premier test nommé `FlywayMigrationIT` ne t
 silencieusement).
 **Prochaine étape :** ROADMAP.md → Phase 0, tâche "Initialiser le squelette Angular avec
 Angular Material installé et thème de base".
+
+## [2026-09-11] — Session (suite 2)
+**Tâche(s) réalisée(s) :** Squelette Angular (`web/`) avec Angular Material installé, thème
+Material 3 neutre (palettes `azure`/`blue`, pas de branding tenant), routing activé.
+`AppComponent` remplace la page de bienvenue par défaut par un simple `<mat-toolbar>`, avec
+un test vérifiant qu'il s'affiche.
+**Décisions prises (et pourquoi) :**
+- Angular CLI 22 génère par défaut avec le nouveau runner de tests **Vitest**. `CLAUDE.md`
+  restreint les tests frontend à Jest ou Karma/Jasmine → régénéré avec
+  `--test-runner=karma` pour rester conforme.
+- Node.js 22+ requis (Angular CLI 22 ne fonctionne pas avec Node 20 malgré l'ancien
+  prérequis du README) — README mis à jour en conséquence. La machine de dev a plusieurs
+  versions de Node installées via `nvm` ; utiliser `nvm use 22` (ou supérieur) avant toute
+  commande `ng`/`npm` dans `web/`.
+- Tests Karma nécessitent Chrome installé sur la machine (mode headless en CI, mode normal
+  en local) — ajouté aux prérequis du README.
+**Problèmes rencontrés / points de vigilance :**
+- Le générateur par défaut (`ng new` sans `--test-runner=karma`) a produit une erreur npm
+  reproductible (`Cannot read properties of null (reading 'edgesOut')`, bug connu de
+  l'arborist npm avec l'arbre de dépendances optionnelles de Vitest) — un signe de plus
+  d'éviter Vitest ici pour l'instant, indépendamment de la contrainte CLAUDE.md.
+- Le pipeline GitHub Actions (tâche à venir) devra lancer `ng test` avec
+  `--browsers=ChromeHeadless` (et `CHROME_BIN` si nécessaire selon l'image du runner) —
+  la commande par défaut ouvre un vrai Chrome, ce qui ne marche pas en CI headless.
+**Prochaine étape :** ROADMAP.md → Phase 0, tâche "Initialiser le squelette Ionic/Capacitor".

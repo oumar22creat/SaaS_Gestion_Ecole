@@ -25,6 +25,11 @@ describe('TenantBrandingService', () => {
   afterEach(() => {
     httpMock.verify();
     sessionStorage.clear();
+    // Ces tests posent des propriétés CSS inline sur <html>, qui persisteraient sinon au-delà
+    // de ce fichier de test (même document partagé par tous les specs dans Karma).
+    document.documentElement.style.removeProperty('--tenant-primary');
+    document.documentElement.style.removeProperty('--tenant-secondary');
+    document.documentElement.style.removeProperty('--tenant-on-primary');
   });
 
   it('applies the neutral default branding immediately, before the API responds', () => {

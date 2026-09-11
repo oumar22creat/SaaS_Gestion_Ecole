@@ -35,3 +35,29 @@ session — à confirmer avant de coder la configuration Flyway (tâche suivante
 d'une vraie connexion PostgreSQL.
 **Prochaine étape :** ROADMAP.md → Phase 0, tâche "Configurer Flyway pour les migrations
 versionnées".
+
+## [2026-09-11] — Session (suite)
+**Tâche(s) réalisée(s) :**
+- Correction du port PostgreSQL exposé par `docker-compose.yml` : `5433` au lieu de `5432`
+  (le port 5432 était déjà occupé par une installation PostgreSQL native sur la machine de
+  dev) ; port configurable via `DB_PORT`. `docker compose up -d` vérifié : les deux services
+  démarrent `healthy`.
+- Configuration Flyway : dépendances `flyway-core` + `flyway-database-postgresql` +
+  `spring-boot-starter-data-jpa` + driver `postgresql`, datasource et
+  `spring.jpa.hibernate.ddl-auto: validate` dans `application.yml` (Flyway/migrations reste
+  la seule source de vérité du schéma, jamais Hibernate auto-DDL), dossier
+  `src/main/resources/db/migration` créé vide (aucune table métier encore — ça, c'est
+  Phase 1.1).
+- Ajout de `backend/.env.example` (déjà référencé par le README mais jamais créé).
+**Décisions prises (et pourquoi) :** Test d'intégration (`FlywayConfigurationTests`) basé sur
+Testcontainers (`spring-boot-testcontainers` + `testcontainers-postgresql`) plutôt que sur le
+`docker-compose` local : le test démarre son propre PostgreSQL jetable, donc `mvn test`
+fonctionne partout (poste de dev sans docker-compose lancé, CI) sans dépendance à un service
+pré-démarré manuellement.
+**Problèmes rencontrés / points de vigilance :** Attention au suffixe de nom de classe de
+test — `*IT` n'est PAS exécuté par Maven Surefire par défaut (seul Failsafe le ferait, non
+configuré dans ce projet) ; utiliser `*Tests` ou `*Test` pour que `mvn test` les exécute
+réellement (piège rencontré : un premier test nommé `FlywayMigrationIT` ne tournait jamais,
+silencieusement).
+**Prochaine étape :** ROADMAP.md → Phase 0, tâche "Initialiser le squelette Angular avec
+Angular Material installé et thème de base".

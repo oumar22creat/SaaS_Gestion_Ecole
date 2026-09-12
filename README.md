@@ -55,7 +55,11 @@ Ceci démarre PostgreSQL sur le port `5433` (et non `5432`, pour éviter un conf
 éventuelle installation PostgreSQL native sur la machine) et Redis sur le port `6379`.
 Voir `docker-compose.yml` pour les identifiants par défaut (à ne jamais utiliser en production).
 Le port PostgreSQL exposé peut être changé via la variable `DB_PORT` dans un fichier `.env`
-à la racine du repo.
+à la racine du repo. Deux rôles PostgreSQL sont créés automatiquement au premier démarrage
+(`backend/docker/postgres-init/01-create-app-role.sh`) : un rôle superutilisateur pour les
+migrations Flyway (`DB_ADMIN_USER`) et un rôle applicatif restreint pour le backend au
+runtime (`DB_USER`) — voir `docs/ARCHITECTURE.md` ADR-001 pour la raison (Row-Level Security
+est toujours contourné pour un superutilisateur PostgreSQL).
 
 ### 3. Lancer le backend
 ```bash
@@ -89,7 +93,8 @@ Copier `backend/.env.example` vers `backend/.env` et ajuster :
 | Variable | Description | Exemple local |
 |---|---|---|
 | `DB_URL` | URL de connexion PostgreSQL | `jdbc:postgresql://localhost:5433/school_saas` |
-| `DB_USER` / `DB_PASSWORD` | Identifiants base de données | voir `docker-compose.yml` |
+| `DB_USER` / `DB_PASSWORD` | Rôle applicatif restreint (runtime, non superutilisateur) | voir `docker-compose.yml` |
+| `DB_ADMIN_USER` / `DB_ADMIN_PASSWORD` | Rôle superutilisateur, migrations Flyway uniquement | voir `docker-compose.yml` |
 | `JWT_SECRET` | Clé de signature des tokens | générer une valeur aléatoire, ne jamais committer |
 | `REDIS_URL` | URL Redis | `redis://localhost:6379` |
 | `STRIPE_SECRET_KEY` | Clé API Stripe (mode test en local) | à récupérer sur le dashboard Stripe |

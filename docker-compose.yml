@@ -3,14 +3,22 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${DB_NAME:-school_saas}
-      POSTGRES_USER: ${DB_USER:-school_saas}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-school_saas}
+      # Rôle superutilisateur, utilisé UNIQUEMENT par Flyway pour les migrations (DDL).
+      POSTGRES_USER: ${DB_ADMIN_USER:-school_saas_admin}
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:-school_saas_admin}
+      # Rôle applicatif restreint (non superutilisateur), créé par le script
+      # backend/docker/postgres-init/01-create-app-role.sh — c'est celui-ci que le backend
+      # utilise au runtime (voir backend/src/main/resources/application.yml), pour que les
+      # politiques Row-Level Security (docs/ARCHITECTURE.md ADR-001) s'appliquent réellement.
+      DB_APP_USER: ${DB_USER:-school_saas}
+      DB_APP_PASSWORD: ${DB_PASSWORD:-school_saas}
     ports:
       - "${DB_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-school_saas}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_ADMIN_USER:-school_saas_admin}"]
       interval: 5s
       timeout: 5s
       retries: 10

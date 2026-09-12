@@ -261,3 +261,56 @@ de test associé (n'entre pas dans le champ de la règle CLAUDE.md sur la couver
 **Phase 0 terminée** : les 13 tâches de `docs/ROADMAP.md` sont cochées. **Prochaine étape :**
 ROADMAP.md → Phase 1.1 (fondations multi-tenant) — table `tenants`, colonne `school_id`
 sur les tables métier, Row-Level Security, Hibernate Filter, tests d'isolation.
+
+## [2026-09-12] — Session (Phase 1.1 + 1.2)
+**Tâche(s) réalisée(s) :** Fondations multi-tenant (1.1) et authentification/rôles (1.2),
+traitées ensemble (il fallait une vraie table scopée — `users` — pour prouver le mécanisme
+d'isolation). Table `tenants`, `TenantScopedEntity` (base JPA), `TenantContextInterceptor`
+(résolution JWT/en-tête `X-Tenant-Id`/sous-domaine), filtre Hibernate `tenantFilter`, RLS
+PostgreSQL sur `users`. Auth JWT complète : `User`/`PlatformAdmin` (séparés, voir ADR-008),
+`Role` (énumération fixe), login/refresh/logout avec rotation du refresh token, RBAC via
+`@PreAuthorize`. Enveloppe de réponse/erreur uniforme (`ApiResponse`/`GlobalExceptionHandler`,
+voir docs/API_CONVENTIONS.md). Endpoint `/api/v1/users` (me, by id, liste paginée) ajouté
+spécifiquement pour pouvoir écrire le test d'isolation exigé par CLAUDE.md sur un vrai
+endpoint scoped-tenant.
+**Décisions prises (et pourquoi) :** Voir ADR-001 (mis à jour avec les 5 pièges détaillés
+ci-dessous) et ADR-008 dans `docs/ARCHITECTURE.md`.
+**Problèmes rencontrés / points de vigilance — IMPORTANT, à lire avant de créer toute
+nouvelle entité scopée `school_id` :** Le premier jet de l'isolation multi-tenant ne
+fonctionnait PAS du tout malgré une implémentation qui semblait correcte sur le papier — le
+test d'isolation (écrit avant de déclarer la tâche terminée, comme l'exige CLAUDE.md) a
+détecté une vraie fuite cross-tenant. Cinq bugs distincts trouvés et corrigés dans la même
+session (détail technique dans ADR-001) :
+1. `@Filter` sur une `@MappedSuperclass` n'est pas hérité de façon fiable par Hibernate —
+   chaque entité concrète doit le redéclarer elle-même.
+2. `TenantContextInterceptor` s'exécutait AVANT `OpenEntityManagerInViewInterceptor` de
+   Spring Boot (ordre d'intercepteurs MVC par défaut non garanti entre configs) —
+   l'activation du filtre se faisait sur un EntityManager jetable, sans aucun effet sur les
+   requêtes suivantes. Fixé avec `.order(100)`.
+3. `Repository#findById`/`getReferenceById` contournent complètement les filtres Hibernate
+   (délèguent à `EntityManager#find()`/`getReference()`) — fixé structurellement via une
+   classe de base de repository (`TenantScopedRepositoryImpl`) qui repasse par du JPQL,
+   plutôt que de compter sur chaque futur développeur pour s'en souvenir.
+4. Row-Level Security ne protège RIEN pour un rôle superutilisateur PostgreSQL (le rôle créé
+   par défaut via `POSTGRES_USER` dans docker-compose) — aucune exception possible, même
+   avec `FORCE ROW LEVEL SECURITY`. Fixé en séparant le rôle Flyway (admin, migrations) du
+   rôle applicatif runtime (restreint) — voir `backend/docker/postgres-init/
+   01-create-app-role.sh`.
+5. La variable de session PostgreSQL RLS pouvait se perdre entre deux transactions
+   `@Transactional` distinctes d'une même requête (connexion JDBC physique relâchée puis
+   réacquise différemment sous Open Session In View) — fixé via
+   `hibernate.connection.handling_mode: DELAYED_ACQUISITION_AND_HOLD`.
+
+Chacun de ces 5 points a désormais un test dédié qui échouerait si le bug revenait
+(`TenantIsolationTest`, 4 tests). Testé aussi de bout en bout avec `docker compose up` réel
+(pas seulement Testcontainers) pour confirmer que le rôle applicatif restreint fonctionne
+correctement pour les opérations normales (login, /me) tout en étant protégé par RLS.
+
+Bug d'infrastructure de test corrigé au passage : le pattern "Singleton Container" de
+Testcontainers avec `@Container` sur un champ statique hérité ne partage PAS fiablement le
+conteneur entre classes de test (JUnit l'arrête après chaque classe concrète, causant des
+"Connection refused" aléatoires) — remplacé par un démarrage manuel dans un bloc statique,
+sans `@Container`/`@Testcontainers`, conforme au pattern officiellement documenté.
+**Prochaine étape :** ROADMAP.md → Phase 1.3 (onboarding self-service) — formulaire
+d'inscription d'établissement, création automatique tenant + compte Administrateur initial,
+assistant de configuration.

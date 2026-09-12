@@ -26,20 +26,23 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 ## Phase 1 — MVP SaaS
 
 ### 1.1 Fondations multi-tenant
-- [ ] Table `tenants` (établissements)
-- [ ] Colonne `school_id` sur toutes les tables métier + contrainte FK
-- [ ] Activer PostgreSQL Row-Level Security sur ces tables
-- [ ] Middleware/filtre Spring qui résout le tenant courant (sous-domaine ou header) et
+- [x] Table `tenants` (établissements)
+- [x] Colonne `school_id` sur toutes les tables métier + contrainte FK
+- [x] Activer PostgreSQL Row-Level Security sur ces tables
+- [x] Middleware/filtre Spring qui résout le tenant courant (sous-domaine ou header) et
       l'injecte dans le contexte de requête
-- [ ] Hibernate Filter global appliquant `school_id` automatiquement
-- [ ] Tests d'isolation : un utilisateur du tenant A ne doit rien voir du tenant B
+- [x] Hibernate Filter global appliquant `school_id` automatiquement
+- [x] Tests d'isolation : un utilisateur du tenant A ne doit rien voir du tenant B
 
 ### 1.2 Authentification et rôles
-- [ ] Tables `users`, `roles`, `permissions`
-- [ ] Inscription / connexion avec JWT (access token + refresh token)
-- [ ] RBAC appliqué côté serveur sur chaque endpoint
-- [ ] Rôle Super-Administrateur (hors tenant, gestion de la plateforme)
-- [ ] Rôles Administrateur, Direction, Enseignant, Élève, Parent, Vie scolaire,
+- [x] Table `users` (rôle fixe par utilisateur via énumération, pas de tables `roles`/
+      `permissions` dynamiques — simplification MVP assumée, voir ADR-008)
+- [ ] Inscription / connexion avec JWT (access token + refresh token) — connexion faite,
+      inscription = tâche 1.3 (onboarding)
+- [x] RBAC appliqué côté serveur sur chaque endpoint (`@PreAuthorize`, à reconduire sur
+      chaque nouvel endpoint)
+- [x] Rôle Super-Administrateur (hors tenant, gestion de la plateforme)
+- [x] Rôles Administrateur, Direction, Enseignant, Élève, Parent, Vie scolaire,
       Secrétaire, Comptable
 
 ### 1.3 Onboarding self-service

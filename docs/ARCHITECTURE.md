@@ -14,6 +14,48 @@ avec PostgreSQL Row-Level Security en filet de sécurité en plus du filtre appl
 **Révision possible** : si un client Enterprise exige une isolation physique (base dédiée),
 prévoir une bascule au cas par cas, pas une réécriture globale.
 
+**Implémentation (Phase 1.1) et pièges rencontrés — à connaître avant de créer toute
+nouvelle entité scopée `school_id` :**
+- Mécanisme : `com.schoolsaas.common.TenantScopedEntity` (classe de base JPA), filtre
+  Hibernate `tenantFilter` activé pour chaque requête par
+  `com.schoolsaas.tenant.TenantContextInterceptor` (résout le tenant depuis le JWT, l'en-tête
+  `X-Tenant-Id`, ou le sous-domaine), plus une politique RLS PostgreSQL sur chaque table
+  scopée (voir `V2__create_users_table.sql` comme modèle).
+- **Piège 1 — `@Filter` sur une `@MappedSuperclass` n'est pas fiable en Hibernate.**
+  Chaque entité concrète DOIT redéclarer elle-même
+  `@Filter(name = "tenantFilter", condition = "school_id = :tenantId")` sur sa classe (le
+  `@FilterDef` correspondant, lui, est déclaré une seule fois — voir
+  `com.schoolsaas.common.package-info.java`).
+- **Piège 2 — ordre des intercepteurs MVC.** `TenantContextInterceptor` doit s'exécuter
+  APRÈS `OpenEntityManagerInViewInterceptor` (enregistré par Spring Boot), sinon
+  l'EntityManager partagé n'est pas encore lié au thread de la requête et l'activation du
+  filtre n'a aucun effet durable. D'où `.order(100)` dans `TenantWebConfig`.
+- **Piège 3 — `EntityManager#find()`/`getReference()` (donc `Repository#findById`/
+  `getReferenceById`) NE PASSENT PAS par les filtres Hibernate.** Un id valide dans un autre
+  tenant serait sinon renvoyé tel quel — exactement l'exemple `/api/students/42` du
+  cahier-des-charges.md §2.2. Fixé structurellement (pas au cas par cas) via
+  `com.schoolsaas.common.TenantScopedRepositoryImpl`, classe de base de TOUS les repositories
+  (`@EnableJpaRepositories(repositoryBaseClass = ...)` sur `SchoolSaasApplication`), qui
+  réimplémente ces deux méthodes en JPQL.
+- **Piège 4 — Row-Level Security ne protège RIEN pour un rôle superutilisateur
+  PostgreSQL**, y compris avec `FORCE ROW LEVEL SECURITY` (comportement PostgreSQL, aucune
+  exception possible). Le rôle créé par `POSTGRES_USER` dans docker-compose EST
+  superutilisateur. Solution : deux rôles distincts, voir `backend/docker/postgres-init/
+  01-create-app-role.sh` — un rôle admin superutilisateur pour Flyway (migrations DDL) et un
+  rôle applicatif restreint pour le backend au runtime (`spring.datasource.*` vs
+  `spring.flyway.*` dans `application.yml`). Preuve du mécanisme :
+  `TenantIsolationTest#rowLevelSecurityAloneBlocksAccessForANonSuperuserRole`.
+- **Piège 5 — variable de session PostgreSQL (`set_config`) et connexions JDBC.** Par
+  défaut, Hibernate peut relâcher puis réacquérir une connexion physique différente entre
+  deux transactions `@Transactional` distinctes au sein d'une même requête (OSIV garde
+  l'EntityManager/Session ouvert, pas forcément la même connexion physique) — la variable de
+  session RLS posée dans une transaction pourrait donc ne plus être visible dans une
+  transaction suivante. Fixé via `hibernate.connection.handling_mode:
+  DELAYED_ACQUISITION_AND_HOLD` dans `application.yml` (une seule connexion physique tenue
+  pour toute la durée de la requête).
+- Le filtre Hibernate reste le mécanisme **principal et obligatoire** (CLAUDE.md règle 2) ;
+  RLS est un filet de sécurité best-effort en plus, pas un substitut.
+
 ### ADR-002 — Authentification
 **Décision** : JWT avec access token (courte durée) + refresh token (longue durée, rotatif).
 RBAC appliqué côté serveur uniquement (jamais de confiance dans un rôle envoyé par le client).
@@ -45,7 +87,6 @@ pas bloquant pour le MVP.
   /billing
   /student
   /teacher
-  /class
   /schoolclass
   /timetable
   /attendance
@@ -79,6 +120,21 @@ sur le projet, un seul historique Git à suivre, un seul pipeline à maintenir.
 **Décision** : le package Java du domaine "classes scolaires" s'appelle `schoolclass`
 (et non `class`).
 **Raison** : `class` est un mot réservé du langage Java, invalide comme nom de package.
+
+### ADR-008 — Comptes Super-Administrateur hors tenant (décidé, Phase 1.2)
+**Décision** : les comptes Super-Administrateur vivent dans une table séparée
+(`platform_admins`, entité `com.schoolsaas.auth.PlatformAdmin`), PAS dans la table `users`
+scopée par tenant. Connexion via un endpoint séparé (`/api/v1/admin/auth/login`), namespace
+cohérent avec `docs/API_CONVENTIONS.md` ("Endpoints d'administration SaaS").
+**Raison** : cahier-des-charges.md §2.5/§5 dit explicitement que ce rôle "n'appartient à
+aucun établissement" — rendre `school_id` nullable sur `users` pour ce seul cas aurait
+affaibli la contrainte NOT NULL/RLS pour TOUS les autres rôles, pour un cas qui est
+structurellement différent (aucune notion de tenant courant à cette identité).
+**Simplification associée** : pas de tables `roles`/`permissions` dynamiques (contrairement
+à la liste indicative de `docs/DATA_MODEL.md`) — un rôle fixe par utilisateur
+(`com.schoolsaas.auth.Role`, énumération), contrôle d'accès via `@PreAuthorize` par rôle sur
+chaque endpoint. Suffisant pour les 9 rôles fixes du cahier des charges ; à revoir seulement
+si un besoin réel de permissions granulaires/personnalisables apparaît.
 
 ---
 

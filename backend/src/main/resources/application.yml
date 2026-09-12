@@ -4,14 +4,37 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
+    # Rôle applicatif restreint (non superutilisateur) — voir backend/docker/postgres-init/
+    # 01-create-app-role.sh. Nécessaire pour que les politiques Row-Level Security
+    # s'appliquent réellement (docs/ARCHITECTURE.md ADR-001) : elles sont toujours
+    # contournées pour un superutilisateur PostgreSQL, sans exception.
     url: ${DB_URL:jdbc:postgresql://localhost:5433/school_saas}
     username: ${DB_USER:school_saas}
     password: ${DB_PASSWORD:school_saas}
   flyway:
+    # Rôle superutilisateur séparé, utilisé UNIQUEMENT pour les migrations (DDL) — jamais par
+    # l'application au runtime.
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/school_saas}
+    user: ${DB_ADMIN_USER:school_saas_admin}
+    password: ${DB_ADMIN_PASSWORD:school_saas_admin}
     locations: classpath:db/migration
   jpa:
     hibernate:
       ddl-auto: validate
+    properties:
+      hibernate:
+        # Garde la même connexion JDBC physique pour toute la durée de la requête (pas
+        # seulement pour chaque transaction) : nécessaire pour que la variable de session
+        # PostgreSQL app.tenant_id (utilisée par les politiques RLS, voir
+        # docs/ARCHITECTURE.md ADR-001) reste fiable même quand plusieurs transactions
+        # @Transactional distinctes s'exécutent dans une même requête (Open Session In View).
+        connection.handling_mode: DELAYED_ACQUISITION_AND_HOLD
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-insecure-secret-do-not-use-in-production-min-32-bytes}
+    access-token-ttl-minutes: 15
+    refresh-token-ttl-days: 30
 
 server:
   port: 8080

@@ -46,10 +46,12 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
       Secrétaire, Comptable
 
 ### 1.3 Onboarding self-service
-- [ ] Formulaire public d'inscription d'un établissement
-- [ ] Création automatique du tenant + compte Administrateur initial
+- [x] Formulaire public d'inscription d'un établissement (Web) — `POST /api/v1/tenants/register`
+- [x] Création automatique du tenant + compte Administrateur initial (connexion immédiate)
 - [ ] Assistant de configuration (wizard) : établissement → classes/matières →
       import élèves/parents (CSV) → enseignants → emploi du temps → activation
+      — dépend des modules 1.5 (classes/matières/élèves) et 1.6 (emploi du temps),
+      pas encore construits ; à compléter étape par étape une fois ces modules prêts
 
 ### 1.4 Abonnement (base)
 - [ ] Tables `plans`, `subscriptions`, `invoices`

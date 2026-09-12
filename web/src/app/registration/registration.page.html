@@ -1,0 +1,57 @@
+<div class="registration-page">
+  @if (success()) {
+    <mat-card>
+      <h1>Établissement créé</h1>
+      <p>Votre établissement a été créé et vous êtes maintenant connecté.</p>
+    </mat-card>
+  } @else {
+    <mat-card>
+      <h1>Créer votre établissement</h1>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Nom de l'établissement</mat-label>
+          <input matInput formControlName="schoolName" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Sous-domaine</mat-label>
+          <input matInput formControlName="subdomain" placeholder="mon-ecole" />
+          <mat-hint>mon-ecole.monapp.com — lettres minuscules, chiffres, tirets</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Prénom (administrateur)</mat-label>
+          <input matInput formControlName="adminFirstName" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nom (administrateur)</mat-label>
+          <input matInput formControlName="adminLastName" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>E-mail (administrateur)</mat-label>
+          <input matInput type="email" formControlName="adminEmail" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Mot de passe</mat-label>
+          <input matInput type="password" formControlName="adminPassword" />
+          <mat-hint>8 caractères minimum</mat-hint>
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <p class="error-message">{{ errorMessage() }}</p>
+        }
+
+        <button mat-flat-button type="submit" [disabled]="submitting()">
+          @if (submitting()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            Créer l'établissement
+          }
+        </button>
+      </form>
+    </mat-card>
+  }
+</div>

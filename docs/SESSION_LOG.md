@@ -314,3 +314,29 @@ sans `@Container`/`@Testcontainers`, conforme au pattern officiellement document
 **Prochaine étape :** ROADMAP.md → Phase 1.3 (onboarding self-service) — formulaire
 d'inscription d'établissement, création automatique tenant + compte Administrateur initial,
 assistant de configuration.
+
+## [2026-09-12] — Session (Phase 1.3)
+**Tâche(s) réalisée(s) :** Inscription self-service d'un établissement. Backend :
+`POST /api/v1/tenants/register` (public, déjà autorisé dans `SecurityConfig`) — crée le
+tenant (statut `TRIAL`) + le compte Administrateur initial, puis connecte immédiatement ce
+dernier (réutilise `AuthService.login`). Web : page `/register` (Angular Material,
+formulaire réactif), `RegistrationService`, `AuthTokenService` (stockage minimal des jetons
+en `sessionStorage`, réutilisable par les futurs écrans protégés).
+**Décisions prises (et pourquoi) :** L'assistant de configuration multi-étapes
+(cahier-des-charges.md §20.2 : import classes/matières/élèves/enseignants/emploi du temps)
+n'est PAS construit maintenant — il dépend fonctionnellement des modules Phase 1.5
+(élèves/classes/matières) et 1.6 (emploi du temps), qui n'existent pas encore. Le construire
+maintenant aurait signifié soit des appels vers des endpoints fictifs, soit sauter l'ordre
+des phases (CLAUDE.md règle 5). Seule l'étape 1 ("informations établissement") est donc
+livrée ; le reste sera ajouté incrémentalement quand 1.5/1.6 seront prêts. Anti-abus
+(captcha, rate limiting Redis — cahier-des-charges.md §20.1) volontairement pas implémenté
+non plus : Redis n'est pas encore câblé dans le backend (présent seulement dans
+docker-compose) — noté comme point ouvert plutôt que bâclé.
+**Problèmes rencontrés / points de vigilance :** Piège retrouvé une seconde fois (déjà vu en
+1.1/1.2) : au moment de l'inscription, aucun contexte tenant n'est encore posé (endpoint
+public, pas de JWT). `AuthService.login()` appelé juste après la création du compte a donc
+dû être entouré d'un `TenantContext.set(...)` + `TenantSessionConfigurer.applyTenant(...)`
+explicites pour que la recherche par email reste bornée au tenant qu'on vient de créer.
+**Prochaine étape :** ROADMAP.md → Phase 1.4 (abonnement de base) — tables plans/
+subscriptions/invoices, essai gratuit automatique, intégration Stripe (checkout + webhook),
+blocage progressif en cas d'échec de paiement.

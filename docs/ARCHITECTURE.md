@@ -143,3 +143,7 @@ si un besoin réel de permissions granulaires/personnalisables apparaît.
 - Hébergement de production (cloud choisi, région) ? (avant le premier déploiement staging)
 - Kubernetes ou déploiement simple Docker Compose au démarrage ? (avant Phase 4, ou avant
   si le nombre de tenants grossit plus vite que prévu)
+- Anti-abus sur l'inscription self-service (captcha, rate limiting Redis — voir
+  cahier-des-charges.md §20.1) : Redis n'est pour l'instant câblé que dans
+  `docker-compose.yml`, pas encore intégré au backend Spring Boot. À faire avant l'ouverture
+  publique de `/api/v1/tenants/register` en dehors d'un cadre de démo/dev.

@@ -206,15 +206,19 @@ avant de passer à la Phase 3.
       projet (voir docs/ARCHITECTURE.md "Points ouverts"), à trancher avec l'utilisateur
 
 ### 3.3 Comptabilité et frais scolaires (cahier §19.4 + §4.3)
-- [ ] Grille tarifaire des frais de scolarité par niveau/classe
-- [ ] Échéancier de paiement pour les familles
-- [ ] Génération de reçus et factures (distinctes des factures d'abonnement SaaS du module `billing`)
-- [ ] Rapprochement avec les moyens de paiement intégrés
-- [ ] Reporting financier consolidé pour Direction/Comptable
-- [ ] Paiement mobile money local (cahier §4.3) — **bloqué : fournisseur à confirmer avec
-      l'utilisateur avant toute implémentation** (marché cible + fournisseur non tranchés,
-      voir docs/ARCHITECTURE.md "Points ouverts" ; Stripe couvre aujourd'hui uniquement
-      l'abonnement SaaS, pas les frais de scolarité payés par les familles)
+- [x] Grille tarifaire des frais de scolarité par classe (pas de "niveau" séparé, voir ADR-024)
+- [x] Échéancier de paiement pour les familles (une ligne de grille = une échéance datée)
+- [x] Génération de factures par élève (masse, idempotent) — pas de PDF de reçu pour cette
+      passe (voir "Hors périmètre" ci-dessous)
+- [x] Rapprochement avec les moyens de paiement — saisie manuelle du personnel (méthode :
+      espèces/virement/mobile money/autre), pas de rapprochement automatique bancaire
+- [x] Reporting financier consolidé pour Direction/Comptable (total dû/payé/impayé par classe/période)
+- [ ] Paiement mobile money local (cahier §4.3) — **questionné à l'utilisateur, réponse :
+      décision reportée**. `FeePaymentMethod.MOBILE_MONEY` existe pour tracer un paiement reçu
+      hors-ligne, mais aucun fournisseur/gateway n'est intégré (voir ADR-024)
+- [ ] Génération de reçus/factures PDF téléchargeables : **hors périmètre de cette passe** —
+      seules les données structurées existent (montant dû/payé/statut) ; l'export PDF suivrait
+      le même pattern que `ReportCardPdfExporter` (ADR-016) si demandé séparément
 
 ### 3.4 Cantine (cahier §19.1)
 - [ ] Gestion des menus et régimes alimentaires particuliers

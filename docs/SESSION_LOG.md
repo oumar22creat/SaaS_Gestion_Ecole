@@ -667,3 +667,21 @@ passent.
 **Prochaine étape :** ROADMAP.md Phase 3.5 (bibliothèque) ou 3.6 (transport scolaire) — aucun
 point bloquant sur ces deux-là, à choisir dans cet ordre plutôt que 3.3/3.4 qui restent
 bloquées sur une décision utilisateur (fournisseur mobile money, portail parent).
+
+## [2026-09-14] — Session (déblocage 3.3/3.4 + Phase 3.3 — comptabilité et frais scolaires)
+**Tâche(s) réalisée(s) :** Question posée à l'utilisateur sur les deux points bloquants
+identifiés en fin de session précédente. Réponses : (1) fournisseur mobile money — décision
+reportée, construire 3.3 sans paiement en ligne réel ; (2) réservation cantine — saisie côté
+staff pour cette passe, pas de portail parent. Puis implémentation de 3.3 : nouveau package
+`schoolfees` — grille tarifaire par classe, génération de factures en masse (élèves actifs),
+paiements partiels/totaux avec recalcul automatique du statut, reporting consolidé par
+classe/période.
+**Décisions prises (et pourquoi) :** Voir ADR-024 (nouveau) — résumé : package nommé
+`schoolfees` (le cahier §26 ne nomme pas ce module, et `billing` désigne déjà la facturation
+SaaS plateforme — mélanger les deux serait confus) ; pas de concept de "niveau" distinct de
+la classe ; `FeePaymentMethod.MOBILE_MONEY` existe pour tracer un paiement reçu hors-ligne,
+sans gateway réel branché.
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau. Suite complète : 94/94 tests
+passent.
+**Prochaine étape :** ROADMAP.md Phase 3.4 (cantine, maintenant débloquée — saisie staff) puis
+3.5 (bibliothèque) et 3.6 (transport scolaire).

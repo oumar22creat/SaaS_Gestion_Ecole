@@ -541,15 +541,31 @@ options changent une invariante du projet martelée depuis l'ADR-001/`TenantRegi
 nouveau : décision à trancher explicitement avec l'utilisateur, pas silencieusement (voir
 "Points ouverts").
 
+### ADR-024 — Comptabilité et frais scolaires (décidé, Phase 3.3)
+**Décision** : nouveau package `schoolfees` (nom non listé au cahier §26, qui ne nomme pas ce
+module — `billing` était déjà pris par la facturation SaaS plateforme, un nom différent évite
+de mélanger deux domaines de facturation distincts : revenu de l'éditeur vs. frais payés par
+les familles). `FeeSchedule` (grille tarifaire, rattachée à une classe — **pas** de concept
+de "niveau" séparé de la classe, aucun n'existe ailleurs dans le modèle, voir ADR-010 ; une
+ligne par échéance porte l'échéancier via son propre `dueDate`) → `StudentFeeInvoice` (générée
+en masse pour les élèves actifs d'une classe, idempotent) → `FeePayment` (paiement partiel ou
+total, saisi manuellement, statut de la facture recalculé automatiquement :
+PENDING→PARTIALLY_PAID→PAID). Reporting consolidé par classe/période (total dû/payé/impayé +
+liste des factures impayées) pour Direction/Comptable.
+
+**Paiement mobile money (cahier §4.3) : questionné à l'utilisateur, réponse "pas encore,
+décision à prendre plus tard"** — `FeePaymentMethod.MOBILE_MONEY` existe pour tracer un
+paiement reçu hors-ligne via ce canal (saisie manuelle par le personnel, avec référence libre,
+ex. identifiant de transaction Orange Money), mais **aucun fournisseur n'est intégré** :
+pas de paiement en ligne réel déclenché depuis l'app pour les frais de scolarité. Rester
+distinct de `StripeGateway` (ADR-009), qui ne concerne que l'abonnement SaaS de l'établissement
+à la plateforme, jamais les frais que les familles paient à l'établissement.
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
-- **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3)** — cahier §4.3
-  demande "des moyens de paiement locaux mobile money selon le marché", mais ni le marché
-  cible ni le fournisseur (Orange Money, MTN MoMo, Wave, agrégateur...) ne sont tranchés.
-  Bloquant : à poser à l'utilisateur avant de commencer 3.3, ne pas deviner.
-- **Réservation de repas "par les parents" (ROADMAP.md 3.4)** — suppose un portail parent
-  (compte `User` lié à un `Parent`), explicitement différé depuis l'ADR-010. Bloquant : à
-  clarifier avec l'utilisateur avant de commencer 3.4 (construire un portail minimal, ou
-  scoper la réservation côté staff pour cette passe).
+- **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3, ADR-024)** — reste
+  à trancher (réponse utilisateur : plus tard). Le modèle (`FeePaymentMethod.MOBILE_MONEY`)
+  est prêt à recevoir un vrai fournisseur sans migration de schéma ; seule l'intégration
+  d'un gateway de paiement en ligne (même pattern que `StripeGateway`) reste à construire.
 - **Stockage utilisé et utilisateurs actifs cross-tenant (ROADMAP.md 3.2, ADR-023)** —
   nécessite soit des compteurs plateforme dénormalisés, soit un rôle DB `BYPASSRLS` restreint.
   Bloquant : à trancher avec l'utilisateur avant d'implémenter (touche à l'invariante RLS du

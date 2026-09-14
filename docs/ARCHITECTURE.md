@@ -181,6 +181,37 @@ souscrit via Stripe Checkout est implicitement mensuel, pas de colonne `billing_
 changement de plan avec proratisation, moyens de paiement locaux mobile money (voir ADR-003),
 back-office Super-Admin pour gérer `plans`/`stripe_price_id` (`/api/admin/plans`, Phase 2).
 
+### ADR-010 — Élèves, parents, enseignants, classes, matières (décidé, Phase 1.5)
+**Décision** : packages `student`, `parent`, `teacher`, `schoolclass`, `subject` (le domaine
+`parent` du cahier-des-charges.md §26 n'était pas listé dans la liste initiale de CLAUDE.md —
+liste manifestement non exhaustive, corrigée à l'usage). Toutes les nouvelles entités sont
+des `TenantScopedEntity` classiques (filtre Hibernate + RLS, voir ADR-001) — pas d'exception.
+
+**Simplifications assumées pour ce MVP** (aucune n'est dans les 4 tâches de ROADMAP.md 1.5,
+ajoutables plus tard sans réécriture) :
+- **Pas d'année scolaire** (`academic_years`, pourtant listée dans docs/DATA_MODEL.md/cahier
+  §6) : une seule génération "courante" de classes/élèves par établissement. À introduire
+  quand la promotion/rollover d'année deviendra un besoin réel (Phase 2+).
+- **`Teacher`/`Parent` sont des fiches métier, PAS des comptes `User`** : contrairement à
+  `Student`/`Parent` cités comme rôles de connexion au cahier-des-charges.md §5, aucun compte
+  de connexion n'est provisionné avec ces fiches (le portail parent/élève n'existe pas
+  encore). Un Admin crée séparément un compte `User` (Role.PARENT/STUDENT) s'il faut un accès
+  portail — non connecté à la fiche métier pour l'instant, voir "hors périmètre" ci-dessous.
+- **Un seul enseignant par couple (classe, matière)** (`class_subject_assignments`, contrainte
+  UNIQUE) — pas de co-intervention.
+- **Import CSV élèves** : parseur volontairement simple (split virgule, pas de support des
+  guillemets/virgules dans un champ) — suffisant pour un export tableur standard ; colonnes
+  `studentNumber,firstName,lastName,birthDate,gender,className`, `className` résolu par
+  correspondance exacte insensible à la casse sur le nom de classe existant (ignoré si non
+  trouvé, l'élève est importé sans classe plutôt que rejeté).
+- **Autorisations** : endpoints réservés aux rôles "staff" (ADMIN/DIRECTION/SECRETARY selon
+  le module) — aucun accès `STUDENT`/`PARENT` (portail non construit, voir point précédent).
+
+**Hors périmètre 1.5 (explicitement différé)** : portail élève/parent (lier `User` à
+`Student`/`Parent`), photo/dossier administratif/pièces justificatives (module `document/`,
+Phase 2), historique des changements de classe, permissions granulaires par enseignant sur
+"ses" classes (un enseignant avec accès à un module a accès à tout le tenant pour l'instant).
+
 ---
 
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)

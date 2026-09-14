@@ -60,10 +60,10 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] Blocage progressif en cas d'échec de paiement (lecture seule puis suspension)
 
 ### 1.5 Élèves, parents, enseignants, classes, matières
-- [ ] CRUD élèves (avec import CSV en masse)
-- [ ] CRUD parents/tuteurs + association aux élèves
-- [ ] CRUD enseignants
-- [ ] CRUD classes et matières + affectation enseignant/classe/matière
+- [x] CRUD élèves (avec import CSV en masse)
+- [x] CRUD parents/tuteurs + association aux élèves
+- [x] CRUD enseignants
+- [x] CRUD classes et matières + affectation enseignant/classe/matière
 
 ### 1.6 Emploi du temps
 - [ ] CRUD emploi du temps (classe, enseignant, matière, salle, horaire)

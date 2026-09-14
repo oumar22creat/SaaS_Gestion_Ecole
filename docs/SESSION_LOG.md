@@ -383,3 +383,25 @@ back-office Super-Admin pour les plans sont explicitement hors périmètre (Phas
 **Prochaine étape :** ROADMAP.md → Phase 1.5 (élèves, parents, enseignants, classes,
 matières) — CRUD élèves avec import CSV, CRUD parents/tuteurs + association aux élèves, CRUD
 enseignants, CRUD classes/matières + affectations.
+
+## [2026-09-14] — Session (Phase 1.5, suite)
+**Tâche(s) réalisée(s) :** Les 4 tâches de ROADMAP.md 1.5 : CRUD élèves (`student/`) avec
+import CSV en masse, CRUD parents/tuteurs (`parent/`) + association élève/parent
+(`student_parents`), CRUD enseignants (`teacher/`), CRUD classes (`schoolclass/`) et matières
+(`subject/`) + affectation enseignant/classe/matière (`class_subject_assignments`). Décision
+explicite de l'utilisateur : enchaîner toute la Phase 1 (1.5 à 1.9) sans validation
+intermédiaire entre chaque sous-tâche.
+**Décisions prises (et pourquoi) :** Voir ADR-010 (nouveau) dans `docs/ARCHITECTURE.md` —
+résumé : pas d'année scolaire pour ce MVP (simplification, non listée dans les tâches 1.5),
+`Teacher`/`Parent` sont des fiches métier découplées de tout compte `User` (le portail élève/
+parent n'existe pas), un seul enseignant par (classe, matière), import CSV avec parseur
+simple (pas de support des champs contenant une virgule), endpoints réservés aux rôles staff.
+**Problèmes rencontrés / points de vigilance :** Piège récurrent (déjà vu en 1.1) à chaque
+fixture de test représentant les données d'un "tenant B" créées hors requête HTTP : sans
+`TenantContext` actif, `TenantScopedEntity#assignTenantIfMissing` ne peut pas déduire
+`school_id` → violation de contrainte NOT NULL si on oublie `setSchoolId(...)` avant le
+premier `save(...)`. Centralisé dans un nouvel utilitaire de test partagé
+`com.schoolsaas.TestAuthSupport` (tenant actif + connexion + `withTenant(...)`) pour éviter de
+redécouvrir ce piège dans chaque nouvelle classe de test des phases suivantes.
+**Prochaine étape :** ROADMAP.md → Phase 1.6 (emploi du temps) — CRUD emploi du temps
+(classe, enseignant, matière, salle, horaire) + détection des conflits.

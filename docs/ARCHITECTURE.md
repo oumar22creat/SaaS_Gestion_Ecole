@@ -583,6 +583,27 @@ soldées/non annulées tous élèves confondus — vue à plat pour ce MVP, pas 
 classe/famille (pas demandé, cohérent avec le niveau d'agrégation des autres modules de cette
 phase).
 
+### ADR-026 — Bibliothèque (décidé, Phase 3.5)
+**Décision** : nouveau package `library` (nom du cahier §26). `Book` (`barcode` = clé de scan
+obligatoire, `isbn` optionnel) ; `BookLoan` (`returnedAt IS NULL` = actif, "en retard" calculé
+à la lecture — `dueDate < aujourd'hui && actif` — pas un statut stocké séparément, même
+principe que `AttendanceRecord`) ; `BookReservation` (liste d'attente FIFO = simplement l'ordre
+de `reservedAt`, pas de colonne de position stockée). Retourner un ouvrage libère
+automatiquement la réservation la plus ancienne en attente (`FULFILLED`), sans notification —
+le cahier ne demande de notification que pour les retards, pas pour la disponibilité.
+
+**"Relances automatiques" (cahier §19.3) = `LibraryOverdueReminderJob`**, nouveau
+`@Scheduled` (quotidien, 08h) qui réutilise le registre centralisé (`NotificationDispatcher`,
+ADR-020) — nouveau `NotificationType.LIBRARY_OVERDUE`. Aucun compte élève/parent (ADR-010) :
+comme pour les absences/devoirs, `recipientUserIds` est vide, la relance est juste loggée.
+**Premier job de ce projet à devoir interroger une table métier RLS-protégée pour TOUS les
+tenants** (contrairement à `TenantAccessLifecycleJob`, ADR-009, qui ne touche que
+`subscriptions`/`tenants`, des entités plateforme sans RLS) : résolu en itérant tenant par
+tenant, en activant explicitement `TenantContext`/`TenantSessionConfigurer` pour chacun avant
+de l'interroger — exactement ce qu'une requête HTTP normale fait, jamais de contournement RLS.
+C'est la réponse concrète à la question laissée ouverte par l'ADR-023 : itérer par tenant
+plutôt que `BYPASSRLS`, dès qu'un vrai job (pas juste un dashboard de lecture) en a besoin.
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3, ADR-024)** — reste
   à trancher (réponse utilisateur : plus tard). Le modèle (`FeePaymentMethod.MOBILE_MONEY`)

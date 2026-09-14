@@ -12,5 +12,6 @@ public enum NotificationType {
     NEW_DOCUMENT,
     NEW_MESSAGE,
     ANNOUNCEMENT,
-    SUBSCRIPTION_ALERT
+    SUBSCRIPTION_ALERT,
+    LIBRARY_OVERDUE
 }

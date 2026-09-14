@@ -231,9 +231,10 @@ avant de passer à la Phase 3.
 - [x] Suivi des impayés (`GET /canteen/invoices/unpaid`, vue à plat tous élèves)
 
 ### 3.5 Bibliothèque (cahier §19.3)
-- [ ] Catalogue des ouvrages (codes-barres/ISBN)
-- [ ] Emprunts et retours avec relances automatiques
-- [ ] Réservations et liste d'attente
+- [x] Catalogue des ouvrages (codes-barres obligatoire, ISBN optionnel)
+- [x] Emprunts et retours avec relances automatiques (`LibraryOverdueReminderJob`, quotidien,
+      via le registre centralisé de notifications — nouveau `NotificationType.LIBRARY_OVERDUE`)
+- [x] Réservations et liste d'attente (FIFO, libérée automatiquement au retour d'un ouvrage)
 
 ### 3.6 Transport scolaire (cahier §19.2)
 - [ ] Gestion des lignes et arrêts de bus

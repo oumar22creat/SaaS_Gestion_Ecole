@@ -700,3 +700,24 @@ passent.
 **Prochaine étape :** ROADMAP.md Phase 3.5 (bibliothèque) puis 3.6 (transport scolaire) — deux
 derniers modules complémentaires sans point bloquant avant 3.7 (domaine personnalisé/branding
 avancé).
+
+## [2026-09-14] — Session (Phase 3.5 — bibliothèque)
+**Tâche(s) réalisée(s) :** Nouveau package `library` — catalogue d'ouvrages, emprunts/retours,
+réservations/liste d'attente FIFO (libérée automatiquement au retour), et
+`LibraryOverdueReminderJob` (relances automatiques quotidiennes pour les retards, via le
+registre centralisé de notifications — nouveau `NotificationType.LIBRARY_OVERDUE`).
+**Décisions prises (et pourquoi) :** Voir ADR-026 (nouveau) — résumé : "en retard" calculé à
+la lecture (`dueDate < aujourd'hui`), pas un statut stocké ; c'est le premier job du projet à
+devoir interroger une table métier RLS-protégée pour tous les tenants (contrairement à
+`TenantAccessLifecycleJob`, qui ne touche que des entités plateforme sans RLS) — résolu en
+itérant tenant par tenant avec `TenantContext`/`TenantSessionConfigurer`, jamais par
+contournement RLS. Répond concrètement à la question laissée ouverte par l'ADR-023.
+**Problèmes rencontrés / points de vigilance :** Piège de test repéré et corrigé avant
+commit : le premier jet du test de relance appelait `job.runFor(...)`, qui parcourt TOUS les
+tenants de la suite (partagés via le conteneur Testcontainers "singleton") — sous la suite
+complète, cela déclenchait des dizaines d'appels `send()` d'autres tenants, faisant échouer
+`verify(...).send(argThat(...))` ("too many actual invocations"). Corrigé en appelant
+directement `remindOverdueLoansFor(tenantId, ...)` pour le seul tenant du test. Suite
+complète : 99/99 tests passent.
+**Prochaine étape :** ROADMAP.md Phase 3.6 (transport scolaire) puis 3.7 (domaine personnalisé
+et branding avancé) — derniers items de la Phase 3.

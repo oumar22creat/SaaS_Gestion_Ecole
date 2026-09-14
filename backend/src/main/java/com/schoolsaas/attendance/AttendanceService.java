@@ -3,6 +3,8 @@ package com.schoolsaas.attendance;
 import com.schoolsaas.attendance.dto.AttendanceRecordRequest;
 import com.schoolsaas.attendance.dto.RollCallRequest;
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.notification.NotificationDispatcher;
+import com.schoolsaas.notification.NotificationType;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.student.StudentRepository;
 import java.time.LocalDate;
@@ -18,19 +20,19 @@ public class AttendanceService {
     private final AttendanceRecordChangeRepository attendanceRecordChangeRepository;
     private final SchoolClassRepository schoolClassRepository;
     private final StudentRepository studentRepository;
-    private final ParentNotificationGateway parentNotificationGateway;
+    private final NotificationDispatcher notificationDispatcher;
 
     public AttendanceService(
             AttendanceRecordRepository attendanceRecordRepository,
             AttendanceRecordChangeRepository attendanceRecordChangeRepository,
             SchoolClassRepository schoolClassRepository,
             StudentRepository studentRepository,
-            ParentNotificationGateway parentNotificationGateway) {
+            NotificationDispatcher notificationDispatcher) {
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.attendanceRecordChangeRepository = attendanceRecordChangeRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.studentRepository = studentRepository;
-        this.parentNotificationGateway = parentNotificationGateway;
+        this.notificationDispatcher = notificationDispatcher;
     }
 
     @Transactional
@@ -95,10 +97,18 @@ public class AttendanceService {
         return saved;
     }
 
-    /** Notification au parent (cahier-des-charges.md §10) — voir ParentNotificationGateway. */
+    /**
+     * Notification au parent (cahier-des-charges.md §10). Aucun compte utilisateur destinataire
+     * réel (parents sans portail, voir ADR-010) : {@link NotificationDispatcher} loggue
+     * simplement l'intention, voir ROADMAP.md 2.5.
+     */
     private void notifyIfNeeded(AttendanceRecord record) {
         if (record.getStatus() != AttendanceStatus.PRESENT && !record.isParentNotified()) {
-            parentNotificationGateway.notifyAbsence(record.getStudentId(), record.getDate(), record.getStatus());
+            notificationDispatcher.dispatch(
+                    NotificationType.ABSENCE,
+                    List.of(),
+                    "Absence signalée",
+                    "Élève " + record.getStudentId() + " — " + record.getStatus() + " le " + record.getDate());
             record.setParentNotified(true);
         }
     }

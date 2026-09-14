@@ -584,3 +584,29 @@ consolidation explicitement prévue en 2.5.
 `UserRepository#findAllByActiveTrue` (nécessaire pour diffuser une annonce).
 **Prochaine étape :** ROADMAP.md Phase 2.5 (infrastructure de notifications — consolidation
 des gateways existants) puis 2.6 (dashboard Super-Admin).
+
+## [2026-09-14] — Session (Phase 2.5 — infrastructure de notifications)
+**Tâche(s) réalisée(s) :** Nouveau package `notification/` : `NotificationType` (liste
+fermée), `NotificationDispatcher` (point d'appel unique), `NotificationGateway`/
+`LoggingNotificationGateway`, `NotificationPreference` (table `notification_preferences`,
+`school_id` + RLS) + `GET/PUT /api/v1/notification-preferences`. Suppression des trois
+gateways ad hoc (`ParentNotificationGateway`, `HomeworkNotificationGateway`,
+`MessageNotificationGateway`) et migration de `AttendanceService`/`LessonService`/
+`MessagingService` vers le registre unique.
+**Décisions prises (et pourquoi) :** Voir ADR-020 (nouveau) — résumé : préférences par
+utilisateur (pas par rôle, plus simple avec le modèle `User` existant), absence de ligne =
+activé par défaut. Événements sans compte utilisateur réel (absence, devoir — élèves/parents
+sans portail, ADR-010) : `recipientUserIds` vide, filtrage par préférence en no-op,
+comportement de log inchangé. Un message dans une conversation-annonce déclenche maintenant
+`ANNOUNCEMENT` plutôt que `NEW_MESSAGE` (types distincts, opt-out séparé possible).
+`NEW_GRADE`/`NEW_DOCUMENT`/`SUBSCRIPTION_ALERT` : type prêt côté registre, mais aucun
+appelant ne les déclenche encore (non demandé dans cette tâche).
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau. Tests existants
+(`AttendanceTest`, `LessonTest`) migrés du mock de l'ancienne gateway spécifique vers un mock
+de `NotificationGateway` avec `argThat` sur le type/corps de l'événement. Isolation
+cross-tenant testée au niveau du filtre Hibernate (comme `TenantIsolationTest`), pas via un
+endpoint — `notification-preferences` n'expose aucun paramètre id/tenant côté client (toujours
+scopé à l'utilisateur courant du JWT), donc pas de surface d'attaque cross-tenant côté API.
+Suite complète : 85/85 tests passent.
+**Prochaine étape :** ROADMAP.md Phase 2.6 (dashboard Super-Admin — dernière sous-phase de la
+Phase 2).

@@ -1,6 +1,6 @@
 package com.schoolsaas.attendance;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -14,6 +14,8 @@ import com.schoolsaas.AbstractIntegrationTest;
 import com.schoolsaas.TestAuthSupport;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.UserRepository;
+import com.schoolsaas.notification.NotificationGateway;
+import com.schoolsaas.notification.NotificationType;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.student.Student;
@@ -31,7 +33,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class AttendanceTest extends AbstractIntegrationTest {
 
     @MockBean
-    private ParentNotificationGateway parentNotificationGateway;
+    private NotificationGateway notificationGateway;
 
     @Autowired
     private MockMvc mockMvc;
@@ -78,8 +80,9 @@ class AttendanceTest extends AbstractIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.length()").value(2));
 
-        verify(parentNotificationGateway).notifyAbsence(eq(absent.getId()), eq(java.time.LocalDate.of(2026, 9, 15)), eq(AttendanceStatus.ABSENT));
-        verifyNoMoreInteractions(parentNotificationGateway);
+        verify(notificationGateway).send(argThat(event ->
+                event.type() == NotificationType.ABSENCE && event.body().contains(absent.getId().toString())));
+        verifyNoMoreInteractions(notificationGateway);
 
         mockMvc.perform(get("/api/v1/attendance")
                         .header("Authorization", "Bearer " + token)

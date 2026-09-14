@@ -3,6 +3,8 @@ package com.schoolsaas.homework;
 import com.schoolsaas.common.ApiException;
 import com.schoolsaas.document.DocumentRepository;
 import com.schoolsaas.homework.dto.LessonRequest;
+import com.schoolsaas.notification.NotificationDispatcher;
+import com.schoolsaas.notification.NotificationType;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.subject.SubjectRepository;
 import java.time.LocalDate;
@@ -21,19 +23,19 @@ public class LessonService {
     private final SchoolClassRepository schoolClassRepository;
     private final SubjectRepository subjectRepository;
     private final DocumentRepository documentRepository;
-    private final HomeworkNotificationGateway notificationGateway;
+    private final NotificationDispatcher notificationDispatcher;
 
     public LessonService(
             LessonRepository lessonRepository,
             SchoolClassRepository schoolClassRepository,
             SubjectRepository subjectRepository,
             DocumentRepository documentRepository,
-            HomeworkNotificationGateway notificationGateway) {
+            NotificationDispatcher notificationDispatcher) {
         this.lessonRepository = lessonRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.subjectRepository = subjectRepository;
         this.documentRepository = documentRepository;
-        this.notificationGateway = notificationGateway;
+        this.notificationDispatcher = notificationDispatcher;
     }
 
     @Transactional
@@ -45,7 +47,7 @@ public class LessonService {
         lesson.setHomeworkDueDate(request.homeworkDueDate());
         lesson.setAttachmentDocumentId(request.attachmentDocumentId());
         if (request.homework() != null) {
-            notificationGateway.notifyNewHomework(lesson.getSchoolClassId(), lesson.getId());
+            notifyNewHomework(lesson);
         }
         return lesson;
     }
@@ -75,7 +77,7 @@ public class LessonService {
         lesson.setAttachmentDocumentId(request.attachmentDocumentId());
 
         if (isNewHomework) {
-            notificationGateway.notifyNewHomework(lesson.getSchoolClassId(), lesson.getId());
+            notifyNewHomework(lesson);
         }
         return lesson;
     }
@@ -83,6 +85,19 @@ public class LessonService {
     @Transactional
     public void delete(Long id) {
         lessonRepository.delete(getById(id));
+    }
+
+    /**
+     * Notification nouveau devoir (cahier-des-charges.md §13/§16). Aucun compte utilisateur
+     * destinataire réel (élèves/parents sans portail, voir ADR-010) :
+     * {@link NotificationDispatcher} loggue simplement l'intention, voir ROADMAP.md 2.5.
+     */
+    private void notifyNewHomework(Lesson lesson) {
+        notificationDispatcher.dispatch(
+                NotificationType.NEW_HOMEWORK,
+                List.of(),
+                "Nouveau devoir",
+                "Classe " + lesson.getSchoolClassId() + " — séance " + lesson.getId());
     }
 
     private void validateReferences(LessonRequest request) {

@@ -1,6 +1,6 @@
 package com.schoolsaas.homework;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -13,6 +13,8 @@ import com.schoolsaas.AbstractIntegrationTest;
 import com.schoolsaas.TestAuthSupport;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.UserRepository;
+import com.schoolsaas.notification.NotificationGateway;
+import com.schoolsaas.notification.NotificationType;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.subject.Subject;
@@ -30,7 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class LessonTest extends AbstractIntegrationTest {
 
     @MockBean
-    private HomeworkNotificationGateway notificationGateway;
+    private NotificationGateway notificationGateway;
 
     @Autowired
     private MockMvc mockMvc;
@@ -81,7 +83,8 @@ class LessonTest extends AbstractIntegrationTest {
                                 + "\"homework\":\"Exercices p.42\",\"homeworkDueDate\":\"2026-10-08\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.homework").value("Exercices p.42"));
-        verify(notificationGateway).notifyNewHomework(org.mockito.ArgumentMatchers.eq(schoolClass.getId()), any());
+        verify(notificationGateway).send(argThat(event ->
+                event.type() == NotificationType.NEW_HOMEWORK && event.body().contains(schoolClass.getId().toString())));
     }
 
     @Test

@@ -6,6 +6,8 @@ import com.schoolsaas.common.ApiException;
 import com.schoolsaas.document.DocumentRepository;
 import com.schoolsaas.messaging.dto.ConversationCreateRequest;
 import com.schoolsaas.messaging.dto.MessageCreateRequest;
+import com.schoolsaas.notification.NotificationDispatcher;
+import com.schoolsaas.notification.NotificationType;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -22,7 +24,7 @@ public class MessagingService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
-    private final MessageNotificationGateway notificationGateway;
+    private final NotificationDispatcher notificationDispatcher;
 
     public MessagingService(
             ConversationRepository conversationRepository,
@@ -30,13 +32,13 @@ public class MessagingService {
             MessageRepository messageRepository,
             UserRepository userRepository,
             DocumentRepository documentRepository,
-            MessageNotificationGateway notificationGateway) {
+            NotificationDispatcher notificationDispatcher) {
         this.conversationRepository = conversationRepository;
         this.participantRepository = participantRepository;
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
         this.documentRepository = documentRepository;
-        this.notificationGateway = notificationGateway;
+        this.notificationDispatcher = notificationDispatcher;
     }
 
     @Transactional
@@ -95,6 +97,8 @@ public class MessagingService {
 
     @Transactional
     public Message sendMessage(Long conversationId, MessageCreateRequest request, Long senderId) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> ApiException.notFound("CONVERSATION_NOT_FOUND", "Conversation introuvable"));
         requireParticipant(conversationId, senderId);
         if (request.attachmentDocumentId() != null && documentRepository.findById(request.attachmentDocumentId()).isEmpty()) {
             throw ApiException.notFound("DOCUMENT_NOT_FOUND", "Document introuvable");
@@ -102,7 +106,10 @@ public class MessagingService {
         Message message = messageRepository.save(new Message(conversationId, senderId, request.content(), request.attachmentDocumentId()));
 
         List<Long> recipients = participantIdsOf(conversationId).stream().filter(id -> !id.equals(senderId)).toList();
-        notificationGateway.notifyNewMessage(conversationId, message.getId(), recipients);
+        NotificationType type = conversation.isAnnouncement() ? NotificationType.ANNOUNCEMENT : NotificationType.NEW_MESSAGE;
+        notificationDispatcher.dispatch(
+                type, recipients, conversation.isAnnouncement() ? "Nouvelle annonce" : "Nouveau message",
+                "Conversation " + conversationId + " — message " + message.getId());
         return message;
     }
 

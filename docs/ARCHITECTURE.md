@@ -430,7 +430,40 @@ pas de moteur de recherche plein texte pour ce MVP.
 `ParentNotificationGateway` et `HomeworkNotificationGateway`) — la consolidation en un
 registre unique reste le travail explicite de ROADMAP.md 2.5.
 
+### ADR-020 — Registre centralisé de notifications (décidé, Phase 2.5)
+**Décision** : les trois gateways ad hoc (`ParentNotificationGateway` ADR-012,
+`HomeworkNotificationGateway` ADR-018, `MessageNotificationGateway` ADR-019) sont supprimées
+et remplacées par un unique package `notification` : `NotificationType` (liste fermée des
+événements notifiables — `NEW_GRADE`, `ABSENCE`, `NEW_HOMEWORK`, `NEW_DOCUMENT`,
+`NEW_MESSAGE`, `ANNOUNCEMENT`, `SUBSCRIPTION_ALERT`), `NotificationDispatcher` (point d'appel
+unique pour tous les modules), `NotificationGateway`/`LoggingNotificationGateway` (même
+pattern gateway que `StripeGateway` — brancher FCM reste un remplacement d'implémentation).
+`NotificationDispatcher` applique les préférences utilisateur (`NotificationPreference`,
+table `notification_preferences`, `school_id` + RLS comme toute table métier) avant d'appeler
+la gateway : absence de ligne pour un (utilisateur, type) = activé par défaut. Endpoint
+`GET/PUT /api/v1/notification-preferences` permet à chaque utilisateur de gérer ses propres
+préférences (pas de paramétrage par rôle pour ce MVP — plus simple à raisonner avec le modèle
+`User` existant).
+
+**Événements sans compte utilisateur réel** (`ABSENCE`, `NEW_HOMEWORK`) : élèves et parents
+n'ont pas de compte (ADR-010), donc `recipientUserIds` est vide et le filtrage par préférence
+est un no-op — l'implémentation par défaut loggue simplement le contenu, comportement
+inchangé par rapport aux gateways précédentes. Seule différence de comportement observable :
+l'envoi d'un message dans une conversation-annonce déclenche désormais `ANNOUNCEMENT` plutôt
+que `NEW_MESSAGE` (types distincts, permettant un opt-out séparé).
+
+**Hors périmètre 2.5 (explicitement différé)** : intégration Firebase Cloud Messaging réelle
+— aucun credential FCM disponible dans cet environnement, voir "Points ouverts" ci-dessous ;
+`NEW_GRADE`/`NEW_DOCUMENT`/`SUBSCRIPTION_ALERT` ne sont émis par aucun appelant pour l'instant
+(le type existe dans `NotificationType` et le registre est prêt à les recevoir, mais
+`GradeService`/`DocumentService`/`TenantAccessLifecycleJob` ne les déclenchent pas encore —
+ne pas anticiper leur contenu métier exact, non demandé dans cette tâche).
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
+- **Firebase Cloud Messaging non câblé** — `LoggingNotificationGateway` (ADR-020) est la
+  seule implémentation de `NotificationGateway` ; aucun credential FCM disponible dans cet
+  environnement. Brancher FCM reste un remplacement d'implémentation, pas un changement
+  d'appelants.
 - **Quota de stockage documentaire par tenant** (cahier §14) — `Plan` n'a pas de champ de
   quota, `StorageGateway` (ADR-017) n'applique aucune limite. À trancher avant l'ouverture
   publique du module documents en dehors d'un cadre de démo/dev.

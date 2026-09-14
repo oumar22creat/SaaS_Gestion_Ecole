@@ -149,12 +149,16 @@ un test de régression qui échoue sans le correctif.
 - [x] Historique et recherche des conversations
 
 ### 2.5 Notifications (infrastructure)
-- [ ] Registre centralisé des événements de notification (nouvelle note, absence/retard déjà
-      fait en 1.7, nouveau devoir, nouveau document, message reçu, annonce, alertes
-      abonnement) — généralise le pattern `ParentNotificationGateway` de l'ADR-012
-- [ ] Firebase Cloud Messaging réel : **non câblé** (pas de credentials FCM) — implémentation
-      par défaut en log, comme pour les absences ; brancher FCM reste un remplacement
-      d'implémentation, pas un changement d'appelants
+- [x] Registre centralisé des événements de notification (`NotificationType`,
+      `NotificationDispatcher`) — généralise le pattern `ParentNotificationGateway`/
+      `HomeworkNotificationGateway`/`MessageNotificationGateway` (ADR-012/018/019), qui sont
+      supprimées. Préférences par utilisateur (`notification_preferences`, opt-out par type)
+      exposées via `GET/PUT /api/v1/notification-preferences`. `NEW_GRADE`/`NEW_DOCUMENT`/
+      `SUBSCRIPTION_ALERT` : le type existe et le registre est prêt, mais aucun appelant ne
+      les déclenche encore (non demandé dans cette tâche, voir ADR-020)
+- [x] Firebase Cloud Messaging réel : **non câblé** (pas de credentials FCM) — implémentation
+      par défaut en log (`LoggingNotificationGateway`), comme pour les absences ; brancher FCM
+      reste un remplacement d'implémentation, pas un changement d'appelants
 
 ### 2.6 Dashboard Super-Admin
 - [ ] Nombre d'établissements actifs/en essai/suspendus/résiliés

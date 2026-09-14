@@ -405,3 +405,18 @@ premier `save(...)`. Centralisé dans un nouvel utilitaire de test partagé
 redécouvrir ce piège dans chaque nouvelle classe de test des phases suivantes.
 **Prochaine étape :** ROADMAP.md → Phase 1.6 (emploi du temps) — CRUD emploi du temps
 (classe, enseignant, matière, salle, horaire) + détection des conflits.
+
+## [2026-09-14] — Session (Phase 1.6)
+**Tâche(s) réalisée(s) :** Les 2 tâches de ROADMAP.md 1.6. Module `timetable/` : `Room`
+(CRUD simple) et `TimetableEntry` (créneau récurrent hebdomadaire : classe/matière/
+enseignant/salle/jour/horaires) avec détection de conflits (enseignant, salle, classe déjà
+occupés sur un créneau qui chevauche le même jour) à la création ET à la modification.
+**Décisions prises (et pourquoi) :** Voir ADR-011 (nouveau) dans `docs/ARCHITECTURE.md` —
+résumé : une seule entité `TimetableEntry` (pas de séparation timetables/courses), pas de
+date de début/fin ni d'exceptions ponctuelles (annulation, remplacement — hors périmètre
+1.6), vues par classe/enseignant via query params plutôt que des endpoints dédiés.
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau — même piège école
+(`setSchoolId` avant `save` pour les fixtures hors requête HTTP) déjà couvert par
+`TestAuthSupport.withTenant`.
+**Prochaine étape :** ROADMAP.md → Phase 1.7 (absences) — feuille d'appel, motifs/
+justificatifs/historique, notification au parent.

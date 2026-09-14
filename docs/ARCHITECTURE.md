@@ -212,6 +212,27 @@ ajoutables plus tard sans réécriture) :
 Phase 2), historique des changements de classe, permissions granulaires par enseignant sur
 "ses" classes (un enseignant avec accès à un module a accès à tout le tenant pour l'instant).
 
+### ADR-011 — Emploi du temps (décidé, Phase 1.6)
+**Décision** : un seul entité `TimetableEntry` (package `timetable`, avec `Room`) représente
+un créneau récurrent hebdomadaire — `schoolClassId`, `subjectId`, `teacherId`, `roomId`,
+`dayOfWeek` (`java.time.DayOfWeek`), `startTime`/`endTime`. Pas de distinction séparée
+"timetables"/"courses" comme suggéré par docs/DATA_MODEL.md : ROADMAP.md 1.6 ne demande
+qu'"emploi du temps" comme une seule fonctionnalité CRUD.
+
+**Détection de conflits** : à la création/modification, trois vérifications indépendantes
+(même jour + chevauchement horaire) sur l'enseignant, la salle et la classe — première
+correspondance trouvée renvoyée comme `409` (`TEACHER_ALREADY_BOOKED`/`ROOM_ALREADY_BOOKED`/
+`CLASS_ALREADY_BOOKED`). Chevauchement calculé en mémoire sur le sous-ensemble déjà filtré par
+jour+ressource (peu de lignes par jour en pratique), pas de requête SQL avec conditions
+d'intervalle — suffisant pour le volume attendu, à revisiter seulement si la volumétrie le
+justifie.
+
+**Hors périmètre 1.6 (explicitement différé)** : pas de date de début/fin de validité ni
+d'exceptions ponctuelles ("annulation exceptionnelle", "remplacement d'enseignant" du cahier
+§9) — un créneau s'applique toutes les semaines sans interruption. Vues journalière/
+hebdomadaire/par classe/par enseignant couvertes par un simple filtre query param
+(`schoolClassId`/`teacherId`) sur la liste, pas des endpoints dédiés.
+
 ---
 
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)

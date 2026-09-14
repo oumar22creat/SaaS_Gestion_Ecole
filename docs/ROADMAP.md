@@ -66,8 +66,8 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] CRUD classes et matières + affectation enseignant/classe/matière
 
 ### 1.6 Emploi du temps
-- [ ] CRUD emploi du temps (classe, enseignant, matière, salle, horaire)
-- [ ] Détection des conflits (salle/enseignant/classe déjà occupés)
+- [x] CRUD emploi du temps (classe, enseignant, matière, salle, horaire)
+- [x] Détection des conflits (salle/enseignant/classe déjà occupés)
 
 ### 1.7 Absences
 - [ ] Feuille d'appel (interface rapide, pensée mobile)

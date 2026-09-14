@@ -457,3 +457,30 @@ côté entité — jamais `NUMERIC` + `double`.
 base (effectifs, taux de présence, moyennes). Dernière tâche de la Phase 1 — son critère de
 sortie (scénario complet inscription → usage → paiement → suspension → réactivation) sera à
 vérifier une fois cette tâche terminée.
+
+## [2026-09-14] — Session (Phase 1.9 — fin de la Phase 1)
+**Tâche(s) réalisée(s) :** La tâche de ROADMAP.md 1.9. Module `statistics/` :
+`GET /api/v1/dashboard/summary` (effectifs élèves/enseignants/classes, taux de présence sur
+une période, moyenne générale). Décision explicite de l'utilisateur en début de session :
+enchaîner tout Phase 1 (1.5 à 1.9) sans validation intermédiaire — les 9 sous-phases sont
+maintenant cochées dans ROADMAP.md, 62 tests passent (toute la suite, isolation multi-tenant
+comprise sur chaque nouveau module).
+**Décisions prises (et pourquoi) :** Voir ADR-014 (nouveau) — trois métriques seulement,
+conformes au bullet unique de ROADMAP.md 1.9 ; pas de ventilation détaillée (déjà couverte
+par le module `grade`), pas de rapports exportables ni d'évolution temporelle (Phase 2).
+**Point important à ne pas perdre de vue** : le critère de sortie de Phase 1 tel qu'écrit
+dans ROADMAP.md ("un établissement peut s'inscrire seul, configurer... et payer un
+abonnement") suppose une utilisation de bout en bout via une interface. Or les tâches 1.5 à
+1.9 étaient formulées comme des livrables API ("CRUD X"), pas "(Web)" comme l'était 1.3 —
+et c'est ce qui a été construit : API backend complète et testée, **sans écrans Angular/
+Ionic** pour classes/élèves/enseignants/emploi du temps/absences/notes/dashboard (seules les
+pages d'inscription/branding existent côté Web/Mobile). Une note a été ajoutée directement
+dans ROADMAP.md sous le critère de sortie pour que la prochaine session ne parte pas du
+principe que "Phase 1 cochée" = "utilisable de bout en bout par un vrai utilisateur".
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau (même piège colonnes
+`DOUBLE PRECISION` que 1.8 — pas rencontré ici car pas de nouvelle colonne décimale).
+**Prochaine étape :** Décision à prendre avec le porteur de projet avant de continuer :
+(a) construire les écrans Web/Mobile pour les modules 1.5-1.9 avant de considérer la Phase 1
+réellement "terminée" au sens du critère de sortie, ou (b) passer directement à
+ROADMAP.md Phase 2 (bulletins, cahier de textes, documents, notifications push, messagerie,
+dashboard Super-Admin) en acceptant que le frontend de Phase 1 reste à construire plus tard.

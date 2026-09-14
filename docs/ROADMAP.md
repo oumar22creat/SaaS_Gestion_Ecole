@@ -79,11 +79,22 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] Calcul automatique des moyennes (par matière, par classe)
 
 ### 1.9 Dashboard établissement
-- [ ] Statistiques de base : effectifs, taux de présence, moyennes
+- [x] Statistiques de base : effectifs, taux de présence, moyennes
 
 **Critère de sortie de Phase 1** : un établissement peut s'inscrire seul, configurer ses
 classes/élèves/enseignants, gérer emploi du temps + absences + notes, et payer un abonnement —
 le tout sans qu'aucune donnée ne fuite vers un autre tenant.
+
+**État au 2026-09-14** : toutes les cases 1.1 à 1.9 sont cochées — API backend complète et
+testée (isolation multi-tenant comprise) pour chaque module. **Mais** ce critère de sortie
+tel que formulé implique une utilisation de bout en bout, donc un frontend Web/Mobile
+fonctionnel — or seules les pages d'inscription/branding (Phase 0/1.3) existent côté Web/
+Mobile ; aucun écran Angular/Ionic n'a été construit pour classes/élèves/enseignants/emploi
+du temps/absences/notes/dashboard (les tâches 1.5 à 1.9 sont formulées comme des livrables
+API — "CRUD X" — contrairement à 1.3 qui précisait explicitement "(Web)"). Avant de démarrer
+la Phase 2, décider si "Phase 1 terminée" signifie "API prête" (ce qui est le cas) ou si le
+scénario de bout en bout doit être rejoué manuellement via une interface — ce qui suppose de
+construire ces écrans d'abord.
 
 ---
 

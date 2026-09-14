@@ -282,6 +282,27 @@ les élèves — seule la saisie via API/JSON est couverte), historisation des n
 aux absences, pas de table de changements ici — non listée explicitement dans ROADMAP.md 1.8),
 `grade_items` (sous-questions/barème détaillé de docs/DATA_MODEL.md), rang de classe.
 
+### ADR-014 — Dashboard établissement (décidé, Phase 1.9 — fin de la Phase 1)
+**Décision** : un seul endpoint `GET /api/v1/dashboard/summary` (package `statistics`),
+paramètres `from`/`to` optionnels (30 derniers jours par défaut) pour le taux de présence.
+Trois métriques seulement, conformes à l'unique bullet de ROADMAP.md 1.9 ("effectifs, taux
+de présence, moyennes") : effectifs (élèves/enseignants actifs, classes), taux de présence
+(% de statuts `PRESENT` sur la période), moyenne générale (toutes notes non-absentes,
+normalisées sur 20, tenant entier). Pas de ventilation par classe/matière ici — déjà
+disponible via les endpoints du module `grade` (ADR-013) ; le dashboard n'agrège qu'un
+chiffre global de chaque métrique.
+
+**Hors périmètre 1.9 (explicitement différé)** : évolution des résultats dans le temps,
+indicateurs de réussite, rapports exportables (cahier §18 — Phase 2), tableau de bord
+Super-Admin (nombre de tenants/MRR/churn — ROADMAP.md Phase 2).
+
+**Note de fin de Phase 1** : les 9 sous-phases de ROADMAP.md 1.1 à 1.9 sont cochées — API
+backend complète et testée. Le critère de sortie de Phase 1 tel que formulé dans
+ROADMAP.md implique cependant une utilisation de bout en bout (donc un frontend Web/Mobile
+fonctionnel pour classes/élèves/enseignants/emploi du temps/absences/notes/dashboard), qui
+n'a pas été construit dans cette session (seules les pages d'inscription/branding
+existent) — voir la note ajoutée directement sous le critère de sortie dans ROADMAP.md.
+
 ---
 
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)

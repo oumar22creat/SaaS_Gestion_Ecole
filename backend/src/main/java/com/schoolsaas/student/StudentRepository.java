@@ -12,4 +12,6 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     Page<Student> findAllBySchoolClassId(Long schoolClassId, Pageable pageable);
 
     List<Student> findAllBySchoolClassId(Long schoolClassId);
+
+    long countByActiveTrue();
 }

@@ -648,3 +648,22 @@ ou improviser un portail parent (voir docs/ARCHITECTURE.md "Points ouverts"). Su
 **Prochaine étape :** ROADMAP.md Phase 3.2 (statistiques avancées) — aucun point bloquant,
 peut démarrer directement. Poser les questions bloquantes de 3.3/3.4 à l'utilisateur avant
 de les aborder.
+
+## [2026-09-14] — Session (Phase 3.2 — statistiques avancées)
+**Tâche(s) réalisée(s) :** `AdvancedStatisticsService`/`Controller` —
+`GET /api/v1/statistics/advanced/results-evolution[.csv]` (moyenne par mois calendaire, classe
+ou classe+matière). Nouvelle table plateforme `notification_log` (non RLS, comme
+subscriptions/invoices) alimentée par `NotificationDispatcher` à chaque envoi réel, exposée
+comme `notificationsSentCount` dans le dashboard Super-Admin (2.6/ADR-021).
+**Décisions prises (et pourquoi) :** Voir ADR-023 (nouveau) — résumé : regroupement par mois
+calendaire plutôt que par trimestre (aucune période pédagogique paramétrable n'existe,
+ADR-010) ; CSV = seul format d'export construit. "Stockage utilisé"/"utilisateurs actifs"
+cross-tenant (cahier §18) **non implémentés** : les tables sources (`documents`, `users`)
+sont RLS-protégées par tenant à raison — un total agrégé plateforme demanderait soit des
+compteurs dénormalisés soit un rôle `BYPASSRLS`, une décision qui touche l'invariante RLS du
+projet et doit être posée à l'utilisateur, pas tranchée seul.
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau. Suite complète : 92/92 tests
+passent.
+**Prochaine étape :** ROADMAP.md Phase 3.5 (bibliothèque) ou 3.6 (transport scolaire) — aucun
+point bloquant sur ces deux-là, à choisir dans cet ordre plutôt que 3.3/3.4 qui restent
+bloquées sur une décision utilisateur (fournisseur mobile money, portail parent).

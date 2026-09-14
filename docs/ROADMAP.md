@@ -196,10 +196,14 @@ avant de passer à la Phase 3.
       demandé explicitement pour ce module contrairement aux absences en 1.7)
 
 ### 3.2 Statistiques avancées (cahier §18)
-- [ ] Évolution des résultats dans le temps (moyennes par classe/matière sur plusieurs périodes)
-- [ ] Rapports exportables (CSV/PDF), au-delà du résumé de base du dashboard établissement (1.9)
-- [ ] Usage global plateforme pour le Super-Admin (stockage, notifications envoyées,
-      utilisateurs actifs) — étend le dashboard Super-Admin (2.6/ADR-021)
+- [x] Évolution des résultats dans le temps (moyennes par classe/matière, regroupées par mois
+      calendaire — pas de notion de trimestre/période paramétrable, voir ADR-023)
+- [x] Rapports exportables : export CSV de l'évolution des résultats — **seul format construit
+      pour cette passe** (pas de PDF pour cet indicateur, cahier §18 ne précise pas de format)
+- [x] Usage global plateforme pour le Super-Admin — **notifications envoyées seulement**
+      (`notification_log`, ADR-023) ; stockage utilisé et utilisateurs actifs cross-tenant
+      **bloqués** : nécessitent une décision d'architecture qui touche l'invariante RLS du
+      projet (voir docs/ARCHITECTURE.md "Points ouverts"), à trancher avec l'utilisateur
 
 ### 3.3 Comptabilité et frais scolaires (cahier §19.4 + §4.3)
 - [ ] Grille tarifaire des frais de scolarité par niveau/classe

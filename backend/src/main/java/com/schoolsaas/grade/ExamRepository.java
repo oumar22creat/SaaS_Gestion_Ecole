@@ -8,4 +8,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findAllBySubjectId(Long subjectId);
 
     List<Exam> findAllBySchoolClassIdAndSubjectId(Long schoolClassId, Long subjectId);
+
+    List<Exam> findAllBySchoolClassId(Long schoolClassId);
 }

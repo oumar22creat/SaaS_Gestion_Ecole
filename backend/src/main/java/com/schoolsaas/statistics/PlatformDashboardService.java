@@ -6,6 +6,7 @@ import com.schoolsaas.billing.Subscription;
 import com.schoolsaas.billing.SubscriptionRepository;
 import com.schoolsaas.billing.SubscriptionStatus;
 import com.schoolsaas.common.NumberUtils;
+import com.schoolsaas.notification.NotificationLogRepository;
 import com.schoolsaas.statistics.dto.PlatformDashboardSummaryResponse;
 import com.schoolsaas.tenant.TenantRepository;
 import com.schoolsaas.tenant.TenantStatus;
@@ -15,9 +16,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 /**
- * Tableau de bord Super-Admin — cahier-des-charges.md §5/§18, ROADMAP.md 2.6. Vue plateforme
- * (tous établissements), pas de vue par tenant : voir {@link DashboardService} pour le
- * tableau de bord établissement.
+ * Tableau de bord Super-Admin — cahier-des-charges.md §5/§18, ROADMAP.md 2.6/3.2. Vue
+ * plateforme (tous établissements), pas de vue par tenant : voir {@link DashboardService}
+ * pour le tableau de bord établissement.
  */
 @Service
 public class PlatformDashboardService {
@@ -25,12 +26,17 @@ public class PlatformDashboardService {
     private final TenantRepository tenantRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final PlanRepository planRepository;
+    private final NotificationLogRepository notificationLogRepository;
 
     public PlatformDashboardService(
-            TenantRepository tenantRepository, SubscriptionRepository subscriptionRepository, PlanRepository planRepository) {
+            TenantRepository tenantRepository,
+            SubscriptionRepository subscriptionRepository,
+            PlanRepository planRepository,
+            NotificationLogRepository notificationLogRepository) {
         this.tenantRepository = tenantRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.planRepository = planRepository;
+        this.notificationLogRepository = notificationLogRepository;
     }
 
     public PlatformDashboardSummaryResponse summary() {
@@ -55,11 +61,14 @@ public class PlatformDashboardService {
         long cancelledSubscriptions = subscriptionRepository.countByStatus(SubscriptionStatus.CANCELED);
         long payingSubscriptions = subscriptionRepository.countByStatus(SubscriptionStatus.ACTIVE);
 
+        long notificationsSentCount = notificationLogRepository.count();
+
         return new PlatformDashboardSummaryResponse(
                 trialCount, activeCount, readOnlyCount, suspendedCount, cancelledCount,
                 mrrCents, mrrCents * 12, currency,
                 rate(cancelledSubscriptions, totalSubscriptions),
-                rate(payingSubscriptions, totalSubscriptions));
+                rate(payingSubscriptions, totalSubscriptions),
+                notificationsSentCount);
     }
 
     private static Double rate(long numerator, long denominator) {

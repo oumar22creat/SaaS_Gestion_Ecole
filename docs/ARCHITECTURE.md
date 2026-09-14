@@ -515,6 +515,32 @@ d'export — cohérent avec le niveau d'agrégation de `DashboardService` (ADR-0
 ici, non demandé dans cette tâche (contrairement aux absences, où la notification est un
 point du cahier §10 explicitement demandé en 1.7).
 
+### ADR-023 — Statistiques avancées (décidé, Phase 3.2)
+**Décision** : `AdvancedStatisticsService`/`AdvancedStatisticsController` (package
+`statistics`) ajoutent `GET /api/v1/statistics/advanced/results-evolution[.csv]` — moyenne
+normalisée sur 20 regroupée par **mois calendaire** de la date d'évaluation (`Exam.examDate`),
+pour une classe entière ou une seule matière. Regroupement par mois calendaire, pas par
+trimestre/période pédagogique : aucune notion de période paramétrable n'existe (ADR-010), et
+en créer une pour ce seul indicateur serait anticiper un futur module de paramétrage
+établissement (cahier §6) non demandé ici. Export CSV = seul format construit pour cette
+passe (`period,average,gradeCount`) ; PDF/autres rapports "exportables" du cahier §18 restent
+hors périmètre, comme le cahier ne liste pas de format précis.
+
+**"Usage global" du dashboard Super-Admin (cahier §18)** : nouvelle table plateforme
+`notification_log` (comme `subscriptions`/`invoices` — pas de `school_id` RLS-protégé,
+`tenant_id` simple colonne nullable) alimentée par `NotificationDispatcher` (ADR-020) à
+chaque envoi réel ; exposée comme `notificationsSentCount` dans
+`PlatformDashboardSummaryResponse` (ADR-021). **Stockage utilisé** et **utilisateurs actifs**
+ne sont PAS implémentés dans cette passe : `documents.size_bytes` et `users` sont des tables
+métier RLS-protégées par tenant (à raison, CLAUDE.md règle 1) — en obtenir un total agrégé
+*à travers tous les tenants* pour le Super-Admin demande soit une table de compteurs
+plateforme dénormalisée mise à jour par l'application (comme `notification_log`), soit un
+rôle Postgres avec `BYPASSRLS` restreint à des requêtes d'agrégat en lecture seule. Les deux
+options changent une invariante du projet martelée depuis l'ADR-001/`TenantRegistrationRlsTest`
+("le rôle applicatif ne contourne jamais RLS") ou ajoutent un mécanisme de synchronisation
+nouveau : décision à trancher explicitement avec l'utilisateur, pas silencieusement (voir
+"Points ouverts").
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3)** — cahier §4.3
   demande "des moyens de paiement locaux mobile money selon le marché", mais ni le marché
@@ -524,6 +550,10 @@ point du cahier §10 explicitement demandé en 1.7).
   (compte `User` lié à un `Parent`), explicitement différé depuis l'ADR-010. Bloquant : à
   clarifier avec l'utilisateur avant de commencer 3.4 (construire un portail minimal, ou
   scoper la réservation côté staff pour cette passe).
+- **Stockage utilisé et utilisateurs actifs cross-tenant (ROADMAP.md 3.2, ADR-023)** —
+  nécessite soit des compteurs plateforme dénormalisés, soit un rôle DB `BYPASSRLS` restreint.
+  Bloquant : à trancher avec l'utilisateur avant d'implémenter (touche à l'invariante RLS du
+  projet), pas avant que le besoin business (dashboard Super-Admin) ne le justifie vraiment.
 - **Écran Web Super-Admin non construit** — `GET /api/v1/admin/dashboard/summary` (ADR-021)
   existe côté backend et est testé, mais aucun frontend ne le consomme : le shell Angular
   actuel (Phase 1) est établi pour les rôles staff d'un tenant, pas pour `PlatformAdmin`

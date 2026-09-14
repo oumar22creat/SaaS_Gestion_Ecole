@@ -112,14 +112,59 @@ un test de régression qui échoue sans le correctif.
 ---
 
 ## Phase 2 — Pédagogie et communication
-*(à détailler en tâches fines une fois la Phase 1 terminée)*
 
-- [ ] Bulletins scolaires (génération, export PDF)
-- [ ] Cahier de textes et devoirs
-- [ ] Bibliothèque de documents
-- [ ] Notifications push (FCM)
-- [ ] Messagerie interne
-- [ ] Dashboard Super-Admin (nombre de tenants, MRR, churn — métriques de base)
+### 2.1 Bulletins scolaires
+- [x] Génération automatique à partir des notes existantes (module `grade`) : moyennes par
+      matière et moyenne générale, coefficients
+- [x] Appréciations (par matière, professeur principal) et appréciation générale
+- [x] Récapitulatif des absences/retards de la période
+- [x] Export PDF
+- [ ] Rang et signature électronique : **non demandés dans cette passe** — cahier §12 les
+      décrit comme "si activé par l'établissement"/renvoi à la section 27 (légal), pas de
+      paramétrage d'établissement construit pour en décider ; à ajouter avec le futur module
+      de paramétrage établissement (cahier §6), pas avant
+
+### 2.2 Documents (bibliothèque)
+- [ ] Upload/consultation de documents par matière, classe ou service
+- [ ] Droits de consultation par rôle
+- [ ] Association à un cours/devoir (référencé par les modules 2.3/2.4)
+- [ ] Archivage/suppression
+- [ ] Stockage objet S3-compatible avec quota par tenant : **stockage local en dev/MVP**
+      (pas de credentials S3 disponibles) derrière une interface `StorageGateway`, même
+      pattern que `StripeGateway`/`ParentNotificationGateway` — bascule S3 sans changer les
+      appelants
+
+### 2.3 Cahier de textes et devoirs
+- [ ] Contenu de séance + travail à faire, dates de publication/limite
+- [ ] Pièces jointes (référencent le module 2.2)
+- [ ] Consultation élèves/parents : **hors périmètre** — aucun portail élève/parent construit
+      (ADR-010), consultation limitée aux rôles staff comme le reste de l'application
+- [ ] Notification nouveau devoir (même pattern gateway que les absences, ADR-012)
+
+### 2.4 Messagerie interne
+- [ ] Messages individuels et de groupe entre utilisateurs staff
+- [ ] Annonces de l'établissement
+- [ ] Pièces jointes (référencent le module 2.2)
+- [ ] Confirmation de lecture
+- [ ] Historique et recherche des conversations
+
+### 2.5 Notifications (infrastructure)
+- [ ] Registre centralisé des événements de notification (nouvelle note, absence/retard déjà
+      fait en 1.7, nouveau devoir, nouveau document, message reçu, annonce, alertes
+      abonnement) — généralise le pattern `ParentNotificationGateway` de l'ADR-012
+- [ ] Firebase Cloud Messaging réel : **non câblé** (pas de credentials FCM) — implémentation
+      par défaut en log, comme pour les absences ; brancher FCM reste un remplacement
+      d'implémentation, pas un changement d'appelants
+
+### 2.6 Dashboard Super-Admin
+- [ ] Nombre d'établissements actifs/en essai/suspendus/résiliés
+- [ ] Revenu récurrent mensuel (MRR) et annuel (ARR)
+- [ ] Taux de churn et taux de conversion essai → abonnement payant
+- [ ] Écran Web réservé au rôle Super-Administrateur
+
+**Critère de sortie de Phase 2** : mêmes garde-fous que la Phase 1 — chaque module testé
+(y compris isolation cross-tenant), documenté, et son périmètre réel (vs. différé) explicite
+avant de passer à la Phase 3.
 
 ## Phase 3 — Administration avancée et modules complémentaires
 *(à détailler en tâches fines une fois la Phase 2 terminée)*

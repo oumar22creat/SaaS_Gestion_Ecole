@@ -346,6 +346,39 @@ endpoint **qui n'a jamais été implémenté côté backend** — voir "Points o
 
 ---
 
+### ADR-016 — Bulletins scolaires (décidé, Phase 2.1)
+**Décision** : `ReportCard` (bulletin) + `ReportCardEntry` (ligne matière, moyenne et
+coefficient **figés** au moment de la génération — un changement ultérieur du coefficient
+d'une matière ne doit pas modifier un bulletin déjà généré). `period_label` reste un texte
+libre ("Trimestre 1"), pas une entité période/année scolaire — même simplification que le
+reste du projet (ADR-010) ; `periodFrom`/`periodTo` bornent seulement le calcul des
+absences/retards. `POST /api/v1/report-cards/generate` réutilise directement
+`GradeService#studentSubjectAverage` (ADR-013) — aucun recalcul de moyenne dupliqué — et les
+matières prises en compte sont celles affectées à la classe (`class_subject_assignments`,
+ADR-010), pas "toute matière ayant une évaluation". Régénération idempotente : les lignes
+matière existantes sont entièrement remplacées, pas fusionnées (une évaluation supprimée
+depuis ne doit pas laisser une moyenne obsolète).
+
+**Export PDF** : Apache PDFBox (Apache-2.0), mise en page simple à une page, pas de gabarit
+configurable par établissement pour ce MVP.
+
+**Piège rencontré** : `deleteAllByReportCardId` dérivé de Spring Data (qui charge les lignes
+puis appelle `entityManager.remove()` une par une) laisse le DELETE en attente de flush,
+alors que les nouvelles lignes (`GenerationType.IDENTITY`) s'insèrent immédiatement à la
+régénération — violation de la contrainte `UNIQUE(report_card_id, subject_id)`. Corrigé avec
+une requête JPQL `@Modifying` de suppression en masse (DELETE direct, pas de cycle de vie
+d'entité). Sans risque d'isolation cross-tenant malgré le bulk DML (qui ne respecte pas le
+filtre Hibernate) : le `reportCardId` utilisé dans le WHERE est toujours déjà validé
+appartenir au tenant courant par l'appelant.
+
+**Hors périmètre 2.1 (explicitement différé)** : rang de classe et signature électronique —
+cahier §12 les décrit comme conditionnés à un paramétrage d'établissement ("si activé") qui
+n'existe pas encore (cahier §6, pas construit).
+
+**Refactor associé** : extraction de `com.schoolsaas.common.NumberUtils#round2` — le même
+arrondi à 2 décimales était dupliqué à l'identique dans `GradeService` et `DashboardService`
+avant l'ajout de ce troisième usage dans `ReportCardService`.
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **`GET /api/v1/tenants/current/branding` n'existe pas côté backend** — le frontend
   (`TenantBrandingService`, Phase 0, Web + Mobile) l'appelle au démarrage mais reçoit 404

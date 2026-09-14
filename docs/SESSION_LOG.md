@@ -528,3 +528,20 @@ backend réel + `docker-compose` Postgres/Redis).
 **Prochaine étape :** ROADMAP.md Phase 2 (bulletins, cahier de textes, documents,
 notifications push FCM, messagerie, dashboard Super-Admin), ou construire l'authentification
 Mobile (Ionic) si la feuille d'appel doit être ramenée sur mobile comme prévu au départ.
+
+## [2026-09-14] — Session (Phase 2.1 — bulletins scolaires)
+**Tâche(s) réalisée(s) :** Sur demande de l'utilisateur ("la suite"), détail de ROADMAP.md
+Phase 2 en tâches fines (2.1 à 2.6, même format que la Phase 1), puis réalisation de 2.1 :
+module `reportcard/` — génération automatique des bulletins à partir des notes existantes,
+appréciations (matière + professeur principal + décision conseil), récapitulatif absences/
+retards, export PDF (Apache PDFBox).
+**Décisions prises (et pourquoi) :** Voir ADR-016 (nouveau) — résumé : moyenne/coefficient
+figés à la génération, période en texte libre (cohérent avec ADR-010), rang/signature
+électronique différés (dépendent d'un paramétrage établissement qui n'existe pas). Extraction
+de `NumberUtils.round2` (dupliqué 2x avant ce module, 3x aurait été trop).
+**Problèmes rencontrés / points de vigilance :** Piège Spring Data avec
+`deleteAllByReportCardId` dérivé (DELETE non flush avant les INSERT immédiats
+`GenerationType.IDENTITY` à la régénération d'un bulletin) — corrigé avec un bulk DELETE
+JPQL `@Modifying`. Détail complet dans ADR-016.
+**Prochaine étape :** ROADMAP.md Phase 2.2 (bibliothèque de documents) — nécessaire avant
+2.3/2.4 qui y référencent des pièces jointes.

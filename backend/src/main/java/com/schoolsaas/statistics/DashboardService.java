@@ -3,6 +3,7 @@ package com.schoolsaas.statistics;
 import com.schoolsaas.attendance.AttendanceRecord;
 import com.schoolsaas.attendance.AttendanceRecordRepository;
 import com.schoolsaas.attendance.AttendanceStatus;
+import com.schoolsaas.common.NumberUtils;
 import com.schoolsaas.grade.Exam;
 import com.schoolsaas.grade.ExamRepository;
 import com.schoolsaas.grade.Grade;
@@ -63,7 +64,7 @@ public class DashboardService {
             return null;
         }
         long presentCount = records.stream().filter(r -> r.getStatus() == AttendanceStatus.PRESENT).count();
-        return round(100.0 * presentCount / records.size());
+        return NumberUtils.round2(100.0 * presentCount / records.size());
     }
 
     private Double averageGrade() {
@@ -85,10 +86,6 @@ public class DashboardService {
             sum += grade.getScore() / exam.getMaxScore() * 20.0;
             count++;
         }
-        return count == 0 ? null : round(sum / count);
-    }
-
-    private double round(double value) {
-        return Math.round(value * 100) / 100.0;
+        return count == 0 ? null : NumberUtils.round2(sum / count);
     }
 }

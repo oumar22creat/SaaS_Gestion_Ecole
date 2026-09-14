@@ -1,6 +1,7 @@
 package com.schoolsaas.grade;
 
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.common.NumberUtils;
 import com.schoolsaas.grade.dto.ClassSubjectAverageResponse;
 import com.schoolsaas.grade.dto.ExamStatisticsResponse;
 import com.schoolsaas.grade.dto.GradeEntryRequest;
@@ -74,7 +75,7 @@ public class GradeService {
         double average = normalizedScores.stream().mapToDouble(Double::doubleValue).average().orElse(0);
         double min = normalizedScores.stream().mapToDouble(Double::doubleValue).min().orElse(0);
         double max = normalizedScores.stream().mapToDouble(Double::doubleValue).max().orElse(0);
-        return new ExamStatisticsResponse(examId, normalizedScores.size(), round(average), round(min), round(max));
+        return new ExamStatisticsResponse(examId, normalizedScores.size(), NumberUtils.round2(average), NumberUtils.round2(min), NumberUtils.round2(max));
     }
 
     /** Moyenne pondérée par coefficient d'évaluation, normalisée sur 20, pour un élève dans une matière. */
@@ -100,7 +101,7 @@ public class GradeService {
             weightedSum += normalize(grade.getScore(), exam.getMaxScore()) * exam.getCoefficient();
             coefficientSum += exam.getCoefficient();
         }
-        return new SubjectAverageResponse(subjectId, round(weightedSum / coefficientSum), grades.size());
+        return new SubjectAverageResponse(subjectId, NumberUtils.round2(weightedSum / coefficientSum), grades.size());
     }
 
     /** Moyenne de classe pour une matière : moyenne des moyennes élèves ayant au moins une note. */
@@ -114,7 +115,7 @@ public class GradeService {
             return new ClassSubjectAverageResponse(schoolClassId, subjectId, null, 0);
         }
         double average = studentAverages.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-        return new ClassSubjectAverageResponse(schoolClassId, subjectId, round(average), studentAverages.size());
+        return new ClassSubjectAverageResponse(schoolClassId, subjectId, NumberUtils.round2(average), studentAverages.size());
     }
 
     private void validateScore(Exam exam, Double score, boolean absent) {
@@ -128,10 +129,6 @@ public class GradeService {
 
     private double normalize(double score, double maxScore) {
         return score / maxScore * 20.0;
-    }
-
-    private double round(double value) {
-        return Math.round(value * 100) / 100.0;
     }
 
     private Exam getExam(Long examId) {

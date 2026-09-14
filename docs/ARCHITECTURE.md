@@ -604,6 +604,29 @@ de l'interroger — exactement ce qu'une requête HTTP normale fait, jamais de c
 C'est la réponse concrète à la question laissée ouverte par l'ADR-023 : itérer par tenant
 plutôt que `BYPASSRLS`, dès qu'un vrai job (pas juste un dashboard de lecture) en a besoin.
 
+### ADR-027 — Transport scolaire (décidé, Phase 3.6)
+**Décision** : nouveau package `transport` (nom du cahier §26). `BusRoute` + `BusStop`
+(ordonnés par `sequenceOrder`) ; `StudentTransportAssignment` (une seule affectation active
+par élève, `UNIQUE(student_id)`, même principe que `school_class_id` sur `Student`) ;
+`TransportInvoice`/`TransportPayment` — forfait périodique (le cahier §19.2 dit juste
+"facturation du service", pas "à la consommation réelle" comme la cantine §19.1, donc un
+montant donné à la génération plutôt qu'un comptage d'usage). Générer une facture exige que
+l'élève ait une affectation active (`404 ASSIGNMENT_NOT_FOUND` sinon) : on ne facture pas un
+service auquel l'élève n'est pas inscrit.
+
+**Troisième duplication quasi identique du couple Invoice/Payment** (après
+`FeeSchedule`/`StudentFeeInvoice`/`FeePayment` en 3.3, `CanteenInvoice`/`CanteenPayment` en
+3.4) — **pas d'abstraction générique extraite malgré ce précédent** (`NumberUtils`, extrait
+après sa 3ᵉ duplication) : contrairement à une fonction de calcul pure, un "Invoice/Payment"
+générique devrait couvrir trois relations différentes à la source du montant dû (une grille
+tarifaire, un comptage de consommation, un forfait saisi à la main) — une factorisation
+propre demanderait une conception à part (table polymorphe ou "billable reference"), plus
+risquée à faire rétroactivement sur des modules déjà livrés et testés que ce que cette tâche
+justifie. Réutilise seulement ce qui est trivial à partager sans risque : l'enum
+`FeePaymentMethod` (package `schoolfees`). À reconsidérer explicitement si un 4ᵉ module de
+facturation apparaît (cantine/scolarité/transport couvrent déjà les cas identifiés par le
+cahier des charges).
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3, ADR-024)** — reste
   à trancher (réponse utilisateur : plus tard). Le modèle (`FeePaymentMethod.MOBILE_MONEY`)

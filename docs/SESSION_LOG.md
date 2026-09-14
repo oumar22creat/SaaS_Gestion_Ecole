@@ -721,3 +721,20 @@ directement `remindOverdueLoansFor(tenantId, ...)` pour le seul tenant du test. 
 complète : 99/99 tests passent.
 **Prochaine étape :** ROADMAP.md Phase 3.6 (transport scolaire) puis 3.7 (domaine personnalisé
 et branding avancé) — derniers items de la Phase 3.
+
+## [2026-09-14] — Session (Phase 3.6 — transport scolaire)
+**Tâche(s) réalisée(s) :** Nouveau package `transport` — lignes et arrêts de bus (ordonnés),
+affectation d'un élève à un circuit (une seule active à la fois), facturation forfaitaire du
+service, paiements partiels/totaux.
+**Décisions prises (et pourquoi) :** Voir ADR-027 (nouveau) — résumé : facturation en forfait
+périodique (pas "à la consommation" comme la cantine, le cahier §19.2 ne le demande pas) ;
+générer une facture exige une affectation active. Troisième duplication quasi identique du
+couple Invoice/Payment (après schoolfees en 3.3, canteen en 3.4) — décision explicite de NE
+PAS extraire d'abstraction générique maintenant (les trois modules calculent le montant dû
+différemment ; une factorisation propre demanderait une conception à part, plus risquée à
+faire rétroactivement sur des modules déjà livrés que ce que la tâche justifie), documentée
+pour être reconsidérée si un 4ᵉ cas apparaît.
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau. Suite complète : 101/101 tests
+passent.
+**Prochaine étape :** ROADMAP.md Phase 3.7 (domaine personnalisé et branding avancé, plan
+Premium) — dernier item de la Phase 3.

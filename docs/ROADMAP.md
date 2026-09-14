@@ -237,9 +237,10 @@ avant de passer à la Phase 3.
 - [x] Réservations et liste d'attente (FIFO, libérée automatiquement au retour d'un ouvrage)
 
 ### 3.6 Transport scolaire (cahier §19.2)
-- [ ] Gestion des lignes et arrêts de bus
-- [ ] Affectation des élèves aux circuits
-- [ ] Facturation du service
+- [x] Gestion des lignes et arrêts de bus (arrêts ordonnés par ligne)
+- [x] Affectation des élèves aux circuits (une seule affectation active par élève)
+- [x] Facturation du service — forfait périodique saisi à la génération (pas "à la
+      consommation réelle" comme la cantine, le cahier ne le demande pas ici, voir ADR-027)
 - [ ] Suivi de présence à bord via QR/NFC : **hors périmètre ici** — cahier §19.2 le renvoie
       lui-même à la section 30/Phase 4 ("QR code pour la présence")
 

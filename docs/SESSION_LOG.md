@@ -435,3 +435,25 @@ brancher la vraie implémentation plus tard sans toucher au service.
 **Problèmes rencontrés / points de vigilance :** Aucun nouveau.
 **Prochaine étape :** ROADMAP.md → Phase 1.8 (notes) — CRUD évaluations et notes, calcul
 automatique des moyennes.
+
+## [2026-09-14] — Session (Phase 1.8)
+**Tâche(s) réalisée(s) :** Les 2 tâches de ROADMAP.md 1.8. Module `grade/` : `Exam`
+(évaluation) et `Grade` (note, `score` NULL = absence explicite via colonne `absent`).
+Calcul automatique des moyennes : statistiques d'évaluation (moyenne/min/max), moyenne
+élève pondérée par coefficient dans une matière, moyenne de classe dans une matière.
+**Décisions prises (et pourquoi) :** Voir ADR-013 (nouveau) — résumé : tout normalisé sur
+20 pour comparer des barèmes différents, moyenne de classe = moyenne des moyennes-élèves
+(poids égal par élève). Import CSV des notes hors périmètre (seule la saisie API est
+couverte, contrairement aux élèves en 1.5).
+**Problèmes rencontrés / points de vigilance :** Colonnes `max_score`/`score` créées en
+`NUMERIC(5,2)` dans la migration ne correspondent PAS au mapping Hibernate par défaut d'un
+champ Java `double`/`Double` (qui attend `DOUBLE PRECISION`/`float8`) — `ddl-auto: validate`
+a fait échouer le démarrage du contexte Spring au premier lancement des tests
+(`SchemaManagementException`). Corrigé en changeant le type de colonne en
+`DOUBLE PRECISION`. À garder en tête pour toute future colonne numérique décimale : soit
+`DOUBLE PRECISION` + champ Java `double`/`Double`, soit `NUMERIC` + `java.math.BigDecimal`
+côté entité — jamais `NUMERIC` + `double`.
+**Prochaine étape :** ROADMAP.md → Phase 1.9 (dashboard établissement) — statistiques de
+base (effectifs, taux de présence, moyennes). Dernière tâche de la Phase 1 — son critère de
+sortie (scénario complet inscription → usage → paiement → suspension → réactivation) sera à
+vérifier une fois cette tâche terminée.

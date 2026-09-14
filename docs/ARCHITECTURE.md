@@ -256,6 +256,32 @@ période (cahier §10 — couvert par le tableau de bord de ROADMAP.md 1.9), sui
 cours plutôt que par jour, règles de notification configurables par établissement (une seule
 règle fixe : notifier à chaque absence/retard/départ anticipé).
 
+### ADR-013 — Notes et moyennes (décidé, Phase 1.8)
+**Décision** : `Exam` (évaluation : classe, matière, barème `maxScore`, `coefficient`, date)
+et `Grade` (note d'un élève, `UNIQUE(exam_id, student_id)`), package `grade`. `score` NULL
+représente explicitement une absence à l'évaluation (colonne `absent` séparée, cahier
+§11 "gestion des absences aux évaluations") — jamais une note de zéro.
+
+**Calcul des moyennes**, toujours normalisé sur 20 (`score / maxScore * 20`) pour rendre les
+évaluations à barèmes différents comparables :
+- Statistiques d'une évaluation (`GET /api/v1/exams/{id}/statistics`) : moyenne/min/max sur
+  les notes non-absentes uniquement.
+- Moyenne d'un élève dans une matière (`GET /api/v1/students/{id}/subjects/{id}/average`) :
+  pondérée par le `coefficient` de chaque évaluation de cette matière.
+- Moyenne de classe dans une matière (`GET /api/v1/classes/{id}/subjects/{id}/average`) :
+  moyenne des moyennes-élèves (uniquement les élèves ayant au moins une note) — pas une
+  moyenne pondérée par élève sur l'ensemble des notes brutes, pour que chaque élève compte
+  pour un poids égal indépendamment de son nombre d'évaluations passées.
+
+**Colonnes `DOUBLE PRECISION`** (pas `NUMERIC`) pour `max_score`/`score` : nécessaire pour
+correspondre au mapping Hibernate par défaut d'un champ Java `double`/`Double`
+(`ddl-auto: validate` échoue sinon au démarrage — piège découvert à l'exécution des tests).
+
+**Hors périmètre 1.8 (explicitement différé)** : import de notes en masse (CSV, comme pour
+les élèves — seule la saisie via API/JSON est couverte), historisation des notes (contrairement
+aux absences, pas de table de changements ici — non listée explicitement dans ROADMAP.md 1.8),
+`grade_items` (sous-questions/barème détaillé de docs/DATA_MODEL.md), rang de classe.
+
 ---
 
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)

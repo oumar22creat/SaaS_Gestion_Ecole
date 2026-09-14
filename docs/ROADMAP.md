@@ -75,8 +75,8 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] Notification au parent
 
 ### 1.8 Notes
-- [ ] CRUD évaluations et notes
-- [ ] Calcul automatique des moyennes (par matière, par classe)
+- [x] CRUD évaluations et notes
+- [x] Calcul automatique des moyennes (par matière, par classe)
 
 ### 1.9 Dashboard établissement
 - [ ] Statistiques de base : effectifs, taux de présence, moyennes

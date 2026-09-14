@@ -135,11 +135,11 @@ un test de régression qui échoue sans le correctif.
       appelants
 
 ### 2.3 Cahier de textes et devoirs
-- [ ] Contenu de séance + travail à faire, dates de publication/limite
-- [ ] Pièces jointes (référencent le module 2.2)
-- [ ] Consultation élèves/parents : **hors périmètre** — aucun portail élève/parent construit
+- [x] Contenu de séance + travail à faire, dates de publication/limite
+- [x] Pièces jointes (référencent le module 2.2)
+- [x] Consultation élèves/parents : **hors périmètre** — aucun portail élève/parent construit
       (ADR-010), consultation limitée aux rôles staff comme le reste de l'application
-- [ ] Notification nouveau devoir (même pattern gateway que les absences, ADR-012)
+- [x] Notification nouveau devoir (même pattern gateway que les absences, ADR-012)
 
 ### 2.4 Messagerie interne
 - [ ] Messages individuels et de groupe entre utilisateurs staff

@@ -561,3 +561,13 @@ stockage pourtant légitime — corrigé en normalisant/absolutisant les deux c�
 comparaison.
 **Prochaine étape :** ROADMAP.md Phase 2.3 (cahier de textes et devoirs), qui référence des
 documents comme pièces jointes.
+
+## [2026-09-14] — Session (Phase 2.3 — cahier de textes et devoirs)
+**Tâche(s) réalisée(s) :** Module `homework/` — `Lesson` (contenu de cours + travail à faire
+regroupés dans une seule entité, pièce jointe référençant le module documents), notification
+nouveau devoir.
+**Décisions prises (et pourquoi) :** Voir ADR-018 (nouveau) — résumé : une seule entité
+plutôt que deux (cours + devoir), nouvelle gateway de notification dédiée plutôt que
+d'anticiper la généralisation prévue en 2.5.
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau.
+**Prochaine étape :** ROADMAP.md Phase 2.4 (messagerie interne).

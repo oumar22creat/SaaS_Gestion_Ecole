@@ -401,6 +401,18 @@ souscrit (cahier §14) — `Plan` n'a pas de champ de quota, ajouter cette contr
 d'abord d'étendre le modèle de facturation (ADR-009), pas fait ici pour ne pas mélanger les
 deux sujets.
 
+### ADR-018 — Cahier de textes et devoirs (décidé, Phase 2.3)
+**Décision** : une seule entité `Lesson` (package `homework`) regroupe contenu du cours ET
+travail à faire — pas deux entités séparées "cours"/"devoir" : c'est ainsi qu'un vrai cahier
+de textes fonctionne (une séance a un contenu, et *éventuellement* un devoir associé), et le
+cahier-des-charges §13 les décrit comme un seul flux ("saisie du contenu... ajout du travail
+à faire..."). Pièce jointe = simple `attachmentDocumentId` référençant le module `document`
+(ADR-017), pas de gestion de pièces jointes dupliquée. Notification nouveau devoir : nouvelle
+`HomeworkNotificationGateway`, même pattern que `ParentNotificationGateway` (ADR-012) — pas
+consolidée avec elle ici, la généralisation est explicitement le travail de ROADMAP.md 2.5.
+
+**Hors périmètre 2.3** : consultation élèves/parents (aucun portail construit, ADR-010).
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Quota de stockage documentaire par tenant** (cahier §14) — `Plan` n'a pas de champ de
   quota, `StorageGateway` (ADR-017) n'applique aucune limite. À trancher avant l'ouverture

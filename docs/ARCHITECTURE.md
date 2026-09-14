@@ -296,16 +296,66 @@ chiffre global de chaque métrique.
 indicateurs de réussite, rapports exportables (cahier §18 — Phase 2), tableau de bord
 Super-Admin (nombre de tenants/MRR/churn — ROADMAP.md Phase 2).
 
-**Note de fin de Phase 1** : les 9 sous-phases de ROADMAP.md 1.1 à 1.9 sont cochées — API
-backend complète et testée. Le critère de sortie de Phase 1 tel que formulé dans
-ROADMAP.md implique cependant une utilisation de bout en bout (donc un frontend Web/Mobile
-fonctionnel pour classes/élèves/enseignants/emploi du temps/absences/notes/dashboard), qui
-n'a pas été construit dans cette session (seules les pages d'inscription/branding
-existent) — voir la note ajoutée directement sous le critère de sortie dans ROADMAP.md.
+**Note de fin de Phase 1 (backend)** : les 9 sous-phases de ROADMAP.md 1.1 à 1.9 sont
+cochées côté API. Le frontend Web correspondant a été construit dans la session suivante —
+voir ADR-015 (le critère de sortie complet de Phase 1, avec sa nuance frontend, est
+documenté directement dans ROADMAP.md, sous le critère de sortie).
+
+### ADR-015 — Frontend Web des modules 1.5-1.9, et deux bugs réels trouvés en le vérifiant (décidé)
+**Décision** : shell authentifié Angular Material (sidenav filtré par rôle, voir
+`web/src/app/shell/`), un service + une paire liste/dialog par ressource simple (Teacher/
+Subject/Room/SchoolClass/Parent), écrans dédiés pour les flux non triviaux (import CSV élèves
+en 2 étapes — pas 3, voir ci-dessous —, feuille d'appel, saisie de notes façon mockup #2,
+dashboard façon mockup #5). `AuthTokenService`/`authInterceptor`/`authGuard` ajoutés dans
+`core/` — jusqu'ici aucun écran n'avait besoin d'appeler l'API de façon authentifiée.
+
+**Écarts assumés par rapport aux mockups de docs/MOCKUPS.md** :
+- **Import élèves (§7)** : 2 étapes ("Déposer le fichier" → "Résultat"), pas 3. Le backend
+  importe en une seule opération synchrone (`POST /api/v1/students/import`,
+  ROADMAP.md 1.5) — il n'existe pas de phase "prévisualiser sans committer" côté API ; une
+  étape "Confirmer" après coup aurait menti sur la possibilité d'annuler.
+- **Feuille d'appel (§1)** : prévue Mobile/Ionic, livrée en Web — l'app Mobile n'a aucune
+  authentification construite (seul le branding l'est, Phase 0), donc un écran Ionic
+  serait inutilisable en pratique tant que ce prérequis n'existe pas.
+
+**Bug 1 — RLS violée à l'inscription avec le rôle applicatif réel** (trouvé en testant le
+frontend contre `docker-compose` + le rôle restreint, jamais avec Testcontainers en
+superutilisateur qui contourne toujours RLS, ADR-001 Piège 4) :
+`TenantRegistrationService#register` créait le compte Administrateur (`INSERT INTO users`,
+`GenerationType.IDENTITY` ⇒ INSERT immédiat) **avant** d'appeler
+`TenantSessionConfigurer#applyTenant` (qui pose `app.tenant_id`). La politique RLS sur
+`users` n'a pas de clause `WITH CHECK` explicite — Postgres réutilise alors la clause
+`USING` comme condition d'insertion, qui échoue tant que `app.tenant_id` n'est pas positionné
+(`current_setting(..., true)` renvoie NULL). Corrigé en posant le contexte tenant AVANT le
+premier INSERT, pas seulement avant `login()`. Test de régression :
+`TenantRegistrationRlsTest`, qui recrée le rôle applicatif restreint réel (comme
+`01-create-app-role.sh`) et échoue bien sans le correctif — piège de test rencontré en
+l'écrivant : `@ServiceConnection` (sur `AbstractIntegrationTest`) enregistre un bean
+`JdbcConnectionDetails` qui prime sur un simple `@DynamicPropertySource` positionnant
+`spring.datasource.username/password` ; il faut fournir son propre bean
+`JdbcConnectionDetails` (`@Primary`) pour vraiment changer le rôle de connexion runtime.
+
+**Bug 2 — 500 au lieu de 404 pour un endpoint inexistant, sans aucun log serveur** : une
+route API non mappée tombe sur `NoResourceFoundException` (repli ressources statiques de
+Spring), que `GlobalExceptionHandler` avalait dans son handler générique `Exception.class`
+(500 "INTERNAL_ERROR") — et ce handler générique ne loggait rien du tout, rendant le
+diagnostic invisible côté serveur. Corrigé par un `@ExceptionHandler(NoResourceFoundException.class)`
+dédié (404) et un `log.error(...)` dans le handler générique. Découvert car le frontend
+(`TenantBrandingService`, Phase 0) appelle `GET /api/v1/tenants/current/branding`, un
+endpoint **qui n'a jamais été implémenté côté backend** — voir "Points ouverts" ci-dessous.
 
 ---
 
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
+- **`GET /api/v1/tenants/current/branding` n'existe pas côté backend** — le frontend
+  (`TenantBrandingService`, Phase 0, Web + Mobile) l'appelle au démarrage mais reçoit 404
+  (auparavant 500, voir ADR-015 Bug 2), tombe systématiquement sur son fallback "branding
+  neutre" (comportement gracieux, prévu par conception — jamais d'écran cassé). Le
+  branding dynamique par tenant (logo/couleurs) ne fonctionne donc **jamais réellement**
+  tant que cet endpoint n'est pas construit : nécessite d'ajouter des colonnes
+  logo/couleurs à `tenants` (migration) et un endpoint résolvant le tenant courant (via
+  sous-domaine, comme `TenantResolver`). Découvert en vérifiant le frontend de Phase 1.5-1.9
+  contre un vrai backend — hors périmètre de cette tâche, à traiter comme son propre item.
 - Fournisseur mobile money ? (avant Phase 3)
 - Hébergement de production (cloud choisi, région) ? (avant le premier déploiement staging)
 - Kubernetes ou déploiement simple Docker Compose au démarrage ? (avant Phase 4, ou avant

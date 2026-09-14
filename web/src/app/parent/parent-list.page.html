@@ -1,0 +1,51 @@
+<div class="page-header">
+  <h1>Parents / tuteurs</h1>
+  <button mat-flat-button (click)="openCreateDialog()">
+    <mat-icon>add</mat-icon>
+    Ajouter un parent
+  </button>
+</div>
+
+<table mat-table [dataSource]="parents()" class="data-table">
+  <ng-container matColumnDef="firstName">
+    <th mat-header-cell *matHeaderCellDef>Prénom</th>
+    <td mat-cell *matCellDef="let parent">{{ parent.firstName }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="lastName">
+    <th mat-header-cell *matHeaderCellDef>Nom</th>
+    <td mat-cell *matCellDef="let parent">{{ parent.lastName }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="email">
+    <th mat-header-cell *matHeaderCellDef>E-mail</th>
+    <td mat-cell *matCellDef="let parent">{{ parent.email || '—' }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="phone">
+    <th mat-header-cell *matHeaderCellDef>Téléphone</th>
+    <td mat-cell *matCellDef="let parent">{{ parent.phone || '—' }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="actions">
+    <th mat-header-cell *matHeaderCellDef></th>
+    <td mat-cell *matCellDef="let parent">
+      <a mat-icon-button [routerLink]="['/parents', parent.id, 'students']" aria-label="Enfants">
+        <mat-icon>family_restroom</mat-icon>
+      </a>
+      <button mat-icon-button (click)="openEditDialog(parent)" aria-label="Modifier">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button (click)="remove(parent)" aria-label="Supprimer">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="columns"></tr>
+  <tr mat-row *matRowDef="let row; columns: columns"></tr>
+</table>
+
+@if (!loading() && parents().length === 0) {
+  <p class="empty-state">Aucun parent pour l'instant.</p>
+}

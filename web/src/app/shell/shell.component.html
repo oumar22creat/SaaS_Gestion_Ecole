@@ -1,0 +1,25 @@
+<mat-sidenav-container class="shell">
+  <mat-sidenav mode="side" opened class="shell-nav">
+    <mat-nav-list>
+      @for (link of navLinks; track link.path) {
+        <a mat-list-item [routerLink]="link.path" routerLinkActive="active-link">{{ link.label }}</a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar class="shell-toolbar">
+      <span class="spacer"></span>
+      @if (email) {
+        <span class="shell-email">{{ email }}</span>
+      }
+      <button mat-button (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Déconnexion
+      </button>
+    </mat-toolbar>
+    <main class="shell-content">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

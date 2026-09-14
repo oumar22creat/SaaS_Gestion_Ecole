@@ -1,0 +1,31 @@
+h1 {
+  font-size: var(--font-size-title-2);
+  margin-bottom: var(--space-4);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+mat-card {
+  padding: var(--space-4);
+}
+
+.card-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  margin: 0;
+}
+
+.card-value {
+  font-size: var(--font-size-title-1);
+  margin: var(--space-1) 0;
+}
+
+.card-detail {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  margin: 0;
+}

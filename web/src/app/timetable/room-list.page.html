@@ -1,0 +1,41 @@
+<div class="page-header">
+  <h1>Salles</h1>
+  <div class="header-actions">
+    <a mat-button routerLink="/timetable">Emploi du temps</a>
+    <button mat-flat-button (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      Ajouter une salle
+    </button>
+  </div>
+</div>
+
+<table mat-table [dataSource]="rooms()" class="data-table">
+  <ng-container matColumnDef="name">
+    <th mat-header-cell *matHeaderCellDef>Nom</th>
+    <td mat-cell *matCellDef="let room">{{ room.name }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="capacity">
+    <th mat-header-cell *matHeaderCellDef>Capacité</th>
+    <td mat-cell *matCellDef="let room">{{ room.capacity ?? '—' }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="actions">
+    <th mat-header-cell *matHeaderCellDef></th>
+    <td mat-cell *matCellDef="let room">
+      <button mat-icon-button (click)="openEditDialog(room)" aria-label="Modifier">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button (click)="remove(room)" aria-label="Supprimer">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="columns"></tr>
+  <tr mat-row *matRowDef="let row; columns: columns"></tr>
+</table>
+
+@if (!loading() && rooms().length === 0) {
+  <p class="empty-state">Aucune salle pour l'instant.</p>
+}

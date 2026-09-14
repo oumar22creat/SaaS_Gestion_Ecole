@@ -1,0 +1,29 @@
+@use '../core/list-page' as listPage;
+@include listPage.styles;
+
+.hint {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+}
+
+.step-actions {
+  margin-top: var(--space-4);
+}
+
+.error-message {
+  color: var(--color-danger);
+  font-size: var(--font-size-caption);
+}
+
+.import-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-success);
+}
+
+.warn-icon {
+  color: var(--color-warning);
+  vertical-align: middle;
+  margin-right: var(--space-1);
+}

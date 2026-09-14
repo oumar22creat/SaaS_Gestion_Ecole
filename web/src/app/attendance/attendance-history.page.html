@@ -1,0 +1,33 @@
+<div class="page-header">
+  <h1>Historique des modifications</h1>
+  <a mat-button routerLink="/attendance">Retour à la feuille d'appel</a>
+</div>
+
+<table mat-table [dataSource]="changes()" class="data-table">
+  <ng-container matColumnDef="changedAt">
+    <th mat-header-cell *matHeaderCellDef>Date de modification</th>
+    <td mat-cell *matCellDef="let change">{{ change.changedAt | date: 'short' }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="previousStatus">
+    <th mat-header-cell *matHeaderCellDef>Ancien statut</th>
+    <td mat-cell *matCellDef="let change">{{ change.previousStatus }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="previousReason">
+    <th mat-header-cell *matHeaderCellDef>Ancien motif</th>
+    <td mat-cell *matCellDef="let change">{{ change.previousReason || '—' }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="previousJustified">
+    <th mat-header-cell *matHeaderCellDef>Justifié</th>
+    <td mat-cell *matCellDef="let change">{{ change.previousJustified ? 'Oui' : 'Non' }}</td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="columns"></tr>
+  <tr mat-row *matRowDef="let row; columns: columns"></tr>
+</table>
+
+@if (changes().length === 0) {
+  <p class="empty-state">Aucune modification enregistrée pour cet enregistrement.</p>
+}

@@ -1,0 +1,15 @@
+@use '../core/list-page' as listPage;
+@include listPage.styles;
+
+.assign-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.error-message {
+  color: var(--color-danger);
+  font-size: var(--font-size-caption);
+}

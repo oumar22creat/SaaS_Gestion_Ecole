@@ -1,0 +1,59 @@
+<div class="page-header">
+  <h1>Feuille d'appel</h1>
+</div>
+
+<div class="roll-call-filters">
+  <mat-form-field appearance="outline">
+    <mat-label>Classe</mat-label>
+    <mat-select [(ngModel)]="selectedClassId" (ngModelChange)="onClassOrDateChange()">
+      @for (schoolClass of classes(); track schoolClass.id) {
+        <mat-option [value]="schoolClass.id">{{ schoolClass.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Date</mat-label>
+    <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" (ngModelChange)="onClassOrDateChange()" />
+    <mat-datepicker-toggle matIconSuffix [for]="picker" />
+    <mat-datepicker #picker />
+  </mat-form-field>
+</div>
+
+@if (rows().length > 0) {
+  <div class="roll-call-list">
+    @for (row of rows(); track row.studentId) {
+      <div class="roll-call-row">
+        <span class="student-name">{{ row.studentLabel }}</span>
+        <mat-button-toggle-group [(ngModel)]="row.status">
+          @for (status of statuses; track status.value) {
+            <mat-button-toggle [value]="status.value">{{ status.label }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+        @if (row.status !== 'PRESENT') {
+          <mat-form-field appearance="outline" class="reason-field">
+            <mat-label>Motif</mat-label>
+            <input matInput [(ngModel)]="row.reason" />
+          </mat-form-field>
+        }
+      </div>
+    }
+  </div>
+
+  @if (errorMessage()) {
+    <p class="error-message">{{ errorMessage() }}</p>
+  }
+  @if (success()) {
+    <p class="success-message">Appel enregistré.</p>
+  }
+
+  <button mat-flat-button class="submit-button" [disabled]="submitting()" (click)="submit()">
+    @if (submitting()) {
+      Enregistrement…
+    } @else {
+      Valider l'appel
+    }
+  </button>
+} @else if (!loading() && selectedClassId() !== null) {
+  <p class="empty-state">Aucun élève actif dans cette classe.</p>
+}

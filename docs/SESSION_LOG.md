@@ -484,3 +484,47 @@ principe que "Phase 1 cochée" = "utilisable de bout en bout par un vrai utilisa
 réellement "terminée" au sens du critère de sortie, ou (b) passer directement à
 ROADMAP.md Phase 2 (bulletins, cahier de textes, documents, notifications push, messagerie,
 dashboard Super-Admin) en acceptant que le frontend de Phase 1 reste à construire plus tard.
+
+## [2026-09-14] — Session (frontend Web des modules 1.5-1.9)
+**Tâche(s) réalisée(s) :** À la demande explicite de l'utilisateur ("construire le frontend
+de ces écrans maintenant"), construction du frontend Web (Angular Material) pour tous les
+modules Phase 1.5-1.9 : shell authentifié (sidenav filtré par rôle), connexion/déconnexion,
+Élèves (+ import CSV en 2 étapes), Parents (+ association), Enseignants, Classes (+
+affectation matière), Matières, Emploi du temps (+ salles), Absences (feuille d'appel +
+historique), Notes (évaluations + saisie + moyennes), Dashboard établissement. Détail des
+écarts vs docs/MOCKUPS.md dans ADR-015 (docs/ARCHITECTURE.md).
+**Décisions prises (et pourquoi) :** Voir ADR-015. Résumé : feuille d'appel livrée en Web
+(mockup prévoyait Mobile, mais l'app Mobile n'a aucune authentification construite) ; import
+CSV en 2 étapes pas 3 (le backend importe en une seule opération, pas de phase "prévisualiser
+sans committer") ; un service + une paire liste/dialog par ressource simple, écrans dédiés
+pour les flux non triviaux.
+**Problèmes rencontrés / points de vigilance — IMPORTANT** : la vérification "en vrai
+navigateur contre un vrai backend" (workflow standard pour tout changement UI) a mis en
+évidence deux bugs **backend** réels, invisibles jusqu'ici car tous les tests
+d'intégration existants tournent avec le rôle superutilisateur par défaut de Testcontainers
+(qui contourne TOUJOURS Row-Level Security, ADR-001 Piège 4) :
+1. **L'inscription self-service violait RLS** avec le vrai rôle applicatif restreint
+   (`docker-compose`/`school_saas`) : le compte Administrateur était inséré dans `users`
+   avant que le contexte tenant (`app.tenant_id`) soit posé. Corrigé dans
+   `TenantRegistrationService#register` ; test de régression `TenantRegistrationRlsTest`
+   (recrée le rôle restreint réel, échoue bien sans le correctif — voir sa javadoc pour le
+   piège `@ServiceConnection` vs `@DynamicPropertySource` rencontré en l'écrivant).
+2. **Un endpoint inexistant renvoyait 500 au lieu de 404, sans aucun log serveur**
+   (`NoResourceFoundException` avalée par le handler générique de `GlobalExceptionHandler`).
+   Corrigé (handler dédié 404 + logging du handler générique) ; test de régression
+   `GlobalExceptionHandlerTest`.
+3. Le port 4200 (défaut Angular) était déjà occupé par un processus totalement étranger à ce
+   projet sur cette machine — utilisé le port 4300 pour la vérification, sans y toucher.
+4. **Découverte annexe, non corrigée (hors périmètre)** : `GET /api/v1/tenants/current/
+   branding`, appelé par le frontend depuis la Phase 0, n'a jamais été implémenté côté
+   backend — le branding dynamique par tenant ne fonctionne donc jamais réellement (retombe
+   toujours sur le fallback neutre, sans casser l'écran). Noté dans "Points ouverts" de
+   docs/ARCHITECTURE.md.
+**Outillage** : `nvm use 22.23.1` nécessaire pour Angular CLI 22 (Node système en 16.20.2,
+trop ancien). Vérification end-to-end faite avec Playwright piloté via Node 22 (pas de
+skill `run` pré-existant pour ce repo, ni de `chromium-cli` disponible sur cette machine —
+`channel: 'chrome'` utilisé à la place, contre l'app réellement servie par `ng serve` et le
+backend réel + `docker-compose` Postgres/Redis).
+**Prochaine étape :** ROADMAP.md Phase 2 (bulletins, cahier de textes, documents,
+notifications push FCM, messagerie, dashboard Super-Admin), ou construire l'authentification
+Mobile (Ionic) si la feuille d'appel doit être ramenée sur mobile comme prévu au départ.

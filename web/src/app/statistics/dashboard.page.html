@@ -1,0 +1,22 @@
+<h1>Tableau de bord établissement</h1>
+
+@if (summary()) {
+  <div class="cards">
+    <mat-card>
+      <p class="card-label">Effectifs</p>
+      <p class="card-value">{{ summary()!.studentCount }} élèves</p>
+      <p class="card-detail">{{ summary()!.teacherCount }} enseignants · {{ summary()!.classCount }} classes</p>
+    </mat-card>
+
+    <mat-card>
+      <p class="card-label">Taux de présence</p>
+      <p class="card-value">{{ summary()!.attendanceRate !== null ? summary()!.attendanceRate + ' %' : '—' }}</p>
+      <p class="card-detail">Du {{ summary()!.periodFrom }} au {{ summary()!.periodTo }}</p>
+    </mat-card>
+
+    <mat-card>
+      <p class="card-label">Moyenne générale</p>
+      <p class="card-value">{{ summary()!.averageGrade !== null ? summary()!.averageGrade + ' / 20' : '—' }}</p>
+    </mat-card>
+  </div>
+}

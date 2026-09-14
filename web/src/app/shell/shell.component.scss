@@ -1,0 +1,30 @@
+.shell {
+  height: 100%;
+}
+
+.shell-nav {
+  width: 220px;
+  padding-top: var(--space-2);
+}
+
+.active-link {
+  font-weight: 600;
+}
+
+.shell-toolbar {
+  .spacer {
+    flex: 1 1 auto;
+  }
+
+  .shell-email {
+    margin-right: var(--space-4);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+  }
+}
+
+.shell-content {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--space-6);
+}

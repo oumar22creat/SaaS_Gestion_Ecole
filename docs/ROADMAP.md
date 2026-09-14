@@ -85,16 +85,29 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 classes/élèves/enseignants, gérer emploi du temps + absences + notes, et payer un abonnement —
 le tout sans qu'aucune donnée ne fuite vers un autre tenant.
 
-**État au 2026-09-14** : toutes les cases 1.1 à 1.9 sont cochées — API backend complète et
-testée (isolation multi-tenant comprise) pour chaque module. **Mais** ce critère de sortie
-tel que formulé implique une utilisation de bout en bout, donc un frontend Web/Mobile
-fonctionnel — or seules les pages d'inscription/branding (Phase 0/1.3) existent côté Web/
-Mobile ; aucun écran Angular/Ionic n'a été construit pour classes/élèves/enseignants/emploi
-du temps/absences/notes/dashboard (les tâches 1.5 à 1.9 sont formulées comme des livrables
-API — "CRUD X" — contrairement à 1.3 qui précisait explicitement "(Web)"). Avant de démarrer
-la Phase 2, décider si "Phase 1 terminée" signifie "API prête" (ce qui est le cas) ou si le
-scénario de bout en bout doit être rejoué manuellement via une interface — ce qui suppose de
-construire ces écrans d'abord.
+**État au 2026-09-14** : les 9 sous-phases sont cochées — API backend complète et testée
+(isolation multi-tenant comprise), **et** un frontend Web (Angular Material) construit et
+vérifié de bout en bout contre un vrai backend (Postgres réel, rôle applicatif restreint,
+pas seulement Testcontainers en superutilisateur) pour tous les modules 1.5-1.9 : Élèves
+(+ import CSV), Parents (+ association), Enseignants, Classes (+ affectation matière),
+Matières, Emploi du temps (+ salles), Absences (feuille d'appel + historique), Notes
+(évaluations + saisie + moyennes), Dashboard établissement. Connexion/déconnexion, garde de
+route et intercepteur HTTP (jeton + 401) ajoutés à cette occasion.
+
+**Écart restant, explicitement différé** : le mockup "Feuille d'appel" (docs/MOCKUPS.md §1)
+prévoyait Mobile/Ionic — livré ici en Web à la place, car l'app Mobile n'a **aucune
+authentification** construite (seul le branding l'est, voir Phase 0). Construire l'auth
+Mobile est un prérequis plus large, non demandé explicitement dans les tâches 1.5-1.9.
+De même, les mockups "Parent — dashboard enfants" et "Élève — emploi du temps" restent hors
+portée : ils supposent un portail élève/parent (compte `User` lié à un `Student`/`Parent`),
+explicitement différé depuis l'ADR-010 (Phase 1.5).
+
+**Deux bugs réels découverts en testant contre un vrai backend** (jamais visibles avec
+Testcontainers en rôle superutilisateur, qui contourne toujours RLS) — voir ADR-015 dans
+docs/ARCHITECTURE.md pour le détail : (1) l'inscription self-service violait la politique
+RLS sur `users` avec le rôle applicatif restreint réel ; (2) tout endpoint inexistant
+renvoyait 500 au lieu de 404, sans aucun log serveur. Les deux sont corrigés et couverts par
+un test de régression qui échoue sans le correctif.
 
 ---
 

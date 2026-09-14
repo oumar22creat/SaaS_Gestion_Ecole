@@ -1,0 +1,74 @@
+<h2 mat-dialog-title>{{ data.entry ? 'Modifier le créneau' : 'Ajouter un créneau' }}</h2>
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <mat-dialog-content>
+    <mat-form-field appearance="outline">
+      <mat-label>Classe</mat-label>
+      <mat-select formControlName="schoolClassId">
+        @for (schoolClass of classes(); track schoolClass.id) {
+          <mat-option [value]="schoolClass.id">{{ schoolClass.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Matière</mat-label>
+      <mat-select formControlName="subjectId">
+        @for (subject of subjects(); track subject.id) {
+          <mat-option [value]="subject.id">{{ subject.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Enseignant</mat-label>
+      <mat-select formControlName="teacherId">
+        @for (teacher of teachers(); track teacher.id) {
+          <mat-option [value]="teacher.id">{{ teacher.firstName }} {{ teacher.lastName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Salle</mat-label>
+      <mat-select formControlName="roomId">
+        @for (room of rooms(); track room.id) {
+          <mat-option [value]="room.id">{{ room.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Jour</mat-label>
+      <mat-select formControlName="dayOfWeek">
+        @for (day of days; track day.value) {
+          <mat-option [value]="day.value">{{ day.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Heure de début</mat-label>
+      <input matInput type="time" formControlName="startTime" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Heure de fin</mat-label>
+      <input matInput type="time" formControlName="endTime" />
+    </mat-form-field>
+
+    @if (errorMessage()) {
+      <p class="error-message">{{ errorMessage() }}</p>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Annuler</button>
+    <button mat-flat-button type="submit" [disabled]="submitting()">
+      @if (submitting()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        Enregistrer
+      }
+    </button>
+  </mat-dialog-actions>
+</form>

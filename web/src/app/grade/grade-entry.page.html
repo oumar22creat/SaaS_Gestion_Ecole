@@ -1,0 +1,58 @@
+<div class="page-header">
+  <h1>{{ exam()?.label }} — Saisie des notes</h1>
+  <a mat-button routerLink="/exams">Retour aux évaluations</a>
+</div>
+
+<table mat-table [dataSource]="rows()" class="data-table">
+  <ng-container matColumnDef="student">
+    <th mat-header-cell *matHeaderCellDef>Élève</th>
+    <td mat-cell *matCellDef="let row">{{ row.studentLabel }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="score">
+    <th mat-header-cell *matHeaderCellDef>Note / {{ exam()?.maxScore }}</th>
+    <td mat-cell *matCellDef="let row">
+      <mat-form-field appearance="outline" class="score-field">
+        <input matInput type="number" min="0" [max]="exam()?.maxScore ?? null" [(ngModel)]="row.score" [disabled]="row.absent" />
+      </mat-form-field>
+    </td>
+  </ng-container>
+
+  <ng-container matColumnDef="absent">
+    <th mat-header-cell *matHeaderCellDef>Absent</th>
+    <td mat-cell *matCellDef="let row">
+      <mat-checkbox [(ngModel)]="row.absent" />
+    </td>
+  </ng-container>
+
+  <ng-container matColumnDef="comment">
+    <th mat-header-cell *matHeaderCellDef>Commentaire</th>
+    <td mat-cell *matCellDef="let row">
+      <mat-form-field appearance="outline" class="comment-field">
+        <input matInput [(ngModel)]="row.comment" />
+      </mat-form-field>
+    </td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="columns"></tr>
+  <tr mat-row *matRowDef="let row; columns: columns"></tr>
+</table>
+
+@if (errorMessage()) {
+  <p class="error-message">{{ errorMessage() }}</p>
+}
+
+@if (statistics()) {
+  <p class="statistics">
+    Moyenne : {{ statistics()!.average ?? '—' }} / 20 · Min : {{ statistics()!.min ?? '—' }} · Max :
+    {{ statistics()!.max ?? '—' }} ({{ statistics()!.gradedCount }} note(s))
+  </p>
+}
+
+<button mat-flat-button class="save-button" [disabled]="submitting()" (click)="submit()">
+  @if (submitting()) {
+    Enregistrement…
+  } @else {
+    Enregistrer
+  }
+</button>

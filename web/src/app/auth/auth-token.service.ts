@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { decodeAccessToken } from '../core/jwt.util';
 
 export interface TokenPair {
   accessToken: string;
@@ -8,9 +9,7 @@ export interface TokenPair {
 
 const STORAGE_KEY = 'auth-tokens';
 
-// Stockage minimal des jetons (session courante). Un intercepteur HTTP posant
-// automatiquement l'en-tête Authorization sur les appels protégés viendra avec les premiers
-// écrans qui en ont réellement besoin (voir docs/ROADMAP.md Phase 1.5+).
+// Stockage minimal des jetons (session courante).
 @Injectable({ providedIn: 'root' })
 export class AuthTokenService {
   store(tokens: TokenPair): void {
@@ -24,5 +23,20 @@ export class AuthTokenService {
 
   clear(): void {
     sessionStorage.removeItem(STORAGE_KEY);
+  }
+
+  isAuthenticated(): boolean {
+    return this.read() !== null;
+  }
+
+  /** Affichage uniquement (nom du rôle dans le shell) — voir docs/jwt.util.ts. */
+  role(): string | null {
+    const tokens = this.read();
+    return tokens ? decodeAccessToken(tokens.accessToken)?.role ?? null : null;
+  }
+
+  email(): string | null {
+    const tokens = this.read();
+    return tokens ? decodeAccessToken(tokens.accessToken)?.email ?? null : null;
   }
 }

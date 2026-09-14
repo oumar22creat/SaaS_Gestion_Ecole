@@ -413,6 +413,23 @@ consolidée avec elle ici, la généralisation est explicitement le travail de R
 
 **Hors périmètre 2.3** : consultation élèves/parents (aucun portail construit, ADR-010).
 
+### ADR-019 — Messagerie interne (décidé, Phase 2.4)
+**Décision** : `Conversation` + `ConversationParticipant` (porte la confirmation de lecture
+via `lastReadAt` — tous les messages antérieurs à cette date sont "lus", pas un accusé par
+message individuel) + `Message`. Une **annonce** est une conversation comme une autre
+(`is_announcement = true`), diffusée à la création à tous les utilisateurs actifs du tenant
+— pas un mécanisme de diffusion séparé. Individuel vs groupe = juste le nombre de
+participants, pas deux concepts différents. Accès contrôlé par appartenance
+(`ConversationParticipant`) en plus du filtre tenant (RLS/Hibernate) : un utilisateur du même
+tenant mais non participant reçoit `403 NOT_A_PARTICIPANT`, pas `404` (la conversation existe
+bel et bien dans son tenant, contrairement à une fuite cross-tenant). Création d'annonce
+réservée à ADMIN/DIRECTION. Recherche : simple `LIKE` insensible à la casse sur le contenu,
+pas de moteur de recherche plein texte pour ce MVP.
+
+**Troisième gateway de notification "log seulement"** (`MessageNotificationGateway`, après
+`ParentNotificationGateway` et `HomeworkNotificationGateway`) — la consolidation en un
+registre unique reste le travail explicite de ROADMAP.md 2.5.
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Quota de stockage documentaire par tenant** (cahier §14) — `Plan` n'a pas de champ de
   quota, `StorageGateway` (ADR-017) n'applique aucune limite. À trancher avant l'ouverture

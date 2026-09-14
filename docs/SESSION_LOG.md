@@ -571,3 +571,16 @@ plutôt que deux (cours + devoir), nouvelle gateway de notification dédiée plu
 d'anticiper la généralisation prévue en 2.5.
 **Problèmes rencontrés / points de vigilance :** Aucun nouveau.
 **Prochaine étape :** ROADMAP.md Phase 2.4 (messagerie interne).
+
+## [2026-09-14] — Session (Phase 2.4 — messagerie interne)
+**Tâche(s) réalisée(s) :** Module `messaging/` — conversations individuelles/groupe/
+annonces, messages avec pièce jointe optionnelle, confirmation de lecture, recherche.
+**Décisions prises (et pourquoi) :** Voir ADR-019 (nouveau) — résumé : annonce = conversation
+diffusée à tous à la création (pas un mécanisme séparé), lecture confirmée via un horodatage
+par participant (pas un accusé par message), accès non-participant = 403 (pas 404, la
+conversation existe bien dans le tenant). Troisième gateway "log seulement" du même genre —
+consolidation explicitement prévue en 2.5.
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau. Ajout de
+`UserRepository#findAllByActiveTrue` (nécessaire pour diffuser une annonce).
+**Prochaine étape :** ROADMAP.md Phase 2.5 (infrastructure de notifications — consolidation
+des gateways existants) puis 2.6 (dashboard Super-Admin).

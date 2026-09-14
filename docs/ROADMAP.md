@@ -142,11 +142,11 @@ un test de régression qui échoue sans le correctif.
 - [x] Notification nouveau devoir (même pattern gateway que les absences, ADR-012)
 
 ### 2.4 Messagerie interne
-- [ ] Messages individuels et de groupe entre utilisateurs staff
-- [ ] Annonces de l'établissement
-- [ ] Pièces jointes (référencent le module 2.2)
-- [ ] Confirmation de lecture
-- [ ] Historique et recherche des conversations
+- [x] Messages individuels et de groupe entre utilisateurs staff
+- [x] Annonces de l'établissement
+- [x] Pièces jointes (référencent le module 2.2)
+- [x] Confirmation de lecture
+- [x] Historique et recherche des conversations
 
 ### 2.5 Notifications (infrastructure)
 - [ ] Registre centralisé des événements de notification (nouvelle note, absence/retard déjà

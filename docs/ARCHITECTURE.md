@@ -561,6 +561,28 @@ pas de paiement en ligne réel déclenché depuis l'app pour les frais de scolar
 distinct de `StripeGateway` (ADR-009), qui ne concerne que l'abonnement SaaS de l'établissement
 à la plateforme, jamais les frais que les familles paient à l'établissement.
 
+### ADR-025 — Cantine (décidé, Phase 3.4)
+**Décision** : nouveau package `canteen` (nom du cahier §26). `Menu` (un par jour, variante
+"régime particulier" comme un champ optionnel du même menu — pas de profil allergène par
+élève, donnée de santé hors périmètre) ; `MealReservation` (une par élève et par jour,
+`UNIQUE(student_id, date)`) ; `CanteenInvoice` (générée à la demande à partir du nombre de
+réservations sur une période × un prix par repas donné au moment de la génération — pas
+d'abonnement forfaitaire ni de grille de prix persistée, cahier §19.1 dit "facturation liée à
+la consommation réelle", donc calculée, pas un tarif fixe) ; `CanteenPayment` (même mécanique
+que `FeePayment`/ADR-024 : paiement partiel/total, statut recalculé automatiquement, réutilise
+`FeePaymentMethod` du package `schoolfees` plutôt que de dupliquer un enum identique).
+
+**"Réservation par les parents" (cahier §19.1) → questionné à l'utilisateur, réponse "saisie
+côté staff pour cette passe"** : `reservedByUserId` sur `MealReservation` porte toujours un
+compte staff (`ADMIN`/`DIRECTION`/`SECRETARY`), jamais un compte parent — cohérent avec
+l'absence de portail parent (ADR-010). Le vrai portail parent, s'il est construit un jour,
+resterait un appelant supplémentaire du même `CanteenService.reserveMeal`, pas une réécriture.
+
+**Suivi des impayés** (cahier §19.1) = `GET /canteen/invoices/unpaid`, toutes factures non
+soldées/non annulées tous élèves confondus — vue à plat pour ce MVP, pas de regroupement par
+classe/famille (pas demandé, cohérent avec le niveau d'agrégation des autres modules de cette
+phase).
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3, ADR-024)** — reste
   à trancher (réponse utilisateur : plus tard). Le modèle (`FeePaymentMethod.MOBILE_MONEY`)

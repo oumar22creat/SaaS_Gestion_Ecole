@@ -685,3 +685,18 @@ sans gateway réel branché.
 passent.
 **Prochaine étape :** ROADMAP.md Phase 3.4 (cantine, maintenant débloquée — saisie staff) puis
 3.5 (bibliothèque) et 3.6 (transport scolaire).
+
+## [2026-09-14] — Session (Phase 3.4 — cantine)
+**Tâche(s) réalisée(s) :** Nouveau package `canteen` — menus du jour (+ variante régime
+particulier), réservations de repas saisies par le personnel (`SECRETARY`/`ADMIN`/`DIRECTION`),
+facturation à la consommation réelle (comptage des réservations × prix donné à la génération),
+paiements partiels/totaux, suivi des impayés (vue à plat tous élèves).
+**Décisions prises (et pourquoi) :** Voir ADR-025 (nouveau) — résumé : pas de tarif persisté
+(cahier §19.1 dit explicitement "liée à la consommation réelle", donc calculé à la demande) ;
+réutilise `FeePaymentMethod` du package `schoolfees` plutôt que de dupliquer un enum identique ;
+`reservedByUserId` porte toujours un compte staff, jamais parent.
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau. Suite complète : 96/96 tests
+passent.
+**Prochaine étape :** ROADMAP.md Phase 3.5 (bibliothèque) puis 3.6 (transport scolaire) — deux
+derniers modules complémentaires sans point bloquant avant 3.7 (domaine personnalisé/branding
+avancé).

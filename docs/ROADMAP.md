@@ -221,13 +221,14 @@ avant de passer à la Phase 3.
       le même pattern que `ReportCardPdfExporter` (ADR-016) si demandé séparément
 
 ### 3.4 Cantine (cahier §19.1)
-- [ ] Gestion des menus et régimes alimentaires particuliers
-- [ ] Réservation des repas — **bloqué en l'état** : "par les parents" (cahier §19.1) suppose
-      un portail parent, explicitement différé depuis l'ADR-010 (Phase 1.5) ; à confirmer avec
-      l'utilisateur — construire un portail parent minimal maintenant, ou scoper la réservation
-      côté staff seulement pour cette passe
-- [ ] Facturation liée à la consommation réelle
-- [ ] Suivi des impayés
+- [x] Gestion des menus et régimes alimentaires particuliers (variante du menu du jour, pas
+      de profil allergène par élève — donnée de santé, hors périmètre)
+- [x] Réservation des repas — **questionné à l'utilisateur, réponse : saisie côté staff pour
+      cette passe** (pas de portail parent, ADR-010/ADR-025), `SECRETARY`/`ADMIN`/`DIRECTION`
+      saisissent pour le compte des familles
+- [x] Facturation liée à la consommation réelle (comptage des réservations sur une période ×
+      prix par repas donné à la génération, pas de tarif persisté ni d'abonnement forfaitaire)
+- [x] Suivi des impayés (`GET /canteen/invoices/unpaid`, vue à plat tous élèves)
 
 ### 3.5 Bibliothèque (cahier §19.3)
 - [ ] Catalogue des ouvrages (codes-barres/ISBN)

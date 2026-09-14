@@ -54,10 +54,10 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
       pas encore construits ; à compléter étape par étape une fois ces modules prêts
 
 ### 1.4 Abonnement (base)
-- [ ] Tables `plans`, `subscriptions`, `invoices`
-- [ ] Essai gratuit automatique à la création du tenant
-- [ ] Intégration Stripe : checkout + webhook de confirmation de paiement
-- [ ] Blocage progressif en cas d'échec de paiement (lecture seule puis suspension)
+- [x] Tables `plans`, `subscriptions`, `invoices`
+- [x] Essai gratuit automatique à la création du tenant
+- [x] Intégration Stripe : checkout + webhook de confirmation de paiement
+- [x] Blocage progressif en cas d'échec de paiement (lecture seule puis suspension)
 
 ### 1.5 Élèves, parents, enseignants, classes, matières
 - [ ] CRUD élèves (avec import CSV en masse)

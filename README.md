@@ -98,6 +98,11 @@ Copier `backend/.env.example` vers `backend/.env` et ajuster :
 | `JWT_SECRET` | Clé de signature des tokens | générer une valeur aléatoire, ne jamais committer |
 | `REDIS_URL` | URL Redis | `redis://localhost:6379` |
 | `STRIPE_SECRET_KEY` | Clé API Stripe (mode test en local) | à récupérer sur le dashboard Stripe |
+| `STRIPE_WEBHOOK_SECRET` | Secret de vérification de signature du webhook Stripe | dashboard Stripe > Webhooks |
+| `STRIPE_CHECKOUT_SUCCESS_URL` / `STRIPE_CHECKOUT_CANCEL_URL` | Redirections après paiement Stripe Checkout | `http://localhost:4200/billing/success` |
+| `BILLING_TRIAL_DAYS` | Durée de l'essai gratuit (jours) | `30` |
+| `BILLING_DEFAULT_TRIAL_PLAN_CODE` | Plan par défaut à l'inscription (avant tout choix explicite) | `ESSENTIEL` |
+| `BILLING_PAST_DUE_GRACE_DAYS` / `BILLING_READ_ONLY_GRACE_DAYS` | Délais de grâce avant lecture seule puis suspension | `3` / `7` |
 | `FCM_CREDENTIALS_PATH` | Chemin du fichier de credentials Firebase | voir la console Firebase du projet |
 
 **Ne jamais committer de fichier `.env` réel.** Seul `.env.example` (sans valeurs sensibles)

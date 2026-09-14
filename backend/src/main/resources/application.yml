@@ -35,6 +35,18 @@ app:
     secret: ${JWT_SECRET:dev-only-insecure-secret-do-not-use-in-production-min-32-bytes}
     access-token-ttl-minutes: 15
     refresh-token-ttl-days: 30
+  billing:
+    # Cycle de vie de l'abonnement (cahier-des-charges.md §4.2) — valeurs par défaut à
+    # confirmer avec le porteur de projet, voir docs/ARCHITECTURE.md ADR-009.
+    trial-days: ${BILLING_TRIAL_DAYS:30}
+    default-trial-plan-code: ${BILLING_DEFAULT_TRIAL_PLAN_CODE:ESSENTIEL}
+    past-due-grace-days: ${BILLING_PAST_DUE_GRACE_DAYS:3}
+    read-only-grace-days: ${BILLING_READ_ONLY_GRACE_DAYS:7}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    checkout-success-url: ${STRIPE_CHECKOUT_SUCCESS_URL:http://localhost:4200/billing/success}
+    checkout-cancel-url: ${STRIPE_CHECKOUT_CANCEL_URL:http://localhost:4200/billing/cancel}
 
 server:
   port: 8080

@@ -5,6 +5,7 @@ import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.User;
 import com.schoolsaas.auth.UserRepository;
 import com.schoolsaas.auth.dto.TokenPairResponse;
+import com.schoolsaas.billing.SubscriptionService;
 import com.schoolsaas.common.ApiException;
 import com.schoolsaas.tenant.dto.TenantRegistrationRequest;
 import com.schoolsaas.tenant.dto.TenantRegistrationResponse;
@@ -14,15 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Inscription en self-service d'un établissement (voir cahier-des-charges.md §20.1) : crée
- * le tenant et son compte Administrateur initial, puis connecte immédiatement ce dernier
+ * le tenant, son compte Administrateur initial et son abonnement d'essai gratuit
+ * (cahier-des-charges.md §4.2), puis connecte immédiatement l'Administrateur
  * ("activation immédiate").
  *
  * <p>L'assistant de configuration multi-étapes (§20.2 : import classes/matières, élèves,
- * enseignants, emploi du temps) n'est PAS implémenté ici — il dépend des modules Phase 1.5
- * (élèves/classes/matières) et 1.6 (emploi du temps), pas encore construits (voir
- * docs/ROADMAP.md et CLAUDE.md règle 5 : ne pas sauter de phase). Cette classe couvre la
- * première étape ("informations établissement"), le reste sera ajouté au fur et à mesure
- * que ces modules existeront.
+ * enseignants, emploi du temps, <b>et choix explicite du plan</b>) n'est PAS implémenté ici
+ * — il dépend des modules Phase 1.5 (élèves/classes/matières) et 1.6 (emploi du temps), pas
+ * encore construits (voir docs/ROADMAP.md et CLAUDE.md règle 5 : ne pas sauter de phase).
+ * En attendant, l'essai démarre automatiquement sur le plan par défaut (voir
+ * {@link SubscriptionService#createTrialSubscription}) ; l'établissement pourra changer de
+ * plan via {@code POST /api/v1/billing/checkout} une fois connecté.
  */
 @Service
 public class TenantRegistrationService {
@@ -32,18 +35,21 @@ public class TenantRegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
     private final TenantSessionConfigurer tenantSessionConfigurer;
+    private final SubscriptionService subscriptionService;
 
     public TenantRegistrationService(
             TenantRepository tenantRepository,
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             AuthService authService,
-            TenantSessionConfigurer tenantSessionConfigurer) {
+            TenantSessionConfigurer tenantSessionConfigurer,
+            SubscriptionService subscriptionService) {
         this.tenantRepository = tenantRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authService = authService;
         this.tenantSessionConfigurer = tenantSessionConfigurer;
+        this.subscriptionService = subscriptionService;
     }
 
     @Transactional
@@ -63,6 +69,8 @@ public class TenantRegistrationService {
                 Role.ADMIN);
         admin.setSchoolId(tenant.getId());
         userRepository.save(admin);
+
+        subscriptionService.createTrialSubscription(tenant.getId());
 
         // Le contexte tenant n'est pas encore posé à ce stade (endpoint public, pas de JWT ni
         // d'en-tête X-Tenant-Id) : sans lui (et sans activer le filtre Hibernate), la

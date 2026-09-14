@@ -8,9 +8,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class TenantWebConfig implements WebMvcConfigurer {
 
     private final TenantContextInterceptor tenantContextInterceptor;
+    private final TenantAccessInterceptor tenantAccessInterceptor;
 
-    public TenantWebConfig(TenantContextInterceptor tenantContextInterceptor) {
+    public TenantWebConfig(TenantContextInterceptor tenantContextInterceptor, TenantAccessInterceptor tenantAccessInterceptor) {
         this.tenantContextInterceptor = tenantContextInterceptor;
+        this.tenantAccessInterceptor = tenantAccessInterceptor;
     }
 
     @Override
@@ -20,5 +22,8 @@ public class TenantWebConfig implements WebMvcConfigurer {
         // partagé n'est pas encore lié au thread de la requête et enableFilter() n'a alors
         // aucun effet durable (bug mis en évidence par TenantIsolationTest).
         registry.addInterceptor(tenantContextInterceptor).addPathPatterns("/api/**").order(100);
+        // Doit s'exécuter APRÈS TenantContextInterceptor : dépend du tenant déjà résolu dans
+        // TenantContext (voir TenantAccessInterceptor).
+        registry.addInterceptor(tenantAccessInterceptor).addPathPatterns("/api/**").order(101);
     }
 }

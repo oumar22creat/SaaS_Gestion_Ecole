@@ -136,6 +136,51 @@ structurellement différent (aucune notion de tenant courant à cette identité)
 chaque endpoint. Suffisant pour les 9 rôles fixes du cahier des charges ; à revoir seulement
 si un besoin réel de permissions granulaires/personnalisables apparaît.
 
+### ADR-009 — Abonnement, paiement Stripe et blocage progressif (décidé, Phase 1.4)
+**Décision** : `plans`, `subscriptions`, `invoices` sont des entités plateforme (comme
+`tenants`), PAS des `TenantScopedEntity` — pas de `school_id`/RLS, filtrage par tenant fait
+manuellement dans les repositories (`SubscriptionRepository#findByTenantId`,
+`InvoiceRepository#findAllByTenantIdOrderByCreatedAtDesc`), exactement comme `Tenant`
+lui-même (voir ADR-001). Un seul `Subscription` par tenant pour le MVP (pas d'historique de
+changement de plan/upgrade-downgrade, hors périmètre de ROADMAP.md 1.4).
+
+**Devise** : XOF (Franc CFA, marché cible retenu), devise "zéro décimale" chez Stripe — voir
+le commentaire de `V4__create_plans_table.sql`. `price_cents`/`amount_due` sont envoyés tels
+quels à l'API Stripe (pas de `*100`), contrairement à une devise comme EUR/USD.
+
+**Essai gratuit** : automatique à la création du tenant (`TenantRegistrationService` appelle
+`SubscriptionService#createTrialSubscription`), sur le plan par défaut configuré
+(`app.billing.default-trial-plan-code`, `ESSENTIEL`) — aucun choix de plan n'est demandé à
+l'inscription (l'assistant de configuration qui le proposerait, cahier-des-charges.md §20.2,
+n'est pas construit, voir ROADMAP.md 1.3). Changement de plan possible après coup via
+`POST /api/v1/billing/checkout`.
+
+**Paiement** : Stripe Checkout (mode `subscription`) + webhook
+(`POST /api/v1/billing/webhooks/stripe`, authentifié uniquement par la signature
+`Stripe-Signature`, pas de JWT). `com.schoolsaas.billing.StripeGateway` est la seule
+frontière avec le SDK Stripe (`StripeGatewayImpl`) — permet aux tests de simuler Stripe sans
+appel réseau (Mockito, voir CLAUDE.md règle 4). Traitement webhook idempotent par upsert
+(`stripe_invoice_id`/`stripe_subscription_id`), pas de table d'événements déjà traités
+(Stripe peut redélivrer, rejouer ces mises à jour d'état est sans effet de bord).
+
+**Blocage progressif** (cahier-des-charges.md §4.2 : "lecture seule, puis blocage") : piloté
+par `Tenant.status` (`TRIAL → ACTIVE → READ_ONLY → SUSPENDED`/`CANCELLED`, déjà défini par
+ADR-001), pas par un statut séparé — `SubscriptionStatus` (`TRIALING/ACTIVE/PAST_DUE/
+CANCELED`) reste l'état "facturation" côté Stripe. `TenantAccessInterceptor` (MVC, après
+`TenantContextInterceptor`) bloque les écritures en `READ_ONLY` et tout en `SUSPENDED`/
+`CANCELLED`, sauf `/api/v1/auth/**`, `/api/v1/billing/**` et `/api/v1/tenants/register` (pour
+pouvoir encore se connecter et payer). La transition elle-même est faite par
+`TenantAccessLifecycleJob`, un job planifié horaire (pas un webhook) : la bascule "fin
+d'essai sans carte" n'a par nature aucun événement Stripe correspondant. Délais de grâce
+(`app.billing.past-due-grace-days` = 3, `read-only-grace-days` = 7) choisis comme point de
+départ raisonnable, **à confirmer avec le porteur de projet** — même traitement que la
+grille tarifaire de V4.
+
+**Hors périmètre 1.4 (explicitement différé, pas oublié)** : périodicité annuelle (le prix
+souscrit via Stripe Checkout est implicitement mensuel, pas de colonne `billing_cycle`),
+changement de plan avec proratisation, moyens de paiement locaux mobile money (voir ADR-003),
+back-office Super-Admin pour gérer `plans`/`stripe_price_id` (`/api/admin/plans`, Phase 2).
+
 ---
 
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)

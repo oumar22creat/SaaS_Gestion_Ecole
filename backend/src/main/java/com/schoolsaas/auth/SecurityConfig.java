@@ -41,6 +41,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/**",
                                 "/api/v1/admin/auth/**",
                                 "/api/v1/tenants/register",
+                                "/api/v1/billing/plans",
+                                "/api/v1/billing/webhooks/**",
                                 "/actuator/health",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

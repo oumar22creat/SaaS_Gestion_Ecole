@@ -340,3 +340,46 @@ explicites pour que la recherche par email reste bornée au tenant qu'on vient d
 **Prochaine étape :** ROADMAP.md → Phase 1.4 (abonnement de base) — tables plans/
 subscriptions/invoices, essai gratuit automatique, intégration Stripe (checkout + webhook),
 blocage progressif en cas d'échec de paiement.
+
+## [2026-09-14] — Session (Phase 1.4)
+**Tâche(s) réalisée(s) :** Abonnement de base, les 4 tâches de ROADMAP.md 1.4 traitées
+ensemble (décision explicite de l'utilisateur, plutôt que de les étaler comme pour 1.3).
+Tables `plans` (migration déjà présente en local, non committée, complétée), `subscriptions`,
+`invoices` — entités plateforme comme `tenants`, pas de `school_id`/RLS, filtrage manuel par
+`tenant_id` dans les repositories. Essai gratuit automatique (30 jours, plan `ESSENTIEL` par
+défaut) créé par `TenantRegistrationService` via `SubscriptionService`. Stripe Checkout
+(`POST /api/v1/billing/checkout`) + webhook (`POST /api/v1/billing/webhooks/stripe`, signature
+uniquement) via `StripeGateway`/`StripeGatewayImpl` (SDK `stripe-java` 33.4.2). Blocage
+progressif porté par `Tenant.status` (déjà `TRIAL/ACTIVE/READ_ONLY/SUSPENDED/CANCELLED`,
+défini dès la Phase 1.1 mais jamais encore branché) : `TenantAccessInterceptor` bloque les
+écritures en `READ_ONLY` et tout en `SUSPENDED`/`CANCELLED` (sauf auth/billing/inscription),
+`TenantAccessLifecycleJob` (planifié horaire) fait descendre les tenants d'un cran par
+exécution selon des délais de grâce configurables.
+**Décisions prises (et pourquoi) :** Voir ADR-009 (nouveau) dans `docs/ARCHITECTURE.md` pour
+le détail complet — résumé : devise XOF (marché cible Franc CFA, "zéro décimale" chez Stripe,
+donc pas de `*100`), un seul `Subscription` par tenant (pas d'historique de changement de
+plan), aucun choix de plan à l'inscription (l'essai démarre automatiquement sur `ESSENTIEL`,
+le changement se fait après coup via checkout), traitement webhook idempotent par upsert
+plutôt qu'une table d'événements déjà traités. Délais de grâce (3 jours "past due", 7 jours
+"lecture seule") et grille tarifaire XOF choisis comme point de départ raisonnable, **à
+confirmer avec le porteur de projet** — même traitement que les prix déjà présents dans la
+migration V4. Périodicité annuelle, proratisation de changement de plan, mobile money et
+back-office Super-Admin pour les plans sont explicitement hors périmètre (Phase 2/3).
+**Problèmes rencontrés / points de vigilance :**
+1. Le SDK `stripe-java` récent a changé la structure de `Invoice` : plus de
+   `getSubscription()` direct, l'id de l'abonnement est maintenant sous
+   `invoice.getParent().getSubscriptionDetails().getSubscription()` — vérifié en inspectant
+   le bytecode du jar (`javap`) plutôt que de deviner, avant d'écrire `StripeWebhookService`.
+2. Mockito (mock maker inline) ne peut pas mocker `com.stripe.model.Event` sur cet
+   environnement ("Could not modify all classes ... com.stripe.model.Event") — contourné en
+   construisant de VRAIS objets `Event` via `ApiResource.GSON.fromJson(json, Event.class)`
+   (le mécanisme interne réel du SDK, y compris le champ `api_version` qui doit correspondre
+   à `Stripe.API_VERSION` sous peine de désérialisation silencieusement vide), voir
+   `StripeWebhookServiceTest`. Seule `StripeGateway` (notre propre interface) reste mockée.
+3. `AbstractIntegrationTest` partage un seul conteneur Postgres entre TOUTES les classes de
+   test (pattern "Singleton Container", voir son javadoc) : `BillingCheckoutTest` mute
+   `stripe_price_id` sur le plan `STANDARD` (pas `ESSENTIEL`, dont d'autres tests dépendent
+   pour rester non-achetable) pour ne pas faire fuiter un état mutable entre classes.
+**Prochaine étape :** ROADMAP.md → Phase 1.5 (élèves, parents, enseignants, classes,
+matières) — CRUD élèves avec import CSV, CRUD parents/tuteurs + association aux élèves, CRUD
+enseignants, CRUD classes/matières + affectations.

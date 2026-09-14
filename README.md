@@ -97,6 +97,7 @@ Copier `backend/.env.example` vers `backend/.env` et ajuster :
 | `DB_ADMIN_USER` / `DB_ADMIN_PASSWORD` | Rôle superutilisateur, migrations Flyway uniquement | voir `docker-compose.yml` |
 | `JWT_SECRET` | Clé de signature des tokens | générer une valeur aléatoire, ne jamais committer |
 | `REDIS_URL` | URL Redis | `redis://localhost:6379` |
+| `CORS_ALLOWED_ORIGINS` | Origine(s) Web autorisées à appeler l'API (dev/staging uniquement) | `http://localhost:4200` |
 | `STRIPE_SECRET_KEY` | Clé API Stripe (mode test en local) | à récupérer sur le dashboard Stripe |
 | `STRIPE_WEBHOOK_SECRET` | Secret de vérification de signature du webhook Stripe | dashboard Stripe > Webhooks |
 | `STRIPE_CHECKOUT_SUCCESS_URL` / `STRIPE_CHECKOUT_CANCEL_URL` | Redirections après paiement Stripe Checkout | `http://localhost:4200/billing/success` |

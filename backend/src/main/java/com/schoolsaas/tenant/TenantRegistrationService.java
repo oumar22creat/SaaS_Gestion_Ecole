@@ -61,25 +61,31 @@ public class TenantRegistrationService {
         Tenant tenant = tenantRepository.save(
                 new Tenant(request.schoolName(), request.subdomain(), TenantStatus.TRIAL));
 
-        User admin = new User(
-                request.adminEmail(),
-                passwordEncoder.encode(request.adminPassword()),
-                request.adminFirstName(),
-                request.adminLastName(),
-                Role.ADMIN);
-        admin.setSchoolId(tenant.getId());
-        userRepository.save(admin);
-
-        subscriptionService.createTrialSubscription(tenant.getId());
-
         // Le contexte tenant n'est pas encore posé à ce stade (endpoint public, pas de JWT ni
-        // d'en-tête X-Tenant-Id) : sans lui (et sans activer le filtre Hibernate), la
-        // recherche par email dans login() ne serait pas bornée au tenant qu'on vient de créer
-        // (voir com.schoolsaas.common.TenantScopedEntity et docs/ARCHITECTURE.md ADR-001).
+        // d'en-tête X-Tenant-Id) : il doit être posé AVANT le premier INSERT dans `users`, pas
+        // seulement avant login(). Piège découvert en testant l'inscription contre un vrai
+        // Postgres avec le rôle applicatif restreint (pas le superutilisateur des tests
+        // Testcontainers, qui contourne silencieusement RLS — voir ADR-001 Piège 4) : la
+        // politique RLS sur `users` n'a pas de clause WITH CHECK explicite, donc Postgres
+        // réutilise la clause USING (`school_id = current_setting('app.tenant_id', true)`)
+        // comme condition d'insertion — sans `app.tenant_id` déjà positionné, l'INSERT de
+        // l'Administrateur initial était rejeté par RLS avant même d'atteindre login().
         TenantContext.set(tenant.getId());
         AuthService.TokenPair tokens;
         try {
             tenantSessionConfigurer.applyTenant(tenant.getId());
+
+            User admin = new User(
+                    request.adminEmail(),
+                    passwordEncoder.encode(request.adminPassword()),
+                    request.adminFirstName(),
+                    request.adminLastName(),
+                    Role.ADMIN);
+            admin.setSchoolId(tenant.getId());
+            userRepository.save(admin);
+
+            subscriptionService.createTrialSubscription(tenant.getId());
+
             tokens = authService.login(request.adminEmail(), request.adminPassword());
         } finally {
             TenantContext.clear();

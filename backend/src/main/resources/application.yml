@@ -35,6 +35,11 @@ app:
     secret: ${JWT_SECRET:dev-only-insecure-secret-do-not-use-in-production-min-32-bytes}
     access-token-ttl-minutes: 15
     refresh-token-ttl-days: 30
+  cors:
+    # Origines autorisées à appeler l'API depuis un navigateur. Utile seulement en dev/
+    # staging (Web sur une origine différente du backend, ex. `ng serve` sur :4200) — en
+    # production, Nginx sert Web+API sur le même domaine, voir README.md "Environnements".
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
   billing:
     # Cycle de vie de l'abonnement (cahier-des-charges.md §4.2) — valeurs par défaut à
     # confirmer avec le porteur de projet, voir docs/ARCHITECTURE.md ADR-009.

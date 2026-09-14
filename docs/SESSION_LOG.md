@@ -420,3 +420,18 @@ date de début/fin ni d'exceptions ponctuelles (annulation, remplacement — hor
 `TestAuthSupport.withTenant`.
 **Prochaine étape :** ROADMAP.md → Phase 1.7 (absences) — feuille d'appel, motifs/
 justificatifs/historique, notification au parent.
+
+## [2026-09-14] — Session (Phase 1.7)
+**Tâche(s) réalisée(s) :** Les 3 tâches de ROADMAP.md 1.7. Module `attendance/` :
+`AttendanceRecord` (un statut par élève et par jour), feuille d'appel en une requête
+(`POST /api/v1/attendance/roll-call`), historique des modifications (`AttendanceRecordChange`,
+instantané de l'état précédent à chaque `update`), notification parent via une passerelle
+`ParentNotificationGateway`.
+**Décisions prises (et pourquoi) :** Voir ADR-012 (nouveau) — résumé : granularité par jour
+(pas par cours), notification parent implémentée comme un simple log (`LoggingParent-
+NotificationGateway`) car ni Redis ni FCM ne sont câblés au backend (FCM est explicitement
+Phase 2 dans ROADMAP.md §16) — pattern identique à `StripeGateway` pour permettre de
+brancher la vraie implémentation plus tard sans toucher au service.
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau.
+**Prochaine étape :** ROADMAP.md → Phase 1.8 (notes) — CRUD évaluations et notes, calcul
+automatique des moyennes.

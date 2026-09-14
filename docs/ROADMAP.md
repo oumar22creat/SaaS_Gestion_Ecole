@@ -70,9 +70,9 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 - [x] Détection des conflits (salle/enseignant/classe déjà occupés)
 
 ### 1.7 Absences
-- [ ] Feuille d'appel (interface rapide, pensée mobile)
-- [ ] Motifs, justificatifs, historique
-- [ ] Notification au parent
+- [x] Feuille d'appel (interface rapide, pensée mobile)
+- [x] Motifs, justificatifs, historique
+- [x] Notification au parent
 
 ### 1.8 Notes
 - [ ] CRUD évaluations et notes

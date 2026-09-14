@@ -233,6 +233,29 @@ d'exceptions ponctuelles ("annulation exceptionnelle", "remplacement d'enseignan
 hebdomadaire/par classe/par enseignant couvertes par un simple filtre query param
 (`schoolClassId`/`teacherId`) sur la liste, pas des endpoints dédiés.
 
+### ADR-012 — Absences et notification parent (décidé, Phase 1.7)
+**Décision** : `AttendanceRecord` (package `attendance`) est scopé **par jour**, pas par
+créneau/cours (`UNIQUE(student_id, date)`) — un seul statut par élève et par jour. Feuille
+d'appel = `POST /api/v1/attendance/roll-call` (tout un `schoolClassId` + `date` + liste
+d'élèves en une seule requête, pensé pour l'usage mobile "rapide" du cahier §10), upsert par
+élève. Historique des modifications : `AttendanceRecordChange` capture un instantané de
+l'état PRÉCÉDENT à chaque `update`, consultable via `GET /api/v1/attendance/{id}/history`.
+
+**Notification au parent** : `ParentNotificationGateway` (interface, même pattern que
+`StripeGateway` pour la facturation) est appelée dès qu'un enregistrement passe à un statut
+≠ `PRESENT`. Implémentation par défaut `LoggingParentNotificationGateway` : trace
+l'intention en log, **n'envoie rien réellement** — l'envoi FCM (ROADMAP.md Phase 2 §16)
+n'est pas encore câblé (ni Redis ni FCM ne sont intégrés au backend à ce stade). Le champ
+`parent_notified` empêche une re-notification en boucle sur des mises à jour ultérieures du
+même enregistrement (limite connue : après une première notification, une correction
+ultérieure ne redéclenche pas d'alerte même si le statut redevient "non présent" après un
+passage par `PRESENT` — acceptable pour ce MVP).
+
+**Hors périmètre 1.7 (explicitement différé)** : statistiques d'absences par élève/classe/
+période (cahier §10 — couvert par le tableau de bord de ROADMAP.md 1.9), suivi par créneau/
+cours plutôt que par jour, règles de notification configurables par établissement (une seule
+règle fixe : notifier à chaque absence/retard/départ anticipé).
+
 ---
 
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)

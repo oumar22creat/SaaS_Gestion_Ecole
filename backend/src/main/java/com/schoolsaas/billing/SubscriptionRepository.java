@@ -17,4 +17,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
     /** Abonnements en échec de paiement depuis {@code threshold} (voir docs/ARCHITECTURE.md ADR-009). */
     List<Subscription> findAllByStatusAndPaymentFailedAtBefore(SubscriptionStatus status, Instant threshold);
+
+    long countByStatus(SubscriptionStatus status);
+
+    List<Subscription> findAllByStatus(SubscriptionStatus status);
 }

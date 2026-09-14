@@ -161,10 +161,22 @@ un test de régression qui échoue sans le correctif.
       reste un remplacement d'implémentation, pas un changement d'appelants
 
 ### 2.6 Dashboard Super-Admin
-- [ ] Nombre d'établissements actifs/en essai/suspendus/résiliés
-- [ ] Revenu récurrent mensuel (MRR) et annuel (ARR)
-- [ ] Taux de churn et taux de conversion essai → abonnement payant
-- [ ] Écran Web réservé au rôle Super-Administrateur
+- [x] Nombre d'établissements actifs/en essai/suspendus/résiliés
+- [x] Revenu récurrent mensuel (MRR) et annuel (ARR)
+- [x] Taux de churn et taux de conversion essai → abonnement payant — **taux cumulés depuis
+      l'origine**, pas des cohortes par période (aucun historique d'événements d'abonnement,
+      voir ADR-021)
+- [ ] Écran Web réservé au rôle Super-Administrateur — **hors périmètre de cette tâche** :
+      `GET /api/v1/admin/dashboard/summary` existe et est testé côté backend, mais aucun
+      frontend Super-Admin n'a été construit (le shell Angular actuel est pour les rôles
+      staff d'un tenant, pas pour `PlatformAdmin`) ; à traiter comme une tâche frontend dédiée
+
+**État au 2026-09-14** : Phase 2 backend complète et testée (87/87 tests) — bulletins avec
+export PDF, bibliothèque de documents, cahier de textes/devoirs, messagerie interne avec
+annonces, registre centralisé de notifications (ADR-020, FCM non câblé) et dashboard
+Super-Admin (ADR-021, écran Web non construit). Chaque module a son test d'isolation
+cross-tenant (au niveau HTTP quand l'endpoint accepte un id, au niveau du filtre Hibernate
+sinon — voir `notification-preferences`/`PlatformDashboardTest`).
 
 **Critère de sortie de Phase 2** : mêmes garde-fous que la Phase 1 — chaque module testé
 (y compris isolation cross-tenant), documenté, et son périmètre réel (vs. différé) explicite

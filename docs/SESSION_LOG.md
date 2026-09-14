@@ -610,3 +610,20 @@ scopé à l'utilisateur courant du JWT), donc pas de surface d'attaque cross-ten
 Suite complète : 85/85 tests passent.
 **Prochaine étape :** ROADMAP.md Phase 2.6 (dashboard Super-Admin — dernière sous-phase de la
 Phase 2).
+
+## [2026-09-14] — Session (Phase 2.6 — dashboard Super-Admin)
+**Tâche(s) réalisée(s) :** `PlatformDashboardService`/`PlatformDashboardController`
+(`GET /api/v1/admin/dashboard/summary`, réservé `SUPER_ADMIN`) : établissements par statut,
+MRR/ARR (somme des prix des plans des abonnements `ACTIVE`), taux de churn/conversion.
+**Décisions prises (et pourquoi) :** Voir ADR-021 (nouveau) — résumé : churn/conversion sont
+des taux cumulés depuis l'origine, pas des cohortes par période (aucun historique
+d'événements d'abonnement conservé, construire cet historique est hors périmètre et
+disproportionné pour ce MVP). Écran Web Super-Admin explicitement différé : l'endpoint
+backend est prêt et testé, mais aucun frontend ne le consomme encore.
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau. Test d'accès RBAC ajouté
+(un utilisateur staff standard reçoit 403 sur cet endpoint). Suite complète : 87/87 tests
+passent.
+**Prochaine étape :** Phase 2 backend entièrement terminée et testée. Deux sujets restent
+explicitement ouverts avant la Phase 3 (voir docs/ARCHITECTURE.md "Points ouverts") : l'écran
+Web Super-Admin et l'intégration FCM réelle. Sinon, passer à ROADMAP.md Phase 3 (à détailler
+en tâches fines, comme fait pour les Phases 1 et 2 avant de les démarrer).

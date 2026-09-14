@@ -459,7 +459,36 @@ que `NEW_MESSAGE` (types distincts, permettant un opt-out séparé).
 `GradeService`/`DocumentService`/`TenantAccessLifecycleJob` ne les déclenchent pas encore —
 ne pas anticiper leur contenu métier exact, non demandé dans cette tâche).
 
+### ADR-021 — Dashboard Super-Admin (décidé, Phase 2.6)
+**Décision** : `PlatformDashboardService`/`PlatformDashboardController` (package
+`statistics`, distinct de `DashboardService` qui reste le tableau de bord *établissement*) —
+endpoint `GET /api/v1/admin/dashboard/summary`, `@PreAuthorize("hasRole('SUPER_ADMIN')")`
+(même mécanisme d'authentification que `AdminAuthController`/`PlatformAdmin`, ADR-008).
+Compte les tenants par `TenantStatus` (TRIAL/ACTIVE/READ_ONLY/SUSPENDED/CANCELLED). MRR =
+somme de `Plan.priceCents` pour chaque `Subscription` au statut `ACTIVE` ; ARR = MRR × 12 ;
+`currency` prise sur le premier plan actif rencontré (tous les plans du catalogue sont en
+XOF pour l'instant, voir ADR-009 — pas de gestion multi-devises simultanée pour ce MVP).
+
+**Churn/conversion = taux cumulés, pas des cohortes par période** : `churnRate` =
+abonnements `CANCELED` / total des abonnements jamais créés ; `conversionRate` = abonnements
+`ACTIVE` / total. Aucune table d'historique d'événements d'abonnement n'existe pour calculer
+un taux "sur les 30 derniers jours" ou par cohorte de trial — construire cet historique est
+un sujet à part (event sourcing ou table d'audit dédiée), non demandé dans cette tâche et
+disproportionné pour un MVP à ce stade. Documenté explicitement ici pour qu'un futur lecteur
+ne prenne pas ces taux pour des cohortes temporelles.
+
+**Hors périmètre 2.6** : ventilation temporelle (évolution MRR mois par mois), export, et
+tout graphique — seuls les agrégats bruts demandés par le cahier des charges §5/§18 sont
+exposés ; l'écran Web réservé au Super-Administrateur consommant cet endpoint n'est pas
+construit dans cette tâche (aucun frontend Web Super-Admin n'existe encore, seul le shell
+Angular établissement de la Phase 1 a été construit) — à faire dans une tâche frontend
+séparée, comme pour toute l'API backend de la Phase 2.
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
+- **Écran Web Super-Admin non construit** — `GET /api/v1/admin/dashboard/summary` (ADR-021)
+  existe côté backend et est testé, mais aucun frontend ne le consomme : le shell Angular
+  actuel (Phase 1) est établi pour les rôles staff d'un tenant, pas pour `PlatformAdmin`
+  (hors tenant). À construire comme une tâche frontend dédiée.
 - **Firebase Cloud Messaging non câblé** — `LoggingNotificationGateway` (ADR-020) est la
   seule implémentation de `NotificationGateway` ; aucun credential FCM disponible dans cet
   environnement. Brancher FCM reste un remplacement d'implémentation, pas un changement

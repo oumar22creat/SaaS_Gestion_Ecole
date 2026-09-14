@@ -52,6 +52,10 @@ app:
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
     checkout-success-url: ${STRIPE_CHECKOUT_SUCCESS_URL:http://localhost:4200/billing/success}
     checkout-cancel-url: ${STRIPE_CHECKOUT_CANCEL_URL:http://localhost:4200/billing/cancel}
+  storage:
+    # Stockage local (dev/MVP) — voir docs/ARCHITECTURE.md ADR-017. S3 réel non câblé (pas de
+    # credentials) : brancher un StorageGateway S3 reste un remplacement d'implémentation.
+    local-path: ${STORAGE_LOCAL_PATH:./storage}
 
 server:
   port: 8080

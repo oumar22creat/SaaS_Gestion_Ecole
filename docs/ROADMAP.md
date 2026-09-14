@@ -125,10 +125,10 @@ un test de régression qui échoue sans le correctif.
       de paramétrage établissement (cahier §6), pas avant
 
 ### 2.2 Documents (bibliothèque)
-- [ ] Upload/consultation de documents par matière, classe ou service
-- [ ] Droits de consultation par rôle
-- [ ] Association à un cours/devoir (référencé par les modules 2.3/2.4)
-- [ ] Archivage/suppression
+- [x] Upload/consultation de documents par matière, classe ou service
+- [x] Droits de consultation par rôle
+- [x] Association à un cours/devoir (référencé par les modules 2.3/2.4)
+- [x] Archivage/suppression
 - [ ] Stockage objet S3-compatible avec quota par tenant : **stockage local en dev/MVP**
       (pas de credentials S3 disponibles) derrière une interface `StorageGateway`, même
       pattern que `StripeGateway`/`ParentNotificationGateway` — bascule S3 sans changer les

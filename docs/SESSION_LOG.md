@@ -545,3 +545,19 @@ de `NumberUtils.round2` (dupliqué 2x avant ce module, 3x aurait été trop).
 JPQL `@Modifying`. Détail complet dans ADR-016.
 **Prochaine étape :** ROADMAP.md Phase 2.2 (bibliothèque de documents) — nécessaire avant
 2.3/2.4 qui y référencent des pièces jointes.
+
+## [2026-09-14] — Session (Phase 2.2 — bibliothèque de documents)
+**Tâche(s) réalisée(s) :** Module `document/` — upload/consultation par matière/classe/
+service, droits de consultation par rôle, archivage (suppression contrôlée), stockage
+derrière `StorageGateway` (implémentation locale par défaut).
+**Décisions prises (et pourquoi) :** Voir ADR-017 (nouveau) — résumé : aucune ligne de
+`document_visible_roles` = visible par tout rôle staff (pas de matrice de permissions
+complète), suppression = archivage réversible, quota de stockage par tenant explicitement
+différé (le modèle `Plan` n'a pas de champ de quota).
+**Problèmes rencontrés / points de vigilance :** Protection anti-traversée de répertoire
+dans `LocalDiskStorageGateway` : comparer un chemin racine non normalisé
+(`Path.of("./storage")`) à un chemin résolu normalisé/absolutisé rejetait à tort une clé de
+stockage pourtant légitime — corrigé en normalisant/absolutisant les deux côtés avant
+comparaison.
+**Prochaine étape :** ROADMAP.md Phase 2.3 (cahier de textes et devoirs), qui référence des
+documents comme pièces jointes.

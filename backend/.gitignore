@@ -5,3 +5,5 @@ target/
 *.iml
 .vscode/
 .DS_Store
+# Stockage local des documents uploadés (dev/MVP, voir docs/ARCHITECTURE.md ADR-017)
+storage/

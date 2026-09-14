@@ -379,7 +379,32 @@ n'existe pas encore (cahier §6, pas construit).
 arrondi à 2 décimales était dupliqué à l'identique dans `GradeService` et `DashboardService`
 avant l'ajout de ce troisième usage dans `ReportCardService`.
 
+### ADR-017 — Bibliothèque de documents (décidé, Phase 2.2)
+**Décision** : `Document` (portée `SUBJECT`/`CLASS`/`SERVICE`, exactement une des trois
+selon une contrainte CHECK) + `DocumentVisibleRole` (droits de consultation — aucune ligne =
+visible par tout rôle staff du tenant, simplification MVP plutôt qu'une matrice de
+permissions complète). Stockage derrière `StorageGateway` (même pattern que
+`StripeGateway`/`ParentNotificationGateway`) : `LocalDiskStorageGateway` par défaut (dev/MVP,
+pas de credentials S3) — brancher S3 reste un remplacement d'implémentation, pas un
+changement d'appelants. `storage_key` est une clé opaque (UUID + nom assaini), jamais un
+chemin de fichier exposé côté API ; protection anti-traversée de répertoire dans
+`LocalDiskStorageGateway#resolveWithinRoot` (chemins normalisés + absolutisés avant
+comparaison — piège rencontré : comparer un chemin racine non normalisé à un chemin résolu
+normalisé peut échouer même pour une clé légitime).
+
+**Suppression** = archivage (`archived = true`, sort des listes), pas de suppression
+physique pour ce MVP — cahier §14 parle de "suppression contrôlée", cohérent avec un
+archivage réversible plutôt qu'une perte de données irréversible.
+
+**Hors périmètre 2.2 (explicitement différé)** : quota de stockage par tenant selon le plan
+souscrit (cahier §14) — `Plan` n'a pas de champ de quota, ajouter cette contrainte suppose
+d'abord d'étendre le modèle de facturation (ADR-009), pas fait ici pour ne pas mélanger les
+deux sujets.
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
+- **Quota de stockage documentaire par tenant** (cahier §14) — `Plan` n'a pas de champ de
+  quota, `StorageGateway` (ADR-017) n'applique aucune limite. À trancher avant l'ouverture
+  publique du module documents en dehors d'un cadre de démo/dev.
 - **`GET /api/v1/tenants/current/branding` n'existe pas côté backend** — le frontend
   (`TenantBrandingService`, Phase 0, Web + Mobile) l'appelle au démarrage mais reçoit 404
   (auparavant 500, voir ADR-015 Bug 2), tombe systématiquement sur son fallback "branding

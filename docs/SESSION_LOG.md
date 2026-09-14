@@ -627,3 +627,24 @@ passent.
 explicitement ouverts avant la Phase 3 (voir docs/ARCHITECTURE.md "Points ouverts") : l'écran
 Web Super-Admin et l'intégration FCM réelle. Sinon, passer à ROADMAP.md Phase 3 (à détailler
 en tâches fines, comme fait pour les Phases 1 et 2 avant de les démarrer).
+
+## [2026-09-14] — Session (Phase 3 détaillée en sous-tâches + Phase 3.1 — vie scolaire)
+**Tâche(s) réalisée(s) :** Détail de ROADMAP.md Phase 3 en sous-phases 3.1 à 3.7 (comme fait
+pour les Phases 1 et 2 avant de les démarrer), avec deux points bloquants identifiés et
+documentés (fournisseur mobile money pour 3.3, dépendance portail parent pour 3.4). Puis
+implémentation de 3.1 (vie scolaire) : nouveau package `discipline` — incidents (multi-élèves),
+sanctions rattachées à un incident+élève, convocations, observations, historique par élève,
+statistiques par classe/période.
+**Décisions prises (et pourquoi) :** Voir ADR-022 (nouveau) — résumé : "Exclusions" du cahier
+§17 = un type de sanction (`EXPULSION`), pas une entité séparée ; RBAC différencié (`TEACHER`
+peut constater/déclarer, seuls `ADMIN`/`DIRECTION`/`VIE_SCOLAIRE` décident une sanction ou une
+convocation) ; notification automatique aux parents explicitement hors périmètre (pas de
+compte parent, ADR-010).
+**Problèmes rencontrés / points de vigilance :** Aucun nouveau. Deux sous-phases suivantes
+(3.3 Comptabilité/mobile money, 3.4 Cantine) ont un point bloquant nécessitant une décision de
+l'utilisateur avant de commencer — ne pas deviner silencieusement un fournisseur de paiement
+ou improviser un portail parent (voir docs/ARCHITECTURE.md "Points ouverts"). Suite complète :
+90/90 tests passent.
+**Prochaine étape :** ROADMAP.md Phase 3.2 (statistiques avancées) — aucun point bloquant,
+peut démarrer directement. Poser les questions bloquantes de 3.3/3.4 à l'utilisateur avant
+de les aborder.

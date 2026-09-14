@@ -183,15 +183,68 @@ sinon — voir `notification-preferences`/`PlatformDashboardTest`).
 avant de passer à la Phase 3.
 
 ## Phase 3 — Administration avancée et modules complémentaires
-*(à détailler en tâches fines une fois la Phase 2 terminée)*
 
-- [ ] Vie scolaire (incidents, sanctions, convocations)
-- [ ] Statistiques avancées
-- [ ] Comptabilité et frais scolaires + paiement local (mobile money)
-- [ ] Cantine
-- [ ] Bibliothèque (emprunts/retours)
-- [ ] Transport scolaire
-- [ ] Domaine personnalisé et branding avancé (plan Premium)
+### 3.1 Vie scolaire (cahier §17)
+- [x] Incidents (élève(s) concerné(s), classe, gravité, description, déclarant)
+- [x] Sanctions et punitions rattachées à un incident (type, quantité/durée) — "Exclusions"
+      (bullet séparé du cahier) = `SanctionType.EXPULSION`, pas une entité à part (ADR-022)
+- [x] Convocations (élève/parent, motif, date, statut)
+- [x] Observations (positives/négatives) et historique disciplinaire par élève
+- [x] Statistiques de vie scolaire (incidents par classe/période, répartition par type/sévérité)
+- [ ] Notification automatique aux parents lors d'une sanction/convocation : **hors périmètre**
+      (aucun compte parent, ADR-010 ; registre de notifications ADR-020 non branché ici, pas
+      demandé explicitement pour ce module contrairement aux absences en 1.7)
+
+### 3.2 Statistiques avancées (cahier §18)
+- [ ] Évolution des résultats dans le temps (moyennes par classe/matière sur plusieurs périodes)
+- [ ] Rapports exportables (CSV/PDF), au-delà du résumé de base du dashboard établissement (1.9)
+- [ ] Usage global plateforme pour le Super-Admin (stockage, notifications envoyées,
+      utilisateurs actifs) — étend le dashboard Super-Admin (2.6/ADR-021)
+
+### 3.3 Comptabilité et frais scolaires (cahier §19.4 + §4.3)
+- [ ] Grille tarifaire des frais de scolarité par niveau/classe
+- [ ] Échéancier de paiement pour les familles
+- [ ] Génération de reçus et factures (distinctes des factures d'abonnement SaaS du module `billing`)
+- [ ] Rapprochement avec les moyens de paiement intégrés
+- [ ] Reporting financier consolidé pour Direction/Comptable
+- [ ] Paiement mobile money local (cahier §4.3) — **bloqué : fournisseur à confirmer avec
+      l'utilisateur avant toute implémentation** (marché cible + fournisseur non tranchés,
+      voir docs/ARCHITECTURE.md "Points ouverts" ; Stripe couvre aujourd'hui uniquement
+      l'abonnement SaaS, pas les frais de scolarité payés par les familles)
+
+### 3.4 Cantine (cahier §19.1)
+- [ ] Gestion des menus et régimes alimentaires particuliers
+- [ ] Réservation des repas — **bloqué en l'état** : "par les parents" (cahier §19.1) suppose
+      un portail parent, explicitement différé depuis l'ADR-010 (Phase 1.5) ; à confirmer avec
+      l'utilisateur — construire un portail parent minimal maintenant, ou scoper la réservation
+      côté staff seulement pour cette passe
+- [ ] Facturation liée à la consommation réelle
+- [ ] Suivi des impayés
+
+### 3.5 Bibliothèque (cahier §19.3)
+- [ ] Catalogue des ouvrages (codes-barres/ISBN)
+- [ ] Emprunts et retours avec relances automatiques
+- [ ] Réservations et liste d'attente
+
+### 3.6 Transport scolaire (cahier §19.2)
+- [ ] Gestion des lignes et arrêts de bus
+- [ ] Affectation des élèves aux circuits
+- [ ] Facturation du service
+- [ ] Suivi de présence à bord via QR/NFC : **hors périmètre ici** — cahier §19.2 le renvoie
+      lui-même à la section 30/Phase 4 ("QR code pour la présence")
+
+### 3.7 Domaine personnalisé et branding avancé — plan Premium (cahier §2.3/§2.4/§4.1)
+- [ ] Domaine personnalisé (custom domain) pointant vers la plateforme
+- [ ] Modèle de bulletin personnalisable (en-tête, mentions légales de l'établissement)
+- [ ] Templates de notification/e-mail personnalisables par établissement
+- [ ] Feature flags par tenant selon le plan souscrit (cantine/transport/bibliothèque en
+      option Standard, inclus Premium — grille §4.1)
+
+**Critère de sortie de Phase 3** : mêmes garde-fous que les Phases 1 et 2 — chaque module
+testé (isolation cross-tenant comprise), documenté, périmètre réel (vs. différé) explicite.
+Deux sous-phases (3.3, 3.4) ont un point bloquant nécessitant une décision utilisateur avant
+codage — à lever avant de les démarrer plutôt que de deviner silencieusement (voir CLAUDE.md
+"Comment démarrer une session de travail", point 4).
 
 ## Phase 4 — Innovation et scalabilité
 *(à détailler en tâches fines une fois la Phase 3 terminée)*

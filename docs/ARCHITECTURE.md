@@ -484,7 +484,46 @@ construit dans cette tâche (aucun frontend Web Super-Admin n'existe encore, seu
 Angular établissement de la Phase 1 a été construit) — à faire dans une tâche frontend
 séparée, comme pour toute l'API backend de la Phase 2.
 
+### ADR-022 — Vie scolaire (décidé, Phase 3.1)
+**Décision** : nouveau package `discipline` (cité nommément dans CLAUDE.md, jamais construit
+avant cette tâche) : `Incident` (rattaché à une classe, plusieurs élèves possibles via
+`IncidentStudent` — même pattern many-to-many que `ConversationParticipant`, ADR-019),
+`Sanction` (toujours rattachée à un incident ET à un élève précis parmi ceux déclarés
+concernés — validé côté service, `400 STUDENT_NOT_IN_INCIDENT` sinon), `Convocation`
+(élève et/ou parent, statut `SCHEDULED`/`DONE`/`CANCELLED`/`NO_SHOW`), `Observation`
+(positive/négative, indépendante d'un incident). "Exclusions" (cahier §17, bullet séparé de
+"Sanctions et punitions") n'est PAS une entité à part : c'est `SanctionType.EXPULSION`, un
+type de sanction comme un autre — les deux bullets du cahier décrivent le même concept
+fonctionnel à deux niveaux de sévérité, pas deux workflows différents.
+
+**RBAC différencié par acte** (le rôle `VIE_SCOLAIRE` existe depuis l'ADR-008 mais n'était
+utilisé par aucun endpoint avant cette tâche) : `TEACHER` peut déclarer un incident ou une
+observation (il est souvent le témoin direct), mais seuls `ADMIN`/`DIRECTION`/`VIE_SCOLAIRE`
+peuvent décider une sanction ou une convocation — décision disciplinaire réservée à
+l'autorité de l'établissement, pas à qui a constaté les faits.
+
+**"Historique disciplinaire par élève"** (cahier §17) = vue agrégée
+(`StudentDisciplineHistoryResponse` : sanctions + observations + convocations triées), pas
+une nouvelle entité — les incidents eux-mêmes n'y figurent pas directement (ils sont
+consultés par classe/période via `GET /discipline/incidents`, un élève y apparaît via
+`IncidentStudent`). **Statistiques de vie scolaire** = agrégat par classe et période
+(nombre d'incidents par sévérité, sanctions par type), pas de ventilation par élève ni
+d'export — cohérent avec le niveau d'agrégation de `DashboardService` (ADR-014).
+
+**Hors périmètre 3.1** : notification automatique aux parents lors d'une sanction/convocation
+— aucun compte parent (ADR-010), le registre de notifications (ADR-020) n'est pas branché
+ici, non demandé dans cette tâche (contrairement aux absences, où la notification est un
+point du cahier §10 explicitement demandé en 1.7).
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
+- **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3)** — cahier §4.3
+  demande "des moyens de paiement locaux mobile money selon le marché", mais ni le marché
+  cible ni le fournisseur (Orange Money, MTN MoMo, Wave, agrégateur...) ne sont tranchés.
+  Bloquant : à poser à l'utilisateur avant de commencer 3.3, ne pas deviner.
+- **Réservation de repas "par les parents" (ROADMAP.md 3.4)** — suppose un portail parent
+  (compte `User` lié à un `Parent`), explicitement différé depuis l'ADR-010. Bloquant : à
+  clarifier avec l'utilisateur avant de commencer 3.4 (construire un portail minimal, ou
+  scoper la réservation côté staff pour cette passe).
 - **Écran Web Super-Admin non construit** — `GET /api/v1/admin/dashboard/summary` (ADR-021)
   existe côté backend et est testé, mais aucun frontend ne le consomme : le shell Angular
   actuel (Phase 1) est établi pour les rôles staff d'un tenant, pas pour `PlatformAdmin`

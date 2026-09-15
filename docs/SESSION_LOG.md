@@ -738,3 +738,34 @@ pour être reconsidérée si un 4ᵉ cas apparaît.
 passent.
 **Prochaine étape :** ROADMAP.md Phase 3.7 (domaine personnalisé et branding avancé, plan
 Premium) — dernier item de la Phase 3.
+
+## [2026-09-15] — Session (Phase 3.7 — domaine personnalisé, branding avancé, feature flags, templates de notification)
+**Tâche(s) réalisée(s) :** Repris une implémentation déjà en cours mais non testée
+(`TenantSettingsController`, `PlanFeature*`, migrations V50/V51) : ajouté les tests manquants
+(`TenantSettingsTest`, `PlanFeatureInterceptorTest`) exigés par CLAUDE.md règle 4, ce qui a
+révélé un bug réel — les mutations de branding/bulletin/domaine personnalisé n'étaient jamais
+persistées (setters appelés hors transaction, sans `save()`). Corrigé en extrayant
+`TenantSettingsService` (`@Transactional` + `save()` explicite, même convention que
+`TenantRegistrationService`/`SubscriptionService`) ; le contrôleur ne fait plus que déléguer.
+Puis terminé le dernier item de la Phase 3.7 : templates de notification/e-mail
+personnalisables par établissement (`NotificationTemplate`, migration V52,
+`NotificationTemplateController/Service`, intégré à `NotificationDispatcher` sans changer sa
+signature côté appelants), avec `NotificationTemplateTest` couvrant RBAC, validation du
+placeholder `{message}`, et l'effet réel sur un envoi (via `LibraryOverdueReminderJob`).
+**Décisions prises (et pourquoi) :** Voir ADR-028 (nouveau) — résumés : `GET /branding` public
+et non enveloppé dans `ApiResponse` (compatibilité avec le contrat frontend déjà écrit,
+`TenantBrandingService.init()`) ; feature flags par plan traités comme "inclus dès abonnement
+actif sur ce plan", pas d'achat à la carte ; `PlanFeatureInterceptor` fail-closed sur
+`/api/v1/{canteen,transport,library}` (a nécessité de mettre à jour
+`TestAuthSupport`/CanteenTest/LibraryTest/TransportTest pour accorder explicitement le plan
+Premium aux tenants de test, sinon 403).
+**Problèmes rencontrés / points de vigilance :** Le bug de persistance ci-dessus n'aurait pas
+été détecté sans écrire les tests d'abord — les endpoints répondaient 200 avec les bonnes
+valeurs en mémoire (donc "semblaient" fonctionner en test manuel superficiel), seule une
+relecture (GET après PUT, requête séparée) le révélait. Suite complète : 109/109 tests
+passent.
+**Prochaine étape :** Phase 3 terminée (tous les items non cochés restants sont des exclusions
+de périmètre déjà documentées, voir ROADMAP.md). Prochaine session : détailler la Phase 4 en
+tâches fines (cahier §26/§30), en commençant par le point le plus structurant à trancher avec
+l'utilisateur (hébergement de production, cloud/région — voir ARCHITECTURE.md "Points
+ouverts").

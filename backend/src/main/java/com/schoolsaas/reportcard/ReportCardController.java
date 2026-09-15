@@ -11,6 +11,9 @@ import com.schoolsaas.schoolclass.SchoolClassService;
 import com.schoolsaas.student.StudentService;
 import com.schoolsaas.subject.Subject;
 import com.schoolsaas.subject.SubjectRepository;
+import com.schoolsaas.tenant.Tenant;
+import com.schoolsaas.tenant.TenantContext;
+import com.schoolsaas.tenant.TenantRepository;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -42,18 +45,21 @@ public class ReportCardController {
     private final StudentService studentService;
     private final SchoolClassService schoolClassService;
     private final SubjectRepository subjectRepository;
+    private final TenantRepository tenantRepository;
 
     public ReportCardController(
             ReportCardService reportCardService,
             ReportCardPdfExporter pdfExporter,
             StudentService studentService,
             SchoolClassService schoolClassService,
-            SubjectRepository subjectRepository) {
+            SubjectRepository subjectRepository,
+            TenantRepository tenantRepository) {
         this.reportCardService = reportCardService;
         this.pdfExporter = pdfExporter;
         this.studentService = studentService;
         this.schoolClassService = schoolClassService;
         this.subjectRepository = subjectRepository;
+        this.tenantRepository = tenantRepository;
     }
 
     @PostMapping("/generate")
@@ -105,12 +111,15 @@ public class ReportCardController {
                 .stream()
                 .collect(Collectors.toMap(Subject::getId, s -> s));
 
+        Tenant tenant = tenantRepository.findById(TenantContext.get())
+                .orElseThrow(() -> ApiException.notFound("TENANT_NOT_FOUND", "Établissement introuvable"));
         byte[] pdf = pdfExporter.export(
                 reportCard,
                 entries,
                 studentService.getById(reportCard.getStudentId()),
                 schoolClassService.getById(reportCard.getSchoolClassId()),
-                subjectsById);
+                subjectsById,
+                tenant);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)

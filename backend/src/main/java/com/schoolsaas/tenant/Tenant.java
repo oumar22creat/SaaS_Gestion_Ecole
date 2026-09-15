@@ -32,6 +32,24 @@ public class Tenant {
     @Column(nullable = false)
     private TenantStatus status;
 
+    @Column(name = "logo_url")
+    private String logoUrl;
+
+    @Column(name = "primary_color", nullable = false)
+    private String primaryColor = "#3880ff";
+
+    @Column(name = "secondary_color", nullable = false)
+    private String secondaryColor = "#3dc2ff";
+
+    @Column(name = "custom_domain", unique = true)
+    private String customDomain;
+
+    @Column(name = "report_card_header")
+    private String reportCardHeader;
+
+    @Column(name = "report_card_legal_mentions")
+    private String reportCardLegalMentions;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -63,6 +81,54 @@ public class Tenant {
 
     public void setStatus(TenantStatus status) {
         this.status = status;
+    }
+
+    public String getLogoUrl() {
+        return logoUrl;
+    }
+
+    public void setLogoUrl(String logoUrl) {
+        this.logoUrl = logoUrl;
+    }
+
+    public String getPrimaryColor() {
+        return primaryColor;
+    }
+
+    public void setPrimaryColor(String primaryColor) {
+        this.primaryColor = primaryColor;
+    }
+
+    public String getSecondaryColor() {
+        return secondaryColor;
+    }
+
+    public void setSecondaryColor(String secondaryColor) {
+        this.secondaryColor = secondaryColor;
+    }
+
+    public String getCustomDomain() {
+        return customDomain;
+    }
+
+    public void setCustomDomain(String customDomain) {
+        this.customDomain = customDomain;
+    }
+
+    public String getReportCardHeader() {
+        return reportCardHeader;
+    }
+
+    public void setReportCardHeader(String reportCardHeader) {
+        this.reportCardHeader = reportCardHeader;
+    }
+
+    public String getReportCardLegalMentions() {
+        return reportCardLegalMentions;
+    }
+
+    public void setReportCardLegalMentions(String reportCardLegalMentions) {
+        this.reportCardLegalMentions = reportCardLegalMentions;
     }
 
     public Instant getCreatedAt() {

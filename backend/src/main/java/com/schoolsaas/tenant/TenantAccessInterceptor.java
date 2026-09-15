@@ -21,8 +21,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Component
 public class TenantAccessInterceptor implements HandlerInterceptor {
 
-    private static final List<String> ALLOWED_PATH_PREFIXES =
-            List.of("/api/v1/auth/", "/api/v1/billing/", "/api/v1/tenants/register");
+    private static final List<String> ALLOWED_PATH_PREFIXES = List.of(
+            "/api/v1/auth/", "/api/v1/billing/", "/api/v1/tenants/register", "/api/v1/tenants/current/branding");
     private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "OPTIONS");
 
     private final TenantRepository tenantRepository;

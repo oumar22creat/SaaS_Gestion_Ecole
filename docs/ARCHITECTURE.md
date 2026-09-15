@@ -627,6 +627,62 @@ justifie. Réutilise seulement ce qui est trivial à partager sans risque : l'en
 facturation apparaît (cantine/scolarité/transport couvrent déjà les cas identifiés par le
 cahier des charges).
 
+### ADR-028 — Domaine personnalisé, branding et modèle de bulletin, feature flags par plan (Phase 3.7)
+**Décision** : trois axes de personnalisation par établissement (cahier §2.3/§2.4/§4.1), tous
+portés directement par `Tenant` (pas de table séparée — champs isolés, pas de relation) :
+- Branding (`logoUrl`/`primaryColor`/`secondaryColor`) : `GET /api/v1/tenants/current/branding`
+  est volontairement **public** (`SecurityConfig` + `TenantAccessInterceptor`) et renvoie
+  `TenantBrandingResponse` **non enveloppé** dans `ApiResponse` (pas de `{"data": ...}`) — il
+  doit rester compatible avec `web/src/app/branding/tenant-branding.model.ts`
+  (`TenantBrandingService.init()` fait `http.get<TenantBranding>(...)`), appelé au démarrage
+  avant toute connexion. Résout enfin le point ouvert laissé par ADR-015 (Phase 1). Écriture
+  (`PUT`) réservée à `ADMIN`/`DIRECTION`.
+- Modèle de bulletin (`reportCardHeader`/`reportCardLegalMentions`) : consommé par
+  `ReportCardPdfExporter`, à défaut de configuration un en-tête générique (nom de
+  l'établissement) et pas de mentions légales — comportement inchangé pour un tenant qui n'a
+  jamais configuré son modèle.
+- Domaine personnalisé (`customDomain`, colonne `UNIQUE`) : résolu par `TenantResolver` par
+  correspondance exacte sur `request.getServerName()`, après l'en-tête `X-Tenant-Id` mais
+  avant le sous-domaine — le provisioning DNS/certificat réel reste hors périmètre applicatif,
+  seule la résolution une fois le domaine reçu l'est. Écriture gate-keepée par
+  `PlanFeature.CUSTOM_DOMAIN` (plan Premium uniquement, `403 FEATURE_NOT_INCLUDED` sinon).
+
+**Feature flags par plan** (`PlanFeature` : `CANTEEN`/`TRANSPORT`/`LIBRARY`/`CUSTOM_DOMAIN`,
+colonnes booléennes sur `plans`, vérifiées par `PlanFeatureService.tenantHasFeature`) :
+simplification assumée — "en option" (cahier §4.1, plan Standard) traité comme équivalent à
+"inclus" dès que le tenant a un abonnement actif sur ce plan ; aucun mécanisme d'achat
+d'option à la carte ni de dérogation individuelle par tenant (feature flag manuel, cahier
+§2.5) n'existe. `PlanFeatureInterceptor` bloque tout le préfixe `/api/v1/{canteen,transport,
+library}` (fail-closed : aucun abonnement = aucune fonctionnalité incluse), au même rang
+d'exécution que `TenantAccessInterceptor` (après `TenantContextInterceptor`, voir
+`TenantWebConfig`). Les tests des trois modules (Cantine/Transport/Bibliothèque, Phases
+3.4-3.6) ont dû être mis à jour pour accorder explicitement le plan Premium via
+`TestAuthSupport.grantAllPlanFeatures` — un tenant de test créé par
+`TestAuthSupport.createActiveTenant` n'a par défaut aucun abonnement.
+
+**Logique métier extraite dans `TenantSettingsService`** (pas directement dans
+`TenantSettingsController`) pour suivre la convention du module (`TenantRegistrationService`,
+`SubscriptionService`) : chaque mutation est `@Transactional` et appelle explicitement
+`tenantRepository.save(tenant)` — piège découvert par `TenantSettingsTest` : muter les
+setters d'une entité récupérée hors d'une transaction ne suffit pas à persister le
+changement (pas de flush automatique sans démarcation transactionnelle), le contrôleur seul
+renvoyait un résultat correct en mémoire mais rien n'était réellement écrit en base.
+
+**Templates de notification/e-mail personnalisables** (dernier item de ROADMAP.md 3.7) :
+nouvelle entité `NotificationTemplate` (school_id, `NotificationType`, `titleOverride`
+nullable, `bodyTemplate` nullable avec placeholder obligatoire `{message}` si renseigné),
+`UNIQUE(school_id, type)`. `NotificationDispatcher.dispatch(...)` reste appelé exactement
+comme avant par chaque module (`AttendanceService`, `LessonService`, `MessagingService`,
+`LibraryOverdueReminderJob`) — signature inchangée — mais résout désormais, juste avant
+d'appeler `NotificationGateway`, un éventuel template pour le tenant courant : `titleOverride`
+remplace le titre calculé par l'appelant, `bodyTemplate` l'enveloppe (le message calculé par
+l'appelant vient remplacer `{message}`). Aucun template configuré pour un (tenant, type) =
+comportement strictement inchangé (comme `NotificationPreference`, même principe de "ligne
+absente = valeur par défaut"). CRUD réservé `ADMIN`/`DIRECTION` via
+`GET/PUT /api/v1/tenants/current/notification-templates[/{type}]`
+(`NotificationTemplateController`, dans le module `notification`, pas `tenant` : c'est un
+paramétrage de notification, pas de branding visuel).
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3, ADR-024)** — reste
   à trancher (réponse utilisateur : plus tard). Le modèle (`FeePaymentMethod.MOBILE_MONEY`)
@@ -647,15 +703,9 @@ cahier des charges).
 - **Quota de stockage documentaire par tenant** (cahier §14) — `Plan` n'a pas de champ de
   quota, `StorageGateway` (ADR-017) n'applique aucune limite. À trancher avant l'ouverture
   publique du module documents en dehors d'un cadre de démo/dev.
-- **`GET /api/v1/tenants/current/branding` n'existe pas côté backend** — le frontend
-  (`TenantBrandingService`, Phase 0, Web + Mobile) l'appelle au démarrage mais reçoit 404
-  (auparavant 500, voir ADR-015 Bug 2), tombe systématiquement sur son fallback "branding
-  neutre" (comportement gracieux, prévu par conception — jamais d'écran cassé). Le
-  branding dynamique par tenant (logo/couleurs) ne fonctionne donc **jamais réellement**
-  tant que cet endpoint n'est pas construit : nécessite d'ajouter des colonnes
-  logo/couleurs à `tenants` (migration) et un endpoint résolvant le tenant courant (via
-  sous-domaine, comme `TenantResolver`). Découvert en vérifiant le frontend de Phase 1.5-1.9
-  contre un vrai backend — hors périmètre de cette tâche, à traiter comme son propre item.
+- ~~**`GET /api/v1/tenants/current/branding` n'existe pas côté backend**~~ — résolu par
+  ADR-028 (Phase 3.7) : l'endpoint existe, colonnes `logo_url`/`primary_color`/
+  `secondary_color` ajoutées à `tenants` (V50).
 - Fournisseur mobile money ? (avant Phase 3)
 - Hébergement de production (cloud choisi, région) ? (avant le premier déploiement staging)
 - Kubernetes ou déploiement simple Docker Compose au démarrage ? (avant Phase 4, ou avant

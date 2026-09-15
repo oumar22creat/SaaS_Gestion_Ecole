@@ -4,6 +4,7 @@ import com.schoolsaas.common.ApiException;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.subject.Subject;
+import com.schoolsaas.tenant.Tenant;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -16,7 +17,13 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.springframework.stereotype.Component;
 
-/** Export PDF d'un bulletin (cahier-des-charges.md §12) — mise en page simple, pas de gabarit configurable. */
+/**
+ * Export PDF d'un bulletin (cahier-des-charges.md §12) — mise en page simple. En-tête et
+ * mentions légales personnalisables par établissement (cahier §2.4, ROADMAP.md 3.7,
+ * {@code Tenant#reportCardHeader}/{@code #reportCardLegalMentions}) ; à défaut, un en-tête
+ * générique et pas de mentions légales — comportement inchangé pour un tenant qui n'a jamais
+ * configuré son modèle de bulletin.
+ */
 @Component
 public class ReportCardPdfExporter {
 
@@ -25,7 +32,7 @@ public class ReportCardPdfExporter {
 
     public byte[] export(
             ReportCard reportCard, List<ReportCardEntry> entries, Student student, SchoolClass schoolClass,
-            Map<Long, Subject> subjectsById) {
+            Map<Long, Subject> subjectsById, Tenant tenant) {
         try (PDDocument document = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
             document.addPage(page);
@@ -36,7 +43,9 @@ public class ReportCardPdfExporter {
             try (PDPageContentStream content = new PDPageContentStream(document, page)) {
                 float y = page.getMediaBox().getHeight() - MARGIN;
 
-                y = writeLine(content, bold, 16, MARGIN, y, "Bulletin scolaire — " + reportCard.getPeriodLabel());
+                String header = tenant.getReportCardHeader() != null ? tenant.getReportCardHeader() : tenant.getName();
+                y = writeLine(content, bold, 16, MARGIN, y, header);
+                y = writeLine(content, bold, 13, MARGIN, y, "Bulletin scolaire — " + reportCard.getPeriodLabel());
                 y -= LINE_HEIGHT / 2;
                 y = writeLine(content, regular, 11, MARGIN, y,
                         "Élève : " + student.getFirstName() + " " + student.getLastName() + " (" + student.getStudentNumber() + ")");
@@ -74,7 +83,11 @@ public class ReportCardPdfExporter {
                 if (reportCard.getCouncilDecision() != null) {
                     y -= LINE_HEIGHT / 2;
                     y = writeLine(content, bold, 11, MARGIN, y, "Décision du conseil de classe :");
-                    writeLine(content, regular, 11, MARGIN, y, reportCard.getCouncilDecision());
+                    y = writeLine(content, regular, 11, MARGIN, y, reportCard.getCouncilDecision());
+                }
+                if (tenant.getReportCardLegalMentions() != null) {
+                    y -= LINE_HEIGHT;
+                    writeLine(content, regular, 8, MARGIN, y, tenant.getReportCardLegalMentions());
                 }
             }
 

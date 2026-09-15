@@ -25,7 +25,25 @@ public class TenantResolver {
         if (byHeader.isPresent()) {
             return byHeader;
         }
+        Optional<Tenant> byCustomDomain = resolveByCustomDomain(request);
+        if (byCustomDomain.isPresent()) {
+            return byCustomDomain;
+        }
         return resolveBySubdomain(request);
+    }
+
+    /**
+     * Domaine personnalisé (cahier-des-charges.md §2.3, plan Premium, voir
+     * docs/ARCHITECTURE.md ADR-028) : correspondance exacte sur le nom d'hôte de la requête.
+     * Le provisioning DNS/certificat réel (pointer ce domaine vers la plateforme) reste hors
+     * périmètre applicatif — seule la résolution une fois le domaine réellement reçu ici l'est.
+     */
+    private Optional<Tenant> resolveByCustomDomain(HttpServletRequest request) {
+        String host = request.getServerName();
+        if (host == null) {
+            return Optional.empty();
+        }
+        return tenantRepository.findByCustomDomain(host);
     }
 
     private Optional<Tenant> resolveByHeader(HttpServletRequest request) {

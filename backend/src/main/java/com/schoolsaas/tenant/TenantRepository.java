@@ -9,5 +9,7 @@ public interface TenantRepository extends JpaRepository<Tenant, Long> {
 
     boolean existsBySubdomain(String subdomain);
 
+    Optional<Tenant> findByCustomDomain(String customDomain);
+
     long countByStatus(TenantStatus status);
 }

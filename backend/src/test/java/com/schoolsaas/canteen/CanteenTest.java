@@ -10,6 +10,8 @@ import com.schoolsaas.AbstractIntegrationTest;
 import com.schoolsaas.TestAuthSupport;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.UserRepository;
+import com.schoolsaas.billing.PlanRepository;
+import com.schoolsaas.billing.SubscriptionRepository;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.student.Student;
@@ -49,9 +51,16 @@ class CanteenTest extends AbstractIntegrationTest {
     @Autowired
     private MenuRepository menuRepository;
 
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private PlanRepository planRepository;
+
     @Test
     void reservesMealsBillsConsumptionAndTracksPaymentToFullSettlement() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Cantine");
+        TestAuthSupport.grantAllPlanFeatures(subscriptionRepository, planRepository, tenant);
         SchoolClass schoolClass = schoolClassRepository.save(TestAuthSupport.withTenant(new SchoolClass("6ème A", null), tenant.getId()));
         Student student = studentRepository.save(
                 TestAuthSupport.withTenant(new Student("C1", "Ada", "L", null, null, schoolClass.getId()), tenant.getId()));
@@ -125,6 +134,7 @@ class CanteenTest extends AbstractIntegrationTest {
     @Test
     void aTenantCanNeverSeeMenusOfAnotherTenant() throws Exception {
         Tenant tenantA = TestAuthSupport.createActiveTenant(tenantRepository, "École Cantine A");
+        TestAuthSupport.grantAllPlanFeatures(subscriptionRepository, planRepository, tenantA);
         Tenant tenantB = TestAuthSupport.createActiveTenant(tenantRepository, "École Cantine B");
         menuRepository.save(TestAuthSupport.withTenant(
                 new Menu(java.time.LocalDate.of(2026, 10, 1), "Secret", null), tenantB.getId()));

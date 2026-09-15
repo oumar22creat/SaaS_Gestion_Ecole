@@ -9,10 +9,16 @@ import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.User;
 import com.schoolsaas.auth.UserRepository;
 import com.schoolsaas.auth.dto.LoginRequest;
+import com.schoolsaas.billing.Plan;
+import com.schoolsaas.billing.PlanRepository;
+import com.schoolsaas.billing.Subscription;
+import com.schoolsaas.billing.SubscriptionRepository;
+import com.schoolsaas.billing.SubscriptionStatus;
 import com.schoolsaas.tenant.Tenant;
 import com.schoolsaas.tenant.TenantRepository;
 import com.schoolsaas.tenant.TenantResolver;
 import com.schoolsaas.tenant.TenantStatus;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +38,19 @@ public final class TestAuthSupport {
 
     public static Tenant createActiveTenant(TenantRepository tenantRepository, String label) {
         return tenantRepository.save(new Tenant(label, "tenant-" + UUID.randomUUID(), TenantStatus.ACTIVE));
+    }
+
+    /**
+     * Un tenant créé par {@link #createActiveTenant} n'a par défaut aucun abonnement — suffisant
+     * pour la plupart des tests, mais {@code PlanFeatureInterceptor} (ROADMAP.md 3.7) bloque en
+     * conséquence les modules Cantine/Transport/Bibliothèque (aucun abonnement = aucune
+     * fonctionnalité incluse, fail-closed). À appeler pour les tests de ces modules qui doivent
+     * passer par une vraie requête HTTP plutôt que d'accéder aux repositories directement.
+     */
+    public static void grantAllPlanFeatures(SubscriptionRepository subscriptionRepository, PlanRepository planRepository, Tenant tenant) {
+        Plan premium = planRepository.findByCode("PREMIUM")
+                .orElseThrow(() -> new IllegalStateException("Plan PREMIUM introuvable (voir V4__create_plans_table.sql)"));
+        subscriptionRepository.save(new Subscription(tenant.getId(), premium.getId(), SubscriptionStatus.ACTIVE, Instant.now()));
     }
 
     /**

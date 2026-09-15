@@ -38,6 +38,18 @@ public class Plan {
     @Column(name = "stripe_price_id")
     private String stripePriceId;
 
+    @Column(name = "canteen_included", nullable = false)
+    private boolean canteenIncluded;
+
+    @Column(name = "transport_included", nullable = false)
+    private boolean transportIncluded;
+
+    @Column(name = "library_included", nullable = false)
+    private boolean libraryIncluded;
+
+    @Column(name = "custom_domain_included", nullable = false)
+    private boolean customDomainIncluded;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -80,6 +92,22 @@ public class Plan {
      */
     public void setStripePriceId(String stripePriceId) {
         this.stripePriceId = stripePriceId;
+    }
+
+    public boolean isCanteenIncluded() {
+        return canteenIncluded;
+    }
+
+    public boolean isTransportIncluded() {
+        return transportIncluded;
+    }
+
+    public boolean isLibraryIncluded() {
+        return libraryIncluded;
+    }
+
+    public boolean isCustomDomainIncluded() {
+        return customDomainIncluded;
     }
 
     public Instant getCreatedAt() {

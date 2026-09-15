@@ -10,6 +10,8 @@ import com.schoolsaas.AbstractIntegrationTest;
 import com.schoolsaas.TestAuthSupport;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.UserRepository;
+import com.schoolsaas.billing.PlanRepository;
+import com.schoolsaas.billing.SubscriptionRepository;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
 import com.schoolsaas.tenant.Tenant;
@@ -44,9 +46,16 @@ class TransportTest extends AbstractIntegrationTest {
     @Autowired
     private BusRouteRepository busRouteRepository;
 
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private PlanRepository planRepository;
+
     @Test
     void assignsAStudentToACircuitAndBillsTheServiceToFullSettlement() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Transport");
+        TestAuthSupport.grantAllPlanFeatures(subscriptionRepository, planRepository, tenant);
         Student student = studentRepository.save(TestAuthSupport.withTenant(new Student("T1", "Ada", "L", null, null, null), tenant.getId()));
         String secretaryToken = TestAuthSupport.createUserAndLogin(
                 mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "secretary-transport@ecole.example", Role.SECRETARY);
@@ -120,6 +129,7 @@ class TransportTest extends AbstractIntegrationTest {
     @Test
     void aTenantCanNeverSeeBusRoutesOfAnotherTenant() throws Exception {
         Tenant tenantA = TestAuthSupport.createActiveTenant(tenantRepository, "École Transport A");
+        TestAuthSupport.grantAllPlanFeatures(subscriptionRepository, planRepository, tenantA);
         Tenant tenantB = TestAuthSupport.createActiveTenant(tenantRepository, "École Transport B");
         busRouteRepository.save(TestAuthSupport.withTenant(new BusRoute("Secrète"), tenantB.getId()));
 

@@ -245,11 +245,19 @@ avant de passer à la Phase 3.
       lui-même à la section 30/Phase 4 ("QR code pour la présence")
 
 ### 3.7 Domaine personnalisé et branding avancé — plan Premium (cahier §2.3/§2.4/§4.1)
-- [ ] Domaine personnalisé (custom domain) pointant vers la plateforme
-- [ ] Modèle de bulletin personnalisable (en-tête, mentions légales de l'établissement)
-- [ ] Templates de notification/e-mail personnalisables par établissement
-- [ ] Feature flags par tenant selon le plan souscrit (cantine/transport/bibliothèque en
-      option Standard, inclus Premium — grille §4.1)
+- [x] Domaine personnalisé (custom domain) pointant vers la plateforme — résolution par nom
+      d'hôte (`TenantResolver`), écriture réservée au plan Premium (`PlanFeature.CUSTOM_DOMAIN`) ;
+      provisioning DNS/certificat réel hors périmètre applicatif (voir ADR-028)
+- [x] Modèle de bulletin personnalisable (en-tête, mentions légales de l'établissement) —
+      consommé par `ReportCardPdfExporter`, comportement par défaut inchangé sans configuration
+- [x] Templates de notification/e-mail personnalisables par établissement — titre/corps
+      surchargeables par `NotificationType` (`NotificationTemplate`, placeholder `{message}`),
+      appliqués par `NotificationDispatcher` avant l'envoi, sans changement de signature pour
+      les modules appelants
+- [x] Feature flags par tenant selon le plan souscrit (cantine/transport/bibliothèque en
+      option Standard, inclus Premium — grille §4.1) — **simplification assumée** : "en
+      option" traité comme équivalent à "inclus dès que le plan est souscrit", pas d'achat à
+      la carte ni de dérogation individuelle par tenant (voir ADR-028)
 
 **Critère de sortie de Phase 3** : mêmes garde-fous que les Phases 1 et 2 — chaque module
 testé (isolation cross-tenant comprise), documenté, périmètre réel (vs. différé) explicite.

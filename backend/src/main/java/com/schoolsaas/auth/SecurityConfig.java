@@ -4,6 +4,7 @@ import com.schoolsaas.common.RestSecurityHandlers;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -73,6 +74,11 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**")
+                        .permitAll()
+                        // Appelé par Web/Mobile au démarrage, avant toute connexion, pour
+                        // appliquer le branding du tenant résolu par sous-domaine/en-tête (voir
+                        // TenantResolver/TenantSettingsController, ROADMAP.md 3.7/ADR-028).
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/current/branding")
                         .permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling

@@ -12,6 +12,8 @@ import com.schoolsaas.AbstractIntegrationTest;
 import com.schoolsaas.TestAuthSupport;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.UserRepository;
+import com.schoolsaas.billing.PlanRepository;
+import com.schoolsaas.billing.SubscriptionRepository;
 import com.schoolsaas.notification.NotificationGateway;
 import com.schoolsaas.notification.NotificationType;
 import com.schoolsaas.student.Student;
@@ -58,9 +60,16 @@ class LibraryTest extends AbstractIntegrationTest {
     @Autowired
     private LibraryOverdueReminderJob libraryOverdueReminderJob;
 
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private PlanRepository planRepository;
+
     @Test
     void lendsAndReturnsABookReleasingTheWaitingListAutomatically() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Bibliothèque");
+        TestAuthSupport.grantAllPlanFeatures(subscriptionRepository, planRepository, tenant);
         Student borrower = studentRepository.save(TestAuthSupport.withTenant(new Student("L1", "Ada", "L", null, null, null), tenant.getId()));
         Student waitingStudent = studentRepository.save(TestAuthSupport.withTenant(new Student("L2", "Alan", "T", null, null, null), tenant.getId()));
         String secretaryToken = TestAuthSupport.createUserAndLogin(
@@ -141,6 +150,7 @@ class LibraryTest extends AbstractIntegrationTest {
     @Test
     void aTenantCanNeverSeeBooksOfAnotherTenant() throws Exception {
         Tenant tenantA = TestAuthSupport.createActiveTenant(tenantRepository, "École Bibliothèque A");
+        TestAuthSupport.grantAllPlanFeatures(subscriptionRepository, planRepository, tenantA);
         Tenant tenantB = TestAuthSupport.createActiveTenant(tenantRepository, "École Bibliothèque B");
         Book bookB = bookRepository.save(TestAuthSupport.withTenant(new Book("BC-SECRET", null, "Secret", "Auteur", 1), tenantB.getId()));
 

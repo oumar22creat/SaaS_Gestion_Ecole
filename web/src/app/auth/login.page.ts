@@ -33,6 +33,7 @@ export class LoginPage {
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly form = this.formBuilder.nonNullable.group({
+    subdomain: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
   });
@@ -46,8 +47,8 @@ export class LoginPage {
     this.submitting.set(true);
     this.errorMessage.set(null);
     try {
-      const { email, password } = this.form.getRawValue();
-      const tokens = await this.authService.login(email, password);
+      const { subdomain, email, password } = this.form.getRawValue();
+      const tokens = await this.authService.login(subdomain, email, password);
       this.authTokenService.store(tokens);
       await this.router.navigateByUrl('/dashboard');
     } catch (error) {

@@ -769,3 +769,26 @@ de périmètre déjà documentées, voir ROADMAP.md). Prochaine session : détai
 tâches fines (cahier §26/§30), en commençant par le point le plus structurant à trancher avec
 l'utilisateur (hébergement de production, cloud/région — voir ARCHITECTURE.md "Points
 ouverts").
+
+## [2026-09-16] — Session (test manuel Phase 3.7 + correction bug login/RLS)
+**Tâche(s) réalisée(s) :** Test manuel de bout en bout de la Phase 3.7 (branding, domaine
+personnalisé avec upgrade Premium via SQL, templates de notification avec effet réel observé
+dans les logs sur un vrai événement d'absence). En cours de route, découvert que
+`POST /api/v1/auth/login` échouait de façon reproductible contre un vrai Postgres avec rôle
+applicatif restreint (fonctionnait par accident avec le superutilisateur Testcontainers).
+Corrigé : `AuthService.login`/`resolvePrincipal` résolvent et appliquent désormais
+explicitement le tenant (via un nouveau champ `subdomain`, DTO `TenantLoginRequest`) AVANT
+toute recherche dans `users` (RLS), au lieu de dépendre du contexte laissé par une requête
+précédente sur la même connexion poolée. Voir ADR-029 (nouveau) pour le détail complet.
+**Décisions prises (et pourquoi) :** Ajout d'un champ sous-domaine au formulaire de connexion
+(Web) plutôt qu'e-mail unique globalement (casserait cahier §21) ou contournement dev-only
+(laisserait le bug réel pour le Mobile en production, qui tape une URL absolue fixe sans
+sous-domaine par tenant) — décision utilisateur explicite après présentation des trois options.
+**Problèmes rencontrés / points de vigilance :** Bug invisible en tests automatisés car
+Testcontainers utilise par défaut un rôle superutilisateur Postgres, qui contourne TOUJOURS
+Row-Level Security (ADR-001 Piège 4) — seul un test dédié avec un rôle restreint
+(`AuthRlsTest`, nouveau) peut le détecter, comme `TenantRegistrationRlsTest` l'avait déjà fait
+pour l'inscription. Suite complète : 110/110 tests backend, 38/38 tests Web passent.
+**Prochaine étape :** Reprendre le test manuel Phase 3.7 (effet du placeholder `{message}` du
+corps de template de notification, maintenant que `LoggingNotificationGateway` logue aussi le
+corps) avec le login désormais fonctionnel. Puis Phase 4 (inchangé).

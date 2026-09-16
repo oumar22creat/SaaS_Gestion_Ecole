@@ -1,6 +1,10 @@
 package com.schoolsaas.auth;
 
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.tenant.Tenant;
+import com.schoolsaas.tenant.TenantContext;
+import com.schoolsaas.tenant.TenantRepository;
+import com.schoolsaas.tenant.TenantSessionConfigurer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -12,13 +16,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Connexion, rafraîchissement et déconnexion — voir docs/ARCHITECTURE.md ADR-002 et ADR-008. */
+/** Connexion, rafraîchissement et déconnexion — voir docs/ARCHITECTURE.md ADR-002, ADR-008 et ADR-029. */
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PlatformAdminRepository platformAdminRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final TenantRepository tenantRepository;
+    private final TenantSessionConfigurer tenantSessionConfigurer;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -27,25 +33,44 @@ public class AuthService {
             UserRepository userRepository,
             PlatformAdminRepository platformAdminRepository,
             RefreshTokenRepository refreshTokenRepository,
+            TenantRepository tenantRepository,
+            TenantSessionConfigurer tenantSessionConfigurer,
             PasswordEncoder passwordEncoder,
             JwtService jwtService) {
         this.userRepository = userRepository;
         this.platformAdminRepository = platformAdminRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.tenantRepository = tenantRepository;
+        this.tenantSessionConfigurer = tenantSessionConfigurer;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
+    /**
+     * L'e-mail n'est unique que par établissement (cahier §21), et {@code users} impose Row-
+     * Level Security (voir V2__create_users_table.sql) : il faut donc résoudre et appliquer le
+     * tenant AVANT de chercher l'utilisateur par e-mail, comme le fait déjà
+     * {@link com.schoolsaas.tenant.TenantRegistrationService#register} pour son premier INSERT
+     * — voir docs/ARCHITECTURE.md ADR-029 pour le bug corrigé ici (dépendait auparavant d'un
+     * contexte tenant laissé par une requête précédente sur la même connexion poolée).
+     */
     @Transactional
-    public TokenPair login(String email, String password) {
-        User user = userRepository.findByEmail(email)
-                .filter(User::isActive)
-                .orElseThrow(AuthService::invalidCredentials);
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw invalidCredentials();
+    public TokenPair login(String subdomain, String email, String password) {
+        Tenant tenant = tenantRepository.findBySubdomain(subdomain).orElseThrow(AuthService::invalidCredentials);
+        TenantContext.set(tenant.getId());
+        try {
+            tenantSessionConfigurer.applyTenant(tenant.getId());
+            User user = userRepository.findByEmail(email)
+                    .filter(User::isActive)
+                    .orElseThrow(AuthService::invalidCredentials);
+            if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+                throw invalidCredentials();
+            }
+            return issueTokenPair(new AuthenticatedPrincipal(
+                    user.getId(), SubjectType.USER, user.getSchoolId(), user.getRole().name(), user.getEmail()));
+        } finally {
+            TenantContext.clear();
         }
-        return issueTokenPair(new AuthenticatedPrincipal(
-                user.getId(), SubjectType.USER, user.getSchoolId(), user.getRole().name(), user.getEmail()));
     }
 
     @Transactional
@@ -79,14 +104,25 @@ public class AuthService {
                     .orElseThrow(() -> ApiException.unauthorized("INVALID_REFRESH_TOKEN", "Compte introuvable"));
             return new AuthenticatedPrincipal(admin.getId(), SubjectType.PLATFORM_ADMIN, null, "SUPER_ADMIN", admin.getEmail());
         }
-        // findById cible une ligne unique par clé primaire, sans ambiguïté possible entre
-        // tenants : pas besoin que le filtre Hibernate tenantFilter soit actif pour cette
-        // recherche précise (l'id ne vient pas d'une entrée utilisateur, mais d'un refresh
-        // token déjà validé par son hash).
-        User user = userRepository.findById(token.getSubjectId())
-                .filter(User::isActive)
-                .orElseThrow(() -> ApiException.unauthorized("INVALID_REFRESH_TOKEN", "Compte introuvable"));
-        return new AuthenticatedPrincipal(user.getId(), SubjectType.USER, user.getSchoolId(), user.getRole().name(), user.getEmail());
+        // findById cible une ligne unique par clé primaire (pas besoin du filtre Hibernate
+        // tenantFilter pour lever une ambiguïté, l'id ne vient pas d'une entrée utilisateur
+        // mais d'un refresh token déjà validé par son hash) — MAIS la politique Row-Level
+        // Security sur `users` (FORCE ROW LEVEL SECURITY) s'applique quand même, y compris à
+        // une recherche par clé primaire : sans positionner app.tenant_id, la ligne reste
+        // invisible. Voir docs/ARCHITECTURE.md ADR-029 (même piège que login()) — tenantId
+        // vient ici du refresh token lui-même (refresh_tokens n'est pas scopé/RLS, voir
+        // V3__create_platform_admins_and_refresh_tokens.sql), pas d'un e-mail fourni par le
+        // client.
+        TenantContext.set(token.getTenantId());
+        try {
+            tenantSessionConfigurer.applyTenant(token.getTenantId());
+            User user = userRepository.findById(token.getSubjectId())
+                    .filter(User::isActive)
+                    .orElseThrow(() -> ApiException.unauthorized("INVALID_REFRESH_TOKEN", "Compte introuvable"));
+            return new AuthenticatedPrincipal(user.getId(), SubjectType.USER, user.getSchoolId(), user.getRole().name(), user.getEmail());
+        } finally {
+            TenantContext.clear();
+        }
     }
 
     private TokenPair issueTokenPair(AuthenticatedPrincipal principal) {

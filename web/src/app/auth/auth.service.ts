@@ -9,9 +9,9 @@ import { TokenPair } from './auth-token.service';
 export class AuthService {
   private readonly http = inject(HttpClient);
 
-  async login(email: string, password: string): Promise<TokenPair> {
+  async login(subdomain: string, email: string, password: string): Promise<TokenPair> {
     const response = await firstValueFrom(
-      this.http.post<ApiResponse<TokenPair>>(`${environment.apiUrl}/auth/login`, { email, password }),
+      this.http.post<ApiResponse<TokenPair>>(`${environment.apiUrl}/auth/login`, { subdomain, email, password }),
     );
     return response.data;
   }

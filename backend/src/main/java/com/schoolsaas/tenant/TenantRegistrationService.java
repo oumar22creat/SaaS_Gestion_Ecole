@@ -86,7 +86,7 @@ public class TenantRegistrationService {
 
             subscriptionService.createTrialSubscription(tenant.getId());
 
-            tokens = authService.login(request.adminEmail(), request.adminPassword());
+            tokens = authService.login(request.subdomain(), request.adminEmail(), request.adminPassword());
         } finally {
             TenantContext.clear();
         }

@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.schoolsaas.AbstractIntegrationTest;
-import com.schoolsaas.auth.dto.LoginRequest;
 import com.schoolsaas.auth.dto.RefreshRequest;
+import com.schoolsaas.auth.dto.TenantLoginRequest;
 import com.schoolsaas.tenant.Tenant;
 import com.schoolsaas.tenant.TenantRepository;
 import com.schoolsaas.tenant.TenantResolver;
@@ -57,7 +57,7 @@ class AuthFlowTest extends AbstractIntegrationTest {
         MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
                         .header(TenantResolver.TENANT_HEADER, tenant.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginRequest("prof@ecole.example", "Sup3rSecret!"))))
+                        .content(objectMapper.writeValueAsString(new TenantLoginRequest(tenant.getSubdomain(), "prof@ecole.example", "Sup3rSecret!"))))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -96,7 +96,7 @@ class AuthFlowTest extends AbstractIntegrationTest {
         mockMvc.perform(post("/api/v1/auth/login")
                         .header(TenantResolver.TENANT_HEADER, tenant.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginRequest("wrongpass@ecole.example", "not-the-password"))))
+                        .content(objectMapper.writeValueAsString(new TenantLoginRequest(tenant.getSubdomain(), "wrongpass@ecole.example", "not-the-password"))))
                 .andExpect(status().isUnauthorized());
     }
 

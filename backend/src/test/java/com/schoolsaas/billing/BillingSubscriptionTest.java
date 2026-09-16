@@ -12,7 +12,7 @@ import com.schoolsaas.AbstractIntegrationTest;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.User;
 import com.schoolsaas.auth.UserRepository;
-import com.schoolsaas.auth.dto.LoginRequest;
+import com.schoolsaas.auth.dto.TenantLoginRequest;
 import com.schoolsaas.tenant.Tenant;
 import com.schoolsaas.tenant.TenantRepository;
 import com.schoolsaas.tenant.TenantResolver;
@@ -167,7 +167,7 @@ class BillingSubscriptionTest extends AbstractIntegrationTest {
         MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
                         .header(TenantResolver.TENANT_HEADER, tenant.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginRequest(email, "Sup3rSecret!"))))
+                        .content(objectMapper.writeValueAsString(new TenantLoginRequest(tenant.getSubdomain(), email, "Sup3rSecret!"))))
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode data = objectMapper.readTree(result.getResponse().getContentAsString()).get("data");

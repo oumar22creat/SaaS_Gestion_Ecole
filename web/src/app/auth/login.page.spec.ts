@@ -38,7 +38,7 @@ describe('LoginPage', () => {
   });
 
   it('stores the tokens and navigates to the dashboard on success', async () => {
-    component['form'].setValue({ email: 'admin@ecole.example', password: 'Sup3rSecret!' });
+    component['form'].setValue({ subdomain: 'ecole-test', email: 'admin@ecole.example', password: 'Sup3rSecret!' });
 
     const submitPromise = component.submit();
     httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({
@@ -55,7 +55,7 @@ describe('LoginPage', () => {
   });
 
   it('shows an error message when the credentials are invalid', async () => {
-    component['form'].setValue({ email: 'admin@ecole.example', password: 'wrong' });
+    component['form'].setValue({ subdomain: 'ecole-test', email: 'admin@ecole.example', password: 'wrong' });
 
     const submitPromise = component.submit();
     httpMock

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.User;
 import com.schoolsaas.auth.UserRepository;
-import com.schoolsaas.auth.dto.LoginRequest;
+import com.schoolsaas.auth.dto.TenantLoginRequest;
 import com.schoolsaas.billing.Plan;
 import com.schoolsaas.billing.PlanRepository;
 import com.schoolsaas.billing.Subscription;
@@ -75,7 +75,7 @@ public final class TestAuthSupport {
         MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
                         .header(TenantResolver.TENANT_HEADER, tenant.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginRequest(email, "Sup3rSecret!"))))
+                        .content(objectMapper.writeValueAsString(new TenantLoginRequest(tenant.getSubdomain(), email, "Sup3rSecret!"))))
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode data = objectMapper.readTree(result.getResponse().getContentAsString()).get("data");

@@ -16,7 +16,7 @@ public class LoggingNotificationGateway implements NotificationGateway {
     @Override
     public void send(NotificationEvent event) {
         log.info(
-                "Notification (non envoyée, FCM pas encore câblé) : {} — \"{}\" — destinataires {}",
-                event.type(), event.title(), event.recipientUserIds());
+                "Notification (non envoyée, FCM pas encore câblé) : {} — \"{}\" — \"{}\" — destinataires {}",
+                event.type(), event.title(), event.body(), event.recipientUserIds());
     }
 }

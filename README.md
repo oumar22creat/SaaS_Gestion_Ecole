@@ -147,6 +147,12 @@ Pour tester le multi-tenant en local sans configurer de vrais sous-domaines, uti
 header `X-Tenant-Id: <id-etablissement>` sur les appels API (voir `docs/ARCHITECTURE.md`
 pour le détail du mécanisme). En production, le tenant est résolu via le sous-domaine.
 
+**Connexion (`POST /api/v1/auth/login`)** fait exception : elle attend un champ `subdomain`
+dans le corps de la requête (en plus de `email`/`password`), pas l'en-tête `X-Tenant-Id` —
+l'e-mail n'étant unique que par établissement, il faut connaître le sous-domaine avant de
+chercher l'utilisateur (voir `docs/ARCHITECTURE.md` ADR-029). C'est le même sous-domaine que
+celui choisi à l'inscription (`POST /api/v1/tenants/register`).
+
 ## Documentation du projet
 
 - [`docs/cahier-des-charges.md`](docs/cahier-des-charges.md) — spec fonctionnelle complète

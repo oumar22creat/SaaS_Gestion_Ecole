@@ -1,7 +1,7 @@
 package com.schoolsaas.auth;
 
-import com.schoolsaas.auth.dto.LoginRequest;
 import com.schoolsaas.auth.dto.RefreshRequest;
+import com.schoolsaas.auth.dto.TenantLoginRequest;
 import com.schoolsaas.auth.dto.TokenPairResponse;
 import com.schoolsaas.common.ApiResponse;
 import jakarta.validation.Valid;
@@ -22,8 +22,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ApiResponse<TokenPairResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ApiResponse.of(toResponse(authService.login(request.email(), request.password())));
+    public ApiResponse<TokenPairResponse> login(@Valid @RequestBody TenantLoginRequest request) {
+        return ApiResponse.of(toResponse(authService.login(request.subdomain(), request.email(), request.password())));
     }
 
     @PostMapping("/refresh")

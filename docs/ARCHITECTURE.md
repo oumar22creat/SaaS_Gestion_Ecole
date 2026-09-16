@@ -683,6 +683,53 @@ absente = valeur par défaut"). CRUD réservé `ADMIN`/`DIRECTION` via
 (`NotificationTemplateController`, dans le module `notification`, pas `tenant` : c'est un
 paramétrage de notification, pas de branding visuel).
 
+### ADR-029 — Login exige désormais le sous-domaine (bug RLS corrigé)
+**Découvert** : en testant manuellement la Phase 3.7 en local contre un vrai backend
+(rôle applicatif restreint, pas le superutilisateur Testcontainers), `POST /api/v1/auth/login`
+échouait de façon reproductible après chaque redémarrage à froid du backend, mais réussissait
+dès qu'un appel scopé à un tenant avait été fait juste avant sur la même connexion.
+
+**Cause réelle** : `AuthService.login(email, password)` faisait une recherche **globale** par
+e-mail (`UserRepository.findByEmail`) — nécessaire car l'e-mail n'est unique que par
+établissement (cahier §21, `UNIQUE(school_id, email)` sur `users`), pas globalement, donc le
+tenant n'est jamais connu à l'avance côté login. Mais `users` impose
+`FORCE ROW LEVEL SECURITY` (`school_id = current_setting('app.tenant_id', true)::bigint`,
+voir ADR-001) — sans avoir positionné `app.tenant_id` pour CETTE requête précise, le résultat
+de `findByEmail` dépendait entièrement de la valeur laissée par une **requête précédente sur
+la même connexion poolée** (HikariCP) : `TenantSessionConfigurer.applyTenant` pose
+`app.tenant_id` au niveau de la session Postgres (`set_config(..., false)`, pas de la
+transaction), et rien ne le réinitialise quand une requête ne résout aucun tenant. En
+production, ça ne se voyait pas pour un Web servi par sous-domaine (`ecole.schoolsaas.example`
+résout le tenant de la requête de login elle-même, avant le contrôleur) — mais ça restait
+cassé pour le Mobile, qui tape une URL absolue fixe sans sous-domaine par tenant (voir
+README.md "Environnements"), et pour tout dev local (`localhost` n'a pas de sous-domaine).
+Le même piège existait dans `AuthService.resolvePrincipal` (chemin `/auth/refresh`,
+recherche par `findById` — RLS s'applique même à une recherche par clé primaire).
+
+**Options considérées** : (a) e-mail unique globalement — rejeté, casse le choix déjà fait
+au cahier §21 (un utilisateur peut avoir un compte dans deux établissements) ; (b) ne rien
+changer, contourner en dev — laisse le bug réel pour le Mobile en production ; (c) **ajouter
+un champ sous-domaine/établissement au formulaire de connexion** (retenu, décision
+utilisateur) — le login résout et applique explicitement le tenant (même pattern que
+`TenantRegistrationService#register`, `TenantContext.set(...)` + `applyTenant(...)` dans un
+`try/finally`) AVANT toute recherche dans `users`, déterministe indépendamment de l'état
+laissé par une requête précédente sur la connexion.
+
+**Implémentation** : nouveau DTO `TenantLoginRequest(subdomain, email, password)` — séparé du
+`LoginRequest` du Super-Admin (`AdminAuthController`), qui n'a pas de tenant et ne doit pas en
+exiger un. `AuthService.login(subdomain, email, password)` et `resolvePrincipal` (branche
+`USER`, via `RefreshToken#tenantId` déjà connu, pas besoin d'un nouveau champ) appliquent
+tous deux le tenant avant toute lecture de `users`. Web : champ "Sous-domaine" ajouté à
+l'écran de connexion. Mobile : aucune authentification n'y est construite (Phase 0 seulement,
+voir ROADMAP.md 1.5-1.9), donc rien à changer côté Mobile pour l'instant — mais la future
+construction de l'auth Mobile devra prévoir ce champ dès le départ.
+
+**Test de régression** : `AuthRlsTest` (nouveau, package `auth`) reproduit le rôle applicatif
+restreint (même mécanisme que `TenantRegistrationRlsTest`) et vérifie login **puis** refresh
+de bout en bout — invisible avec le superutilisateur Testcontainers par défaut (RLS toujours
+contourné, ADR-001 Piège 4), donc un test dédié était nécessaire pour ne pas régresser
+silencieusement.
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3, ADR-024)** — reste
   à trancher (réponse utilisateur : plus tard). Le modèle (`FeePaymentMethod.MOBILE_MONEY`)

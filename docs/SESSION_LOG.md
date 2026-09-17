@@ -792,3 +792,27 @@ pour l'inscription. Suite complète : 110/110 tests backend, 38/38 tests Web pas
 **Prochaine étape :** Reprendre le test manuel Phase 3.7 (effet du placeholder `{message}` du
 corps de template de notification, maintenant que `LoggingNotificationGateway` logue aussi le
 corps) avec le login désormais fonctionnel. Puis Phase 4 (inchangé).
+
+## [2026-09-17] — Session (authentification Mobile)
+**Tâche(s) réalisée(s) :** Construit l'authentification Mobile (Ionic), en miroir du Web,
+comblant l'écart documenté depuis la Phase 1.5-1.9 : `AuthTokenService`, `AuthService`
+(login avec `subdomain`/`email`/`password`, contrat aligné sur ADR-029), `authGuard`,
+`authInterceptor` (jeton Bearer + déconnexion au premier 401 authentifié), écran de connexion
+Ionic (`ion-card`/`ion-input`/`ion-button`, composants natifs — docs/DESIGN.md §3), et un
+écran d'accueil minimal (`HomePage`, email + déconnexion) pour avoir une route protégée à
+tester de bout en bout. Utilisateur a choisi de démarrer par l'auth seule (pas les 9 modules
+métier du Web, pas encore les 2 écrans mobile-first identifiés par docs/DESIGN.md) —
+prochaine tâche à cadrer séparément.
+**Décisions prises (et pourquoi) :** Code dupliqué (pas partagé) entre `web/` et `mobile/`
+pour `auth-token.service.ts`/`jwt.util.ts`/`http-error.util.ts`/`api-response.model.ts`/
+`auth.guard.ts`/`auth.interceptor.ts` — même principe déjà assumé pour les design tokens
+(voir `mobile/src/theme/variables.scss`) : pas de package partagé entre les deux workspaces
+Angular pour l'instant.
+**Problèmes rencontrés / points de vigilance :** Aucun — le correctif login/RLS (ADR-029,
+session précédente) a été fait juste avant, donc `TenantLoginRequest(subdomain, email,
+password)` était déjà le bon contrat à répliquer côté Mobile dès le départ. Suite complète :
+18/18 tests Mobile passent (nouveaux : `auth.guard.spec`, `auth.interceptor.spec`,
+`login.page.spec`, `home.page.spec`).
+**Prochaine étape :** Cadrer avec l'utilisateur quels écrans métier Mobile construire ensuite
+— candidats naturels selon docs/DESIGN.md §5 (mobile-first) : Feuille d'appel et Saisie de
+notes (rôle Enseignant).

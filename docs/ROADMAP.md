@@ -94,10 +94,13 @@ Matières, Emploi du temps (+ salles), Absences (feuille d'appel + historique), 
 (évaluations + saisie + moyennes), Dashboard établissement. Connexion/déconnexion, garde de
 route et intercepteur HTTP (jeton + 401) ajoutés à cette occasion.
 
-**Écart restant, explicitement différé** : le mockup "Feuille d'appel" (docs/MOCKUPS.md §1)
-prévoyait Mobile/Ionic — livré ici en Web à la place, car l'app Mobile n'a **aucune
-authentification** construite (seul le branding l'est, voir Phase 0). Construire l'auth
-Mobile est un prérequis plus large, non demandé explicitement dans les tâches 1.5-1.9.
+**Écart initial, comblé le 2026-09-17** : le mockup "Feuille d'appel" (docs/MOCKUPS.md §1)
+prévoyait Mobile/Ionic — livré ici en Web à la place à l'origine, car l'app Mobile n'avait
+**aucune authentification** construite (seul le branding l'était, voir Phase 0). L'auth
+Mobile (connexion avec sous-domaine/e-mail/mot de passe, garde de route, intercepteur HTTP,
+déconnexion, écran d'accueil minimal) est désormais construite, en miroir du Web — voir
+SESSION_LOG.md 2026-09-17. Les écrans métier eux-mêmes (feuille d'appel, notes, etc.) sur
+Mobile restent à construire un par un, module par module, dans de prochaines tâches.
 De même, les mockups "Parent — dashboard enfants" et "Élève — emploi du temps" restent hors
 portée : ils supposent un portail élève/parent (compte `User` lié à un `Student`/`Parent`),
 explicitement différé depuis l'ADR-010 (Phase 1.5).

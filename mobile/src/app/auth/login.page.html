@@ -1,0 +1,36 @@
+<ion-content class="ion-padding">
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Connexion</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <ion-item>
+          <ion-input label="Sous-domaine" labelPlacement="floating" placeholder="mon-ecole" formControlName="subdomain" />
+        </ion-item>
+
+        <ion-item>
+          <ion-input label="E-mail" labelPlacement="floating" type="email" formControlName="email" />
+        </ion-item>
+
+        <ion-item>
+          <ion-input label="Mot de passe" labelPlacement="floating" type="password" formControlName="password" />
+        </ion-item>
+
+        @if (errorMessage()) {
+          <ion-text color="danger">
+            <p>{{ errorMessage() }}</p>
+          </ion-text>
+        }
+
+        <ion-button expand="block" type="submit" [disabled]="submitting()" class="ion-margin-top">
+          @if (submitting()) {
+            <ion-spinner name="dots" />
+          } @else {
+            Se connecter
+          }
+        </ion-button>
+      </form>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

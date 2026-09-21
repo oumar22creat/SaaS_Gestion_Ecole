@@ -132,6 +132,26 @@ class PortalAccessTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + token)
                         .header(TenantResolver.TENANT_HEADER, tenant().getId()))
                 .andExpect(status().isNotFound());
+
+        // L'emploi du temps est soumis au même contrôle : il révèle la classe de l'enfant.
+        mockMvc.perform(get("/api/v1/portal/students/" + otherChild.getId() + "/timetable")
+                        .header("Authorization", "Bearer " + token)
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId()))
+                .andExpect(status().isNotFound());
+    }
+
+    /** Un élève sans classe affectée obtient une liste vide, pas une erreur. */
+    @Test
+    void timetableIsEmptyWhenTheStudentHasNoClass() throws Exception {
+        User studentAccount = account("sans-classe@ecole.example", Role.STUDENT, "Ibrahim");
+        Student me = student("Ibrahim", studentAccount);
+
+        String token = loginAs("sans-classe@ecole.example");
+        mockMvc.perform(get("/api/v1/portal/students/" + me.getId() + "/timetable")
+                        .header("Authorization", "Bearer " + token)
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
     }
 
     @Test

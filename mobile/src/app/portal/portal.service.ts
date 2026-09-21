@@ -32,6 +32,15 @@ export interface PortalAttendance {
   justified: boolean;
 }
 
+export interface PortalTimetableSlot {
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  subject: string;
+  teacher: string;
+  room: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PortalService {
   private readonly http = inject(HttpClient);
@@ -46,6 +55,15 @@ export class PortalService {
   async grades(studentId: number): Promise<PortalGrade[]> {
     const response = await firstValueFrom(
       this.http.get<ApiResponse<PortalGrade[]>>(`${BASE_URL}/students/${studentId}/grades`),
+    );
+    return response.data;
+  }
+
+  async timetable(studentId: number): Promise<PortalTimetableSlot[]> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<PortalTimetableSlot[]>>(
+        `${BASE_URL}/students/${studentId}/timetable`,
+      ),
     );
     return response.data;
   }

@@ -28,4 +28,14 @@ public final class PortalResponse {
 
     public record AttendanceLine(LocalDate date, String status, String reason, boolean justified) {
     }
+
+    /** Créneau de l'emploi du temps de la classe de l'élève. */
+    public record TimetableSlot(
+            String dayOfWeek,
+            String startTime,
+            String endTime,
+            String subject,
+            String teacher,
+            String room) {
+    }
 }

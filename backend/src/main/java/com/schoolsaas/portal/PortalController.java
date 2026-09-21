@@ -8,6 +8,14 @@ import com.schoolsaas.grade.Grade;
 import com.schoolsaas.grade.GradeRepository;
 import com.schoolsaas.portal.dto.PortalResponse;
 import com.schoolsaas.student.Student;
+import com.schoolsaas.subject.Subject;
+import com.schoolsaas.subject.SubjectRepository;
+import com.schoolsaas.teacher.Teacher;
+import com.schoolsaas.teacher.TeacherRepository;
+import com.schoolsaas.timetable.Room;
+import com.schoolsaas.timetable.RoomRepository;
+import com.schoolsaas.timetable.TimetableEntry;
+import com.schoolsaas.timetable.TimetableEntryRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -37,16 +45,28 @@ public class PortalController {
     private final AttendanceService attendanceService;
     private final GradeRepository gradeRepository;
     private final ExamRepository examRepository;
+    private final TimetableEntryRepository timetableEntryRepository;
+    private final SubjectRepository subjectRepository;
+    private final TeacherRepository teacherRepository;
+    private final RoomRepository roomRepository;
 
     public PortalController(
             PortalService portalService,
             AttendanceService attendanceService,
             GradeRepository gradeRepository,
-            ExamRepository examRepository) {
+            ExamRepository examRepository,
+            TimetableEntryRepository timetableEntryRepository,
+            SubjectRepository subjectRepository,
+            TeacherRepository teacherRepository,
+            RoomRepository roomRepository) {
         this.portalService = portalService;
         this.attendanceService = attendanceService;
         this.gradeRepository = gradeRepository;
         this.examRepository = examRepository;
+        this.timetableEntryRepository = timetableEntryRepository;
+        this.subjectRepository = subjectRepository;
+        this.teacherRepository = teacherRepository;
+        this.roomRepository = roomRepository;
     }
 
     /** Enfants du parent connecté, ou l'élève lui-même s'il consulte son propre portail. */
@@ -97,6 +117,51 @@ public class PortalController {
                         record.getStatus().name(),
                         record.getReason(),
                         record.isJustified()))
+                .toList());
+    }
+
+    /**
+     * Emploi du temps de la classe de l'élève (mockup docs/MOCKUPS.md « Élève — emploi du
+     * temps »). Les noms de matière, d'enseignant et de salle sont résolus ici : une famille
+     * ne peut rien faire d'un identifiant technique.
+     */
+    @GetMapping("/students/{studentId}/timetable")
+    public ApiResponse<List<PortalResponse.TimetableSlot>> timetable(@PathVariable Long studentId) {
+        Student student = portalService.requireAccessibleStudent(studentId);
+        if (student.getSchoolClassId() == null) {
+            return ApiResponse.of(List.of());
+        }
+
+        List<TimetableEntry> entries =
+                timetableEntryRepository.findAllBySchoolClassId(student.getSchoolClassId());
+        Map<Long, String> subjects = subjectRepository
+                .findAllById(entries.stream().map(TimetableEntry::getSubjectId).distinct().toList())
+                .stream()
+                .collect(Collectors.toMap(Subject::getId, Subject::getName));
+        Map<Long, String> teachers = teacherRepository
+                .findAllById(entries.stream().map(TimetableEntry::getTeacherId).distinct().toList())
+                .stream()
+                .collect(Collectors.toMap(
+                        Teacher::getId, teacher -> teacher.getFirstName() + " " + teacher.getLastName()));
+        Map<Long, String> rooms = roomRepository
+                .findAllById(entries.stream()
+                        .map(TimetableEntry::getRoomId)
+                        .filter(java.util.Objects::nonNull)
+                        .distinct()
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(Room::getId, Room::getName));
+
+        return ApiResponse.of(entries.stream()
+                .sorted(java.util.Comparator.comparing(TimetableEntry::getDayOfWeek)
+                        .thenComparing(TimetableEntry::getStartTime))
+                .map(entry -> new PortalResponse.TimetableSlot(
+                        entry.getDayOfWeek().name(),
+                        entry.getStartTime().toString(),
+                        entry.getEndTime().toString(),
+                        subjects.getOrDefault(entry.getSubjectId(), "Matière"),
+                        teachers.getOrDefault(entry.getTeacherId(), ""),
+                        entry.getRoomId() == null ? "" : rooms.getOrDefault(entry.getRoomId(), "")))
                 .toList());
     }
 

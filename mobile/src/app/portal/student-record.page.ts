@@ -12,7 +12,12 @@ import {
   IonToolbar,
 } from '@ionic/angular';
 import { extractErrorMessage } from '../core/http-error.util';
-import { PortalAttendance, PortalGrade, PortalService } from './portal.service';
+import {
+  PortalAttendance,
+  PortalGrade,
+  PortalService,
+  PortalTimetableSlot,
+} from './portal.service';
 
 /** Fenêtre d'historique des absences : l'année scolaire en cours, pas une date arbitraire. */
 function schoolYearRange(): { from: string; to: string } {
@@ -52,6 +57,7 @@ function schoolYearRange(): { from: string; to: string } {
       <ion-segment [value]="tab()" (ionChange)="tab.set($any($event).detail.value)">
         <ion-segment-button value="grades">Notes</ion-segment-button>
         <ion-segment-button value="attendance">Absences</ion-segment-button>
+        <ion-segment-button value="timetable">Emploi du temps</ion-segment-button>
       </ion-segment>
 
       @if (errorMessage()) {
@@ -82,7 +88,7 @@ function schoolYearRange(): { from: string; to: string } {
             }
           </div>
         }
-      } @else {
+      } @else if (tab() === 'attendance') {
         @if (attendance().length === 0) {
           <p class="empty-state">Aucune absence sur l'année scolaire en cours.</p>
         } @else {
@@ -98,6 +104,25 @@ function schoolYearRange(): { from: string; to: string } {
                 <span class="record-value">
                   {{ entry.justified ? 'Justifiée' : 'Non justifiée' }}
                 </span>
+              </div>
+            }
+          </div>
+        }
+      } @else {
+        @if (timetable().length === 0) {
+          <p class="empty-state">Aucun cours planifié pour cette classe.</p>
+        } @else {
+          <div class="record-list">
+            @for (slot of timetable(); track slot.dayOfWeek + slot.startTime + slot.subject) {
+              <div class="record-row">
+                <span class="record-text">
+                  <span class="record-label">{{ slot.subject }}</span>
+                  <span class="record-meta">
+                    {{ dayLabel(slot.dayOfWeek) }} · {{ slot.startTime }} à {{ slot.endTime
+                    }}{{ slot.room ? ' · ' + slot.room : '' }}
+                  </span>
+                </span>
+                <span class="record-value">{{ slot.teacher }}</span>
               </div>
             }
           </div>
@@ -152,14 +177,28 @@ export class PortalStudentRecordPage {
   private readonly portalService = inject(PortalService);
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly tab = signal<'grades' | 'attendance'>('grades');
+  protected readonly tab = signal<'grades' | 'attendance' | 'timetable'>('grades');
   protected readonly grades = signal<PortalGrade[]>([]);
   protected readonly attendance = signal<PortalAttendance[]>([]);
+  protected readonly timetable = signal<PortalTimetableSlot[]>([]);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
 
   constructor() {
     void this.load();
+  }
+
+  protected dayLabel(day: string): string {
+    const days: Record<string, string> = {
+      MONDAY: 'Lundi',
+      TUESDAY: 'Mardi',
+      WEDNESDAY: 'Mercredi',
+      THURSDAY: 'Jeudi',
+      FRIDAY: 'Vendredi',
+      SATURDAY: 'Samedi',
+      SUNDAY: 'Dimanche',
+    };
+    return days[day] ?? day;
   }
 
   protected statusLabel(status: string): string {
@@ -176,11 +215,13 @@ export class PortalStudentRecordPage {
     const studentId = Number(this.route.snapshot.paramMap.get('studentId'));
     const range = schoolYearRange();
     try {
-      const [grades, attendance] = await Promise.all([
+      const [grades, attendance, timetable] = await Promise.all([
         this.portalService.grades(studentId),
         this.portalService.attendance(studentId, range.from, range.to),
+        this.portalService.timetable(studentId),
       ]);
       this.grades.set(grades);
+      this.timetable.set(timetable);
       // Une famille consulte d'abord les absences récentes : on présente l'ordre inverse.
       this.attendance.set([...attendance].reverse());
     } catch (error) {

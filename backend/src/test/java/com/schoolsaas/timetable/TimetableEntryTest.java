@@ -159,4 +159,27 @@ class TimetableEntryTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/v1/timetable-entries/" + entryB.getId()).header("Authorization", "Bearer " + fA.token()))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void aTeacherCanReadTimetableEntriesButCannotCreateThem() throws Exception {
+        Fixture f = setUpFixture("École EDT Enseignant");
+        Long tenantId = teacherRepository.findById(f.teacherId()).orElseThrow().getSchoolId();
+        Tenant tenant = tenantRepository.findById(tenantId).orElseThrow();
+        String teacherToken = TestAuthSupport.createUserAndLogin(
+                mockMvc,
+                objectMapper,
+                userRepository,
+                passwordEncoder,
+                tenant,
+                "teacher-edt@ecole.example",
+                Role.TEACHER);
+
+        mockMvc.perform(get("/api/v1/timetable-entries").header("Authorization", "Bearer " + teacherToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/timetable-entries")
+                        .header("Authorization", "Bearer " + teacherToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(entryJson(f, f.classId(), "11:00", "12:00")))
+                .andExpect(status().isForbidden());
+    }
 }

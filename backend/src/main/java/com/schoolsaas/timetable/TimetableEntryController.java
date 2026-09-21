@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/v1/timetable-entries")
-@PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
 public class TimetableEntryController {
 
     private final TimetableEntryService timetableEntryService;
@@ -37,16 +36,19 @@ public class TimetableEntryController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
     public ApiResponse<TimetableEntryResponse> create(@Valid @RequestBody TimetableEntryRequest request) {
         return ApiResponse.of(TimetableEntryResponse.from(timetableEntryService.create(request)));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER')")
     public ApiResponse<TimetableEntryResponse> getById(@PathVariable Long id) {
         return ApiResponse.of(TimetableEntryResponse.from(timetableEntryService.getById(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER')")
     public ApiResponse<List<TimetableEntryResponse>> list(
             @RequestParam(required = false) Long schoolClassId, @RequestParam(required = false) Long teacherId) {
         List<TimetableEntry> entries;
@@ -61,12 +63,14 @@ public class TimetableEntryController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
     public ApiResponse<TimetableEntryResponse> update(@PathVariable Long id, @Valid @RequestBody TimetableEntryRequest request) {
         return ApiResponse.of(TimetableEntryResponse.from(timetableEntryService.update(id, request)));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
     public void delete(@PathVariable Long id) {
         timetableEntryService.delete(id);
     }

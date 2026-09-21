@@ -5,9 +5,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.schoolsaas.auth.PlatformAdmin;
+import com.schoolsaas.auth.PlatformAdminRepository;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.User;
 import com.schoolsaas.auth.UserRepository;
+import com.schoolsaas.auth.dto.LoginRequest;
 import com.schoolsaas.auth.dto.TenantLoginRequest;
 import com.schoolsaas.billing.Plan;
 import com.schoolsaas.billing.PlanRepository;
@@ -92,5 +95,22 @@ public final class TestAuthSupport {
             Role role) throws Exception {
         createUser(userRepository, passwordEncoder, tenant, email, role);
         return login(mockMvc, objectMapper, tenant, email);
+    }
+
+    public static String createPlatformAdminAndLogin(
+            MockMvc mockMvc,
+            ObjectMapper objectMapper,
+            PlatformAdminRepository platformAdminRepository,
+            PasswordEncoder passwordEncoder,
+            String email)
+            throws Exception {
+        platformAdminRepository.save(new PlatformAdmin(email, passwordEncoder.encode("Sup3rSecret!"), "Super", "Admin"));
+        MvcResult result = mockMvc.perform(post("/api/v1/admin/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest(email, "Sup3rSecret!"))))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode data = objectMapper.readTree(result.getResponse().getContentAsString()).get("data");
+        return data.get("accessToken").asText();
     }
 }

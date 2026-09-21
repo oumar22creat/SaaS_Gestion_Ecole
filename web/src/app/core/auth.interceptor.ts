@@ -30,8 +30,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // piège même les pages publiques comme /register, en y redirigeant l'utilisateur au
       // premier chargement.
       if (isApiRequest && tokens && error instanceof HttpErrorResponse && error.status === 401) {
+        const role = authTokenService.role();
         authTokenService.clear();
-        router.navigateByUrl('/login');
+        router.navigateByUrl(role === 'SUPER_ADMIN' ? '/admin/login' : '/login');
       }
       return throwError(() => error);
     }),

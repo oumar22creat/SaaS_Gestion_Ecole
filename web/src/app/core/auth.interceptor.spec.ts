@@ -61,4 +61,15 @@ describe('authInterceptor', () => {
     expect(authTokenService.read()).toBeNull();
     expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
   });
+
+  it('redirects SUPER_ADMIN to /admin/login on a 401', () => {
+    const payload = btoa(JSON.stringify({ role: 'SUPER_ADMIN' }));
+    authTokenService.store({ accessToken: `h.${payload}.s`, refreshToken: 'def', expiresIn: 900 });
+
+    httpClient.get(`${environment.apiUrl}/admin/dashboard/summary`).subscribe({ error: () => undefined });
+    const req = httpMock.expectOne(`${environment.apiUrl}/admin/dashboard/summary`);
+    req.flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/login');
+  });
 });

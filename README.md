@@ -103,6 +103,7 @@ Copier `backend/.env.example` vers `backend/.env` et ajuster :
 | `STRIPE_CHECKOUT_SUCCESS_URL` / `STRIPE_CHECKOUT_CANCEL_URL` | Redirections après paiement Stripe Checkout | `http://localhost:4200/billing/success` |
 | `BILLING_TRIAL_DAYS` | Durée de l'essai gratuit (jours) | `30` |
 | `BILLING_DEFAULT_TRIAL_PLAN_CODE` | Plan par défaut à l'inscription (avant tout choix explicite) | `ESSENTIEL` |
+| `MOBILE_MONEY_CALLBACK_SECRET` | Secret partagé avec l'opérateur mobile money, exigé sur le callback | **vide par défaut : tout callback est alors rejeté** |
 | `BILLING_PAST_DUE_GRACE_DAYS` / `BILLING_READ_ONLY_GRACE_DAYS` | Délais de grâce avant lecture seule puis suspension | `3` / `7` |
 | `STORAGE_LOCAL_PATH` | Répertoire de stockage local des documents uploadés (S3 réel non câblé) | `./storage` |
 | `FCM_CREDENTIALS_PATH` | Chemin du fichier de credentials Firebase | voir la console Firebase du projet |

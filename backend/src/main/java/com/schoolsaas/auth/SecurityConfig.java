@@ -70,6 +70,9 @@ public class SecurityConfig {
                                 "/api/v1/tenants/register",
                                 "/api/v1/billing/plans",
                                 "/api/v1/billing/webhooks/**",
+                                // Appelé par l'opérateur mobile money, qui n'a pas de compte
+                                // chez nous : protégé par un secret partagé, pas par un jeton.
+                                "/api/v1/payments/mobile-money/callback",
                                 "/actuator/health",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

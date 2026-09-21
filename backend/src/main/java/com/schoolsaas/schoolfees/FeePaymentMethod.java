@@ -1,8 +1,9 @@
 package com.schoolsaas.schoolfees;
 
 /**
- * MOBILE_MONEY trace un paiement reçu hors-ligne via ce canal (saisie manuelle) — aucun
- * fournisseur n'est intégré pour déclencher un paiement en ligne réel, voir ADR-024.
+ * MOBILE_MONEY couvre deux cas : la saisie manuelle d'un règlement reçu hors ligne, et
+ * l'encaissement automatique par le module {@code mobilemoney}. Un paiement automatique se
+ * reconnaît à son {@code recordedByUserId} vide, personne ne l'ayant saisi.
  */
 public enum FeePaymentMethod {
     CASH,

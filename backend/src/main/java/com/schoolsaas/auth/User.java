@@ -74,6 +74,16 @@ public class User extends TenantScopedEntity {
         return active;
     }
 
+    /** Changement de rôle par un administrateur (les garde-fous sont dans UserService). */
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    /** Réinitialisation du mot de passe : le hachage est fait par l'appelant, jamais ici. */
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public void setActive(boolean active) {
         this.active = active;
     }

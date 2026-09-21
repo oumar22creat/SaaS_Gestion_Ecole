@@ -1,0 +1,110 @@
+<div class="page-header">
+  <h1><mat-icon class="page-icon" aria-hidden="true">badge</mat-icon>Comptes du personnel</h1>
+  <button mat-flat-button (click)="openCreateDialog()">
+    <mat-icon>person_add</mat-icon>
+    Créer un compte
+  </button>
+</div>
+
+<p class="page-subtitle">
+  Chaque membre du personnel se connecte avec son e-mail et le sous-domaine de l'établissement. Le
+  rôle choisi détermine les écrans auxquels il accède.
+</p>
+
+@if (errorMessage()) {
+  <p class="flash-error">{{ errorMessage() }}</p>
+}
+
+@if (loading()) {
+  <p class="loading-state" role="status" aria-label="Chargement des comptes"></p>
+} @else {
+  <div class="table-scroll">
+    <table mat-table [dataSource]="accounts()" class="data-table">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Nom</th>
+        <td mat-cell *matCellDef="let account">{{ account.firstName }} {{ account.lastName }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Identifiant</th>
+        <td mat-cell *matCellDef="let account">{{ account.email }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="role">
+        <th mat-header-cell *matHeaderCellDef>Rôle</th>
+        <td mat-cell *matCellDef="let account">
+          <span class="pill">{{ roleLabelFor(account.role) }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Accès</th>
+        <td mat-cell *matCellDef="let account">
+          @if (account.active) {
+            <span class="status-badge status-ok">Actif</span>
+          } @else {
+            <span class="status-badge status-off">Désactivé</span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let account">
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="menu"
+            [attr.aria-label]="
+              'Actions sur le compte de ' + account.firstName + ' ' + account.lastName
+            "
+          >
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            <button mat-menu-item [matMenuTriggerFor]="roleMenu">
+              <mat-icon>badge</mat-icon>
+              Changer le rôle
+            </button>
+            <button mat-menu-item (click)="openResetPassword(account)">
+              <mat-icon>lock_reset</mat-icon>
+              Réinitialiser le mot de passe
+            </button>
+            <button mat-menu-item (click)="toggleActive(account)">
+              <mat-icon>{{ account.active ? 'block' : 'check_circle' }}</mat-icon>
+              {{ account.active ? 'Désactiver le compte' : 'Réactiver le compte' }}
+            </button>
+          </mat-menu>
+          <mat-menu #roleMenu="matMenu">
+            @for (role of roles; track role.value) {
+              <button
+                mat-menu-item
+                [disabled]="role.value === account.role"
+                (click)="changeRole(account, role.value)"
+              >
+                {{ role.label }}
+              </button>
+            }
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns" [class.row-inactive]="!row.active"></tr>
+    </table>
+  </div>
+
+  @if (accounts().length === 0) {
+    <div class="empty-state">
+      <span class="empty-title">Aucun compte en dehors du vôtre</span>
+      <span class="empty-hint">
+        Créez les comptes de vos enseignants, du secrétariat et de la comptabilité. Sans compte, un
+        enseignant ne peut pas faire l'appel depuis l'application mobile.
+      </span>
+      <span class="empty-actions">
+        <button mat-flat-button (click)="openCreateDialog()">
+          <mat-icon>person_add</mat-icon> Créer un compte
+        </button>
+      </span>
+    </div>
+  }
+}

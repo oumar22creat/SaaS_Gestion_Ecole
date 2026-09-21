@@ -1,14 +1,17 @@
 <div class="page-header">
-  <h1>Import d'élèves (CSV)</h1>
+  <h1>
+    <mat-icon class="page-icon" aria-hidden="true">upload_file</mat-icon>Import d'élèves (CSV)
+  </h1>
   <a mat-button routerLink="/students">Retour aux élèves</a>
 </div>
 
 <mat-stepper orientation="horizontal" linear>
   <mat-step label="Déposer le fichier">
     <p class="hint">
-      Fichier CSV avec en-tête <code>studentNumber,firstName,lastName,birthDate,gender,className</code> —
-      seules les 3 premières colonnes sont obligatoires. <code>className</code> doit correspondre exactement
-      au nom d'une classe existante (sinon l'élève est importé sans classe).
+      Fichier CSV avec en-tête
+      <code>studentNumber,firstName,lastName,birthDate,gender,className</code> — seules les 3
+      premières colonnes sont obligatoires. <code>className</code> doit correspondre exactement au
+      nom d'une classe existante (sinon l'élève est importé sans classe).
     </p>
 
     <input type="file" accept=".csv,text/csv" (change)="onFileSelected($event)" />
@@ -36,21 +39,23 @@
       </p>
 
       @if (result()!.errors.length > 0) {
-        <table mat-table [dataSource]="result()!.errors" class="data-table">
-          <ng-container matColumnDef="line">
-            <th mat-header-cell *matHeaderCellDef>Ligne</th>
-            <td mat-cell *matCellDef="let error">{{ error.line }}</td>
-          </ng-container>
-          <ng-container matColumnDef="message">
-            <th mat-header-cell *matHeaderCellDef>Erreur</th>
-            <td mat-cell *matCellDef="let error">
-              <mat-icon class="warn-icon">warning</mat-icon>
-              {{ error.message }}
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: errorColumns"></tr>
-        </table>
+        <div class="table-scroll">
+          <table mat-table [dataSource]="result()!.errors" class="data-table">
+            <ng-container matColumnDef="line">
+              <th mat-header-cell *matHeaderCellDef>Ligne</th>
+              <td mat-cell *matCellDef="let error">{{ error.line }}</td>
+            </ng-container>
+            <ng-container matColumnDef="message">
+              <th mat-header-cell *matHeaderCellDef>Erreur</th>
+              <td mat-cell *matCellDef="let error">
+                <mat-icon class="warn-icon">warning</mat-icon>
+                {{ error.message }}
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: errorColumns"></tr>
+          </table>
+        </div>
       }
     }
 

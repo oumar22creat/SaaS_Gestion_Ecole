@@ -23,7 +23,9 @@
       <mat-label>Enseignant</mat-label>
       <mat-select formControlName="teacherId">
         @for (teacher of teachers(); track teacher.id) {
-          <mat-option [value]="teacher.id">{{ teacher.firstName }} {{ teacher.lastName }}</mat-option>
+          <mat-option [value]="teacher.id"
+            >{{ teacher.firstName }} {{ teacher.lastName }}</mat-option
+          >
         }
       </mat-select>
     </mat-form-field>

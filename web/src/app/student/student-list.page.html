@@ -1,5 +1,5 @@
 <div class="page-header">
-  <h1>Élèves</h1>
+  <h1><mat-icon class="page-icon" aria-hidden="true">school</mat-icon>Élèves</h1>
   <div class="header-actions">
     <a mat-stroked-button routerLink="/students/import">
       <mat-icon>upload_file</mat-icon>
@@ -12,50 +12,73 @@
   </div>
 </div>
 
-<table mat-table [dataSource]="students()" class="data-table">
-  <ng-container matColumnDef="studentNumber">
-    <th mat-header-cell *matHeaderCellDef>Matricule</th>
-    <td mat-cell *matCellDef="let student">{{ student.studentNumber }}</td>
-  </ng-container>
+<div class="table-scroll">
+  <table mat-table [dataSource]="students()" class="data-table">
+    <ng-container matColumnDef="studentNumber">
+      <th mat-header-cell *matHeaderCellDef>Matricule</th>
+      <td mat-cell *matCellDef="let student">{{ student.studentNumber }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="firstName">
-    <th mat-header-cell *matHeaderCellDef>Prénom</th>
-    <td mat-cell *matCellDef="let student">{{ student.firstName }}</td>
-  </ng-container>
+    <ng-container matColumnDef="firstName">
+      <th mat-header-cell *matHeaderCellDef>Prénom</th>
+      <td mat-cell *matCellDef="let student">{{ student.firstName }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="lastName">
-    <th mat-header-cell *matHeaderCellDef>Nom</th>
-    <td mat-cell *matCellDef="let student">{{ student.lastName }}</td>
-  </ng-container>
+    <ng-container matColumnDef="lastName">
+      <th mat-header-cell *matHeaderCellDef>Nom</th>
+      <td mat-cell *matCellDef="let student">{{ student.lastName }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="schoolClassId">
-    <th mat-header-cell *matHeaderCellDef>Classe</th>
-    <td mat-cell *matCellDef="let student">{{ student.schoolClassId ?? '—' }}</td>
-  </ng-container>
+    <ng-container matColumnDef="schoolClassId">
+      <th mat-header-cell *matHeaderCellDef>Classe</th>
+      <td mat-cell *matCellDef="let student">{{ student.schoolClassId ?? '—' }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="active">
-    <th mat-header-cell *matHeaderCellDef>Statut</th>
-    <td mat-cell *matCellDef="let student">
-      <mat-chip [class.inactive-chip]="!student.active">{{ student.active ? 'Actif' : 'Inactif' }}</mat-chip>
-    </td>
-  </ng-container>
+    <ng-container matColumnDef="active">
+      <th mat-header-cell *matHeaderCellDef>Statut</th>
+      <td mat-cell *matCellDef="let student">
+        <mat-chip [class.inactive-chip]="!student.active">{{
+          student.active ? 'Actif' : 'Inactif'
+        }}</mat-chip>
+      </td>
+    </ng-container>
 
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef></th>
-    <td mat-cell *matCellDef="let student">
-      <button mat-icon-button (click)="openEditDialog(student)" aria-label="Modifier">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button (click)="deactivate(student)" aria-label="Désactiver" [disabled]="!student.active">
-        <mat-icon>block</mat-icon>
-      </button>
-    </td>
-  </ng-container>
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let student">
+        <button mat-icon-button (click)="openEditDialog(student)" aria-label="Modifier">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          (click)="deactivate(student)"
+          aria-label="Désactiver"
+          [disabled]="!student.active"
+        >
+          <mat-icon>block</mat-icon>
+        </button>
+      </td>
+    </ng-container>
 
-  <tr mat-header-row *matHeaderRowDef="columns"></tr>
-  <tr mat-row *matRowDef="let row; columns: columns"></tr>
-</table>
+    <tr mat-header-row *matHeaderRowDef="columns"></tr>
+    <tr mat-row *matRowDef="let row; columns: columns"></tr>
+  </table>
+</div>
 
 @if (!loading() && students().length === 0) {
-  <p class="empty-state">Aucun élève pour l'instant.</p>
+  <div class="empty-state">
+    <span class="empty-title">Aucun élève inscrit</span>
+    <span class="empty-hint"
+      >Ajoutez vos élèves un par un, ou importez toute une promotion depuis un fichier CSV exporté
+      de votre tableur.</span
+    >
+    <span class="empty-actions">
+      <button mat-flat-button (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon> Ajouter un élève
+      </button>
+      <a mat-stroked-button routerLink="/students/import"
+        ><mat-icon>upload_file</mat-icon> Importer un CSV</a
+      >
+    </span>
+  </div>
 }

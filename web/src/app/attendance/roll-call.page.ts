@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
 import { extractErrorMessage } from '../core/http-error.util';
 import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
@@ -33,16 +34,14 @@ interface RollCallRow {
  */
 @Component({
   selector: 'app-roll-call-page',
-  imports: [
-    FormsModule,
+  imports: [FormsModule,
     MatFormFieldModule,
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
     MatButtonToggleModule,
     MatButtonModule,
-    MatInputModule,
-  ],
+    MatInputModule, MatIconModule],
   templateUrl: './roll-call.page.html',
   styleUrl: './roll-call.page.scss',
 })

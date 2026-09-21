@@ -16,10 +16,21 @@ import { TenantSettingsService } from './tenant-settings.service';
       <h1><mat-icon class="page-icon" aria-hidden="true">palette</mat-icon>Établissement</h1>
     </div>
     <form class="stack-form" (submit)="save($event)">
-      <mat-form-field appearance="outline"><mat-label>URL du logo</mat-label><input matInput [(ngModel)]="logoUrl" name="logoUrl" /></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Couleur primaire</mat-label><input matInput [(ngModel)]="primaryColor" name="primaryColor" /></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Couleur secondaire</mat-label><input matInput [(ngModel)]="secondaryColor" name="secondaryColor" /></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Domaine personnalisé (Premium)</mat-label><input matInput [(ngModel)]="customDomain" name="customDomain" /></mat-form-field>
+      <mat-form-field appearance="outline"
+        ><mat-label>URL du logo</mat-label><input matInput [(ngModel)]="logoUrl" name="logoUrl"
+      /></mat-form-field>
+      <mat-form-field appearance="outline"
+        ><mat-label>Couleur primaire</mat-label
+        ><input matInput [(ngModel)]="primaryColor" name="primaryColor"
+      /></mat-form-field>
+      <mat-form-field appearance="outline"
+        ><mat-label>Couleur secondaire</mat-label
+        ><input matInput [(ngModel)]="secondaryColor" name="secondaryColor"
+      /></mat-form-field>
+      <mat-form-field appearance="outline"
+        ><mat-label>Domaine personnalisé (Premium)</mat-label
+        ><input matInput [(ngModel)]="customDomain" name="customDomain"
+      /></mat-form-field>
       <button mat-flat-button type="submit">Enregistrer</button>
     </form>
     @if (errorMessage()) {
@@ -53,7 +64,11 @@ export class SettingsPage {
     event.preventDefault();
     this.errorMessage.set(null);
     try {
-      await this.settingsService.updateBranding(this.logoUrl || null, this.primaryColor, this.secondaryColor);
+      await this.settingsService.updateBranding(
+        this.logoUrl || null,
+        this.primaryColor,
+        this.secondaryColor,
+      );
       if (this.customDomain) {
         await this.settingsService.updateCustomDomain(this.customDomain);
       }

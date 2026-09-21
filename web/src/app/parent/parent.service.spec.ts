@@ -9,7 +9,9 @@ describe('ParentService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(ParentService);
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -32,6 +34,11 @@ describe('ParentService', () => {
     expect(req.request.method).toBe('POST');
     req.flush({ data: { studentId: 5, parentId: 1, relationship: 'MERE', primaryContact: true } });
 
-    expect(await promise).toEqual({ studentId: 5, parentId: 1, relationship: 'MERE', primaryContact: true });
+    expect(await promise).toEqual({
+      studentId: 5,
+      parentId: 1,
+      relationship: 'MERE',
+      primaryContact: true,
+    });
   });
 });

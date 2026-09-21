@@ -9,7 +9,9 @@ describe('TimetableEntryService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(TimetableEntryService);
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -29,7 +31,12 @@ describe('TimetableEntryService', () => {
     const promise = service.create(request);
     const req = httpMock.expectOne(`${environment.apiUrl}/timetable-entries`);
     req.flush(
-      { error: { code: 'TEACHER_ALREADY_BOOKED', message: 'Cet enseignant a déjà un cours sur ce créneau' } },
+      {
+        error: {
+          code: 'TEACHER_ALREADY_BOOKED',
+          message: 'Cet enseignant a déjà un cours sur ce créneau',
+        },
+      },
       { status: 409, statusText: 'Conflict' },
     );
 

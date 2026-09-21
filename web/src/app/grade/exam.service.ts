@@ -12,7 +12,9 @@ export class ExamService {
   private readonly http = inject(HttpClient);
 
   async list(): Promise<Exam[]> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<Exam[]>>(BASE_URL, { params: { pageSize: 200 } }));
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<Exam[]>>(BASE_URL, { params: { pageSize: 200 } }),
+    );
     return response.data;
   }
 
@@ -31,7 +33,9 @@ export class ExamService {
   }
 
   async statistics(examId: number): Promise<ExamStatistics> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<ExamStatistics>>(`${BASE_URL}/${examId}/statistics`));
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<ExamStatistics>>(`${BASE_URL}/${examId}/statistics`),
+    );
     return response.data;
   }
 }

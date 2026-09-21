@@ -16,7 +16,15 @@ import { DisciplineService, Incident } from './discipline.service';
 
 @Component({
   selector: 'app-discipline-page',
-  imports: [FormsModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, MatTableModule, MatIconModule],
+  imports: [
+    FormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    MatButtonModule,
+    MatTableModule,
+    MatIconModule,
+  ],
   template: `
     <div class="page-header">
       <h1><mat-icon class="page-icon" aria-hidden="true">gavel</mat-icon>Vie scolaire</h1>
@@ -36,7 +44,9 @@ import { DisciplineService, Incident } from './discipline.service';
         <mat-label>Élèves concernés</mat-label>
         <mat-select [(ngModel)]="studentIds" name="studentIds" multiple>
           @for (student of students(); track student.id) {
-            <mat-option [value]="student.id">{{ student.lastName }} {{ student.firstName }}</mat-option>
+            <mat-option [value]="student.id"
+              >{{ student.lastName }} {{ student.firstName }}</mat-option
+            >
           }
         </mat-select>
       </mat-form-field>
@@ -58,22 +68,22 @@ import { DisciplineService, Incident } from './discipline.service';
       <p class="flash-error">{{ errorMessage() }}</p>
     }
     <div class="table-scroll">
-<table mat-table [dataSource]="incidents()" class="data-table">
-      <ng-container matColumnDef="date">
-        <th mat-header-cell *matHeaderCellDef>Date</th>
-        <td mat-cell *matCellDef="let incident">{{ incident.occurredAt }}</td>
-      </ng-container>
-      <ng-container matColumnDef="severity">
-        <th mat-header-cell *matHeaderCellDef>Gravité</th>
-        <td mat-cell *matCellDef="let incident">{{ incident.severity }}</td>
-      </ng-container>
-      <ng-container matColumnDef="description">
-        <th mat-header-cell *matHeaderCellDef>Faits</th>
-        <td mat-cell *matCellDef="let incident">{{ incident.description }}</td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
-      <tr mat-row *matRowDef="let row; columns: columns"></tr>
-    </table>
+      <table mat-table [dataSource]="incidents()" class="data-table">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let incident">{{ incident.occurredAt }}</td>
+        </ng-container>
+        <ng-container matColumnDef="severity">
+          <th mat-header-cell *matHeaderCellDef>Gravité</th>
+          <td mat-cell *matCellDef="let incident">{{ incident.severity }}</td>
+        </ng-container>
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Faits</th>
+          <td mat-cell *matCellDef="let incident">{{ incident.description }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
     </div>
   `,
 })

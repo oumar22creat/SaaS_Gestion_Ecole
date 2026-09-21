@@ -8,6 +8,7 @@
           <mat-option [value]="schoolClass.id">{{ schoolClass.name }}</mat-option>
         }
       </mat-select>
+      <mat-error>{{ fieldError(form.controls.schoolClassId) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -17,21 +18,25 @@
           <mat-option [value]="subject.id">{{ subject.name }}</mat-option>
         }
       </mat-select>
+      <mat-error>{{ fieldError(form.controls.subjectId) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Intitulé</mat-label>
       <input matInput formControlName="label" placeholder="Contrôle du 12/09" />
+      <mat-error>{{ fieldError(form.controls.label) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Barème</mat-label>
       <input matInput type="number" min="1" formControlName="maxScore" />
+      <mat-error>{{ fieldError(form.controls.maxScore) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Coefficient</mat-label>
       <input matInput type="number" min="1" formControlName="coefficient" />
+      <mat-error>{{ fieldError(form.controls.coefficient) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -39,6 +44,7 @@
       <input matInput [matDatepicker]="picker" formControlName="examDate" />
       <mat-datepicker-toggle matIconSuffix [for]="picker" />
       <mat-datepicker #picker />
+      <mat-error>{{ fieldError(form.controls.examDate) }}</mat-error>
     </mat-form-field>
 
     @if (errorMessage()) {

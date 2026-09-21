@@ -15,6 +15,7 @@ import { Subject } from '../subject/subject.model';
 import { SubjectService } from '../subject/subject.service';
 import { Exam } from './grade.model';
 import { ExamService } from './exam.service';
+import { fieldError } from '../core/form-error.util';
 
 @Component({
   selector: 'app-exam-form-dialog',
@@ -33,6 +34,7 @@ import { ExamService } from './exam.service';
   styleUrl: './exam-form.dialog.scss',
 })
 export class ExamFormDialog {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly examService = inject(ExamService);
   private readonly dialogRef = inject(MatDialogRef<ExamFormDialog, Exam | undefined>);

@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { extractErrorMessage } from '../core/http-error.util';
 import { Teacher } from './teacher.model';
 import { TeacherService } from './teacher.service';
+import { fieldError } from '../core/form-error.util';
 
 export interface TeacherFormDialogData {
   teacher?: Teacher;
@@ -27,6 +28,7 @@ export interface TeacherFormDialogData {
   styleUrl: './teacher-form.dialog.scss',
 })
 export class TeacherFormDialog {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly teacherService = inject(TeacherService);
   private readonly dialogRef = inject(MatDialogRef<TeacherFormDialog, Teacher | undefined>);
@@ -36,7 +38,10 @@ export class TeacherFormDialog {
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly form = this.formBuilder.nonNullable.group({
-    firstName: [this.data.teacher?.firstName ?? '', [Validators.required, Validators.maxLength(100)]],
+    firstName: [
+      this.data.teacher?.firstName ?? '',
+      [Validators.required, Validators.maxLength(100)],
+    ],
     lastName: [this.data.teacher?.lastName ?? '', [Validators.required, Validators.maxLength(100)]],
     email: [this.data.teacher?.email ?? '', [Validators.email]],
     phone: [this.data.teacher?.phone ?? ''],

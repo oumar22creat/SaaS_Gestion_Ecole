@@ -32,11 +32,11 @@ export class AuthTokenService {
   /** Affichage uniquement (nom du rôle dans le shell) — voir docs/jwt.util.ts. */
   role(): string | null {
     const tokens = this.read();
-    return tokens ? decodeAccessToken(tokens.accessToken)?.role ?? null : null;
+    return tokens ? (decodeAccessToken(tokens.accessToken)?.role ?? null) : null;
   }
 
   email(): string | null {
     const tokens = this.read();
-    return tokens ? decodeAccessToken(tokens.accessToken)?.email ?? null : null;
+    return tokens ? (decodeAccessToken(tokens.accessToken)?.email ?? null) : null;
   }
 }

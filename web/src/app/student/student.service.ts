@@ -12,7 +12,9 @@ export class StudentService {
   private readonly http = inject(HttpClient);
 
   async list(): Promise<Student[]> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<Student[]>>(BASE_URL, { params: { pageSize: 200 } }));
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<Student[]>>(BASE_URL, { params: { pageSize: 200 } }),
+    );
     return response.data;
   }
 
@@ -22,7 +24,9 @@ export class StudentService {
   }
 
   async update(id: number, request: StudentRequest): Promise<Student> {
-    const response = await firstValueFrom(this.http.put<ApiResponse<Student>>(`${BASE_URL}/${id}`, request));
+    const response = await firstValueFrom(
+      this.http.put<ApiResponse<Student>>(`${BASE_URL}/${id}`, request),
+    );
     return response.data;
   }
 

@@ -37,7 +37,15 @@ export class TimetableListPage {
   protected readonly teachers = signal<Teacher[]>([]);
   protected readonly rooms = signal<Room[]>([]);
   protected readonly loading = signal(false);
-  protected readonly columns = ['dayOfWeek', 'time', 'schoolClassId', 'subjectId', 'teacherId', 'roomId', 'actions'];
+  protected readonly columns = [
+    'dayOfWeek',
+    'time',
+    'schoolClassId',
+    'subjectId',
+    'teacherId',
+    'roomId',
+    'actions',
+  ];
   protected readonly dayLabels = new Map(DAYS_OF_WEEK.map((d) => [d.value, d.label]));
 
   constructor() {

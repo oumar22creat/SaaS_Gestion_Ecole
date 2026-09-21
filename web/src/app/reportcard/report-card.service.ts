@@ -40,26 +40,35 @@ export class ReportCardService {
   private readonly http = inject(HttpClient);
 
   async generate(request: GenerateReportCardsRequest): Promise<ReportCard[]> {
-    const response = await firstValueFrom(this.http.post<ApiResponse<ReportCard[]>>(`${BASE_URL}/generate`, request));
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<ReportCard[]>>(`${BASE_URL}/generate`, request),
+    );
     return response.data;
   }
 
   async list(schoolClassId: number, periodLabel: string): Promise<ReportCard[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<ReportCard[]>>(BASE_URL, { params: { schoolClassId, periodLabel } }),
+      this.http.get<ApiResponse<ReportCard[]>>(BASE_URL, {
+        params: { schoolClassId, periodLabel },
+      }),
     );
     return response.data;
   }
 
   async update(id: number, generalComment: string, councilDecision: string): Promise<ReportCard> {
     const response = await firstValueFrom(
-      this.http.put<ApiResponse<ReportCard>>(`${BASE_URL}/${id}`, { generalComment, councilDecision }),
+      this.http.put<ApiResponse<ReportCard>>(`${BASE_URL}/${id}`, {
+        generalComment,
+        councilDecision,
+      }),
     );
     return response.data;
   }
 
   async downloadPdf(id: number): Promise<void> {
-    const blob = await firstValueFrom(this.http.get(`${BASE_URL}/${id}/pdf`, { responseType: 'blob' }));
+    const blob = await firstValueFrom(
+      this.http.get(`${BASE_URL}/${id}/pdf`, { responseType: 'blob' }),
+    );
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;

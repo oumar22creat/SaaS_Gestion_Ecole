@@ -25,12 +25,18 @@ export class CanteenService {
 
   async listMenus(from: string, to: string): Promise<Menu[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<Menu[]>>(`${environment.apiUrl}/canteen/menus`, { params: { from, to } }),
+      this.http.get<ApiResponse<Menu[]>>(`${environment.apiUrl}/canteen/menus`, {
+        params: { from, to },
+      }),
     );
     return response.data;
   }
 
-  async upsertMenu(date: string, mainDescription: string, specialDietDescription: string | null): Promise<Menu> {
+  async upsertMenu(
+    date: string,
+    mainDescription: string,
+    specialDietDescription: string | null,
+  ): Promise<Menu> {
     const response = await firstValueFrom(
       this.http.post<ApiResponse<Menu>>(`${environment.apiUrl}/canteen/menus`, {
         date,
@@ -43,7 +49,11 @@ export class CanteenService {
 
   async reserve(studentId: number, date: string, specialDiet: boolean): Promise<void> {
     await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/canteen/reservations`, { studentId, date, specialDiet }),
+      this.http.post(`${environment.apiUrl}/canteen/reservations`, {
+        studentId,
+        date,
+        specialDiet,
+      }),
     );
   }
 

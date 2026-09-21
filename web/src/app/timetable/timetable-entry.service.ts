@@ -17,12 +17,16 @@ export class TimetableEntryService {
   }
 
   async create(request: TimetableEntryRequest): Promise<TimetableEntry> {
-    const response = await firstValueFrom(this.http.post<ApiResponse<TimetableEntry>>(BASE_URL, request));
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<TimetableEntry>>(BASE_URL, request),
+    );
     return response.data;
   }
 
   async update(id: number, request: TimetableEntryRequest): Promise<TimetableEntry> {
-    const response = await firstValueFrom(this.http.put<ApiResponse<TimetableEntry>>(`${BASE_URL}/${id}`, request));
+    const response = await firstValueFrom(
+      this.http.put<ApiResponse<TimetableEntry>>(`${BASE_URL}/${id}`, request),
+    );
     return response.data;
   }
 

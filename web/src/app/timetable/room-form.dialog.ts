@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { extractErrorMessage } from '../core/http-error.util';
 import { Room } from './room.model';
 import { RoomService } from './room.service';
+import { fieldError } from '../core/form-error.util';
 
 export interface RoomFormDialogData {
   room?: Room;
@@ -15,11 +16,19 @@ export interface RoomFormDialogData {
 
 @Component({
   selector: 'app-room-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+  ],
   templateUrl: './room-form.dialog.html',
   styleUrl: './room-form.dialog.scss',
 })
 export class RoomFormDialog {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly roomService = inject(RoomService);
   private readonly dialogRef = inject(MatDialogRef<RoomFormDialog, Room | undefined>);

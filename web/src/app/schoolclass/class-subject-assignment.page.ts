@@ -15,6 +15,7 @@ import { Teacher } from '../teacher/teacher.model';
 import { TeacherService } from '../teacher/teacher.service';
 import { ClassSubjectAssignment } from './school-class.model';
 import { SchoolClassService } from './school-class.service';
+import { fieldError } from '../core/form-error.util';
 
 /** Affectation enseignant/matière pour une classe — cahier-des-charges.md §8, ROADMAP.md 1.5. */
 @Component({
@@ -33,6 +34,7 @@ import { SchoolClassService } from './school-class.service';
   styleUrl: './class-subject-assignment.page.scss',
 })
 export class ClassSubjectAssignmentPage {
+  protected readonly fieldError = fieldError;
   private readonly route = inject(ActivatedRoute);
   private readonly schoolClassService = inject(SchoolClassService);
   private readonly subjectService = inject(SubjectService);
@@ -79,7 +81,10 @@ export class ClassSubjectAssignmentPage {
     this.errorMessage.set(null);
     try {
       const value = this.form.getRawValue();
-      await this.schoolClassService.assign(this.classId, { subjectId: value.subjectId!, teacherId: value.teacherId! });
+      await this.schoolClassService.assign(this.classId, {
+        subjectId: value.subjectId!,
+        teacherId: value.teacherId!,
+      });
       this.form.reset();
       await this.refresh();
     } catch (error) {

@@ -15,7 +15,15 @@ import { CanteenInvoice, CanteenService, Menu } from './canteen.service';
 
 @Component({
   selector: 'app-canteen-page',
-  imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatTableModule, MatIconModule],
+  imports: [
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatTableModule,
+    MatIconModule,
+  ],
   template: `
     <div class="page-header">
       <h1><mat-icon class="page-icon" aria-hidden="true">restaurant</mat-icon>Cantine</h1>
@@ -36,7 +44,9 @@ import { CanteenInvoice, CanteenService, Menu } from './canteen.service';
         <mat-label>Élève</mat-label>
         <mat-select [(ngModel)]="studentId" name="studentId">
           @for (student of students(); track student.id) {
-            <mat-option [value]="student.id">{{ student.lastName }} {{ student.firstName }}</mat-option>
+            <mat-option [value]="student.id"
+              >{{ student.lastName }} {{ student.firstName }}</mat-option
+            >
           }
         </mat-select>
       </mat-form-field>
@@ -47,33 +57,35 @@ import { CanteenInvoice, CanteenService, Menu } from './canteen.service';
     }
     <h2>Menus</h2>
     <div class="table-scroll">
-<table mat-table [dataSource]="menus()" class="data-table">
-      <ng-container matColumnDef="date">
-        <th mat-header-cell *matHeaderCellDef>Date</th>
-        <td mat-cell *matCellDef="let menu">{{ menu.date }}</td>
-      </ng-container>
-      <ng-container matColumnDef="desc">
-        <th mat-header-cell *matHeaderCellDef>Plat</th>
-        <td mat-cell *matCellDef="let menu">{{ menu.mainDescription }}</td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="menuColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: menuColumns"></tr>
-    </table>
+      <table mat-table [dataSource]="menus()" class="data-table">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let menu">{{ menu.date }}</td>
+        </ng-container>
+        <ng-container matColumnDef="desc">
+          <th mat-header-cell *matHeaderCellDef>Plat</th>
+          <td mat-cell *matCellDef="let menu">{{ menu.mainDescription }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="menuColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: menuColumns"></tr>
+      </table>
     </div>
     <h2>Impayés</h2>
     <div class="table-scroll">
-<table mat-table [dataSource]="unpaid()" class="data-table">
-      <ng-container matColumnDef="student">
-        <th mat-header-cell *matHeaderCellDef>Élève</th>
-        <td mat-cell *matCellDef="let invoice">#{{ invoice.studentId }}</td>
-      </ng-container>
-      <ng-container matColumnDef="amount">
-        <th mat-header-cell *matHeaderCellDef>Dû</th>
-        <td mat-cell *matCellDef="let invoice">{{ money(invoice.amountDueCents - invoice.amountPaidCents) }}</td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="unpaidColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: unpaidColumns"></tr>
-    </table>
+      <table mat-table [dataSource]="unpaid()" class="data-table">
+        <ng-container matColumnDef="student">
+          <th mat-header-cell *matHeaderCellDef>Élève</th>
+          <td mat-cell *matCellDef="let invoice">#{{ invoice.studentId }}</td>
+        </ng-container>
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef>Dû</th>
+          <td mat-cell *matCellDef="let invoice">
+            {{ money(invoice.amountDueCents - invoice.amountPaidCents) }}
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="unpaidColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: unpaidColumns"></tr>
+      </table>
     </div>
   `,
 })

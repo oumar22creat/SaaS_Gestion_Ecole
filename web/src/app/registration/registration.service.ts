@@ -14,7 +14,10 @@ export class RegistrationService {
 
   async register(request: TenantRegistrationRequest): Promise<TenantRegistrationResponse> {
     const response = await firstValueFrom(
-      this.http.post<ApiResponse<TenantRegistrationResponse>>(`${environment.apiUrl}/tenants/register`, request),
+      this.http.post<ApiResponse<TenantRegistrationResponse>>(
+        `${environment.apiUrl}/tenants/register`,
+        request,
+      ),
     );
     return response.data;
   }

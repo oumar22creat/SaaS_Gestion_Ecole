@@ -12,7 +12,9 @@ export class RoomService {
   private readonly http = inject(HttpClient);
 
   async list(): Promise<Room[]> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<Room[]>>(BASE_URL, { params: { pageSize: 200 } }));
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<Room[]>>(BASE_URL, { params: { pageSize: 200 } }),
+    );
     return response.data;
   }
 
@@ -22,7 +24,9 @@ export class RoomService {
   }
 
   async update(id: number, request: RoomRequest): Promise<Room> {
-    const response = await firstValueFrom(this.http.put<ApiResponse<Room>>(`${BASE_URL}/${id}`, request));
+    const response = await firstValueFrom(
+      this.http.put<ApiResponse<Room>>(`${BASE_URL}/${id}`, request),
+    );
     return response.data;
   }
 

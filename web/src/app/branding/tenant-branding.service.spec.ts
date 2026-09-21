@@ -36,8 +36,9 @@ describe('TenantBrandingService', () => {
     service.init();
 
     expect(service.branding()).toEqual(DEFAULT_BRANDING);
-    expect(getComputedStyle(document.documentElement).getPropertyValue('--tenant-primary').trim())
-      .toBe(DEFAULT_BRANDING.primaryColor);
+    expect(
+      getComputedStyle(document.documentElement).getPropertyValue('--tenant-primary').trim(),
+    ).toBe(DEFAULT_BRANDING.primaryColor);
 
     httpMock.expectOne(`${environment.apiUrl}/tenants/current/branding`).flush(DEFAULT_BRANDING);
   });

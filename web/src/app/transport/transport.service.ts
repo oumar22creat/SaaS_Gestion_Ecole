@@ -36,24 +36,33 @@ export class TransportService {
 
   async addStop(routeId: number, name: string, sequenceOrder: number): Promise<BusStop> {
     const response = await firstValueFrom(
-      this.http.post<ApiResponse<BusStop>>(`${environment.apiUrl}/transport/routes/${routeId}/stops`, {
-        name,
-        sequenceOrder,
-      }),
+      this.http.post<ApiResponse<BusStop>>(
+        `${environment.apiUrl}/transport/routes/${routeId}/stops`,
+        {
+          name,
+          sequenceOrder,
+        },
+      ),
     );
     return response.data;
   }
 
   async listStops(routeId: number): Promise<BusStop[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<BusStop[]>>(`${environment.apiUrl}/transport/routes/${routeId}/stops`),
+      this.http.get<ApiResponse<BusStop[]>>(
+        `${environment.apiUrl}/transport/routes/${routeId}/stops`,
+      ),
     );
     return response.data;
   }
 
   async assign(studentId: number, busRouteId: number, busStopId: number): Promise<void> {
     await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/transport/assignments`, { studentId, busRouteId, busStopId }),
+      this.http.post(`${environment.apiUrl}/transport/assignments`, {
+        studentId,
+        busRouteId,
+        busStopId,
+      }),
     );
   }
 }

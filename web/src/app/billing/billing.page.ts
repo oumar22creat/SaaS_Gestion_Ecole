@@ -26,14 +26,23 @@ import { BillingPlan, BillingService, Subscription } from './billing.service';
         <mat-card>
           <h2>{{ plan.name }}</h2>
           <p>{{ money(plan.priceCents, plan.currency) }} / mois</p>
-          <button mat-flat-button [disabled]="!plan.purchasable" (click)="checkout(plan)">Choisir</button>
+          <button mat-flat-button [disabled]="!plan.purchasable" (click)="checkout(plan)">
+            Choisir
+          </button>
         </mat-card>
       }
     </div>
   `,
   styles: `
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
-    mat-card { padding: var(--space-4); }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--space-4);
+      margin-top: var(--space-4);
+    }
+    mat-card {
+      padding: var(--space-4);
+    }
   `,
 })
 export class BillingPage {

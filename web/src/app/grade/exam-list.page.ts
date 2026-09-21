@@ -29,7 +29,14 @@ export class ExamListPage {
   protected readonly classes = signal<SchoolClass[]>([]);
   protected readonly subjects = signal<Subject[]>([]);
   protected readonly loading = signal(false);
-  protected readonly columns = ['examDate', 'label', 'schoolClassId', 'subjectId', 'coefficient', 'actions'];
+  protected readonly columns = [
+    'examDate',
+    'label',
+    'schoolClassId',
+    'subjectId',
+    'coefficient',
+    'actions',
+  ];
 
   constructor() {
     void this.refresh();

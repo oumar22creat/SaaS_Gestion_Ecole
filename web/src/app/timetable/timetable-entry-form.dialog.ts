@@ -17,6 +17,7 @@ import { DAYS_OF_WEEK, TimetableEntry } from './timetable-entry.model';
 import { TimetableEntryService } from './timetable-entry.service';
 import { Room } from './room.model';
 import { RoomService } from './room.service';
+import { fieldError } from '../core/form-error.util';
 
 export interface TimetableEntryFormDialogData {
   entry?: TimetableEntry;
@@ -37,9 +38,12 @@ export interface TimetableEntryFormDialogData {
   styleUrl: './timetable-entry-form.dialog.scss',
 })
 export class TimetableEntryFormDialog {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly timetableEntryService = inject(TimetableEntryService);
-  private readonly dialogRef = inject(MatDialogRef<TimetableEntryFormDialog, TimetableEntry | undefined>);
+  private readonly dialogRef = inject(
+    MatDialogRef<TimetableEntryFormDialog, TimetableEntry | undefined>,
+  );
   protected readonly data = inject<TimetableEntryFormDialogData>(MAT_DIALOG_DATA);
 
   protected readonly submitting = signal(false);

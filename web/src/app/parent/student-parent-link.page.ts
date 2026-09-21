@@ -14,6 +14,7 @@ import { extractErrorMessage } from '../core/http-error.util';
 import { Student } from '../student/student.model';
 import { StudentService } from '../student/student.service';
 import { ParentService } from './parent.service';
+import { fieldError } from '../core/form-error.util';
 
 /** Association élève/parent, vue depuis un parent — cahier-des-charges.md §7, ROADMAP.md 1.5. */
 @Component({
@@ -34,6 +35,7 @@ import { ParentService } from './parent.service';
   styleUrl: './student-parent-link.page.scss',
 })
 export class StudentParentLinkPage {
+  protected readonly fieldError = fieldError;
   private readonly route = inject(ActivatedRoute);
   private readonly parentService = inject(ParentService);
   private readonly studentService = inject(StudentService);
@@ -63,7 +65,9 @@ export class StudentParentLinkPage {
 
   studentName(studentId: number): string {
     const student = this.students().find((s) => s.id === studentId);
-    return student ? `${student.firstName} ${student.lastName} (${student.studentNumber})` : `#${studentId}`;
+    return student
+      ? `${student.firstName} ${student.lastName} (${student.studentNumber})`
+      : `#${studentId}`;
   }
 
   async link(): Promise<void> {

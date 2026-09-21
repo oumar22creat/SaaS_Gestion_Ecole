@@ -7,12 +7,14 @@ import { MatIconModule } from '@angular/material/icon';
   imports: [MatCardModule, MatIconModule],
   template: `
     <div class="page-header">
-      <h1><mat-icon class="page-icon" aria-hidden="true">phone_iphone</mat-icon>Application mobile</h1>
+      <h1>
+        <mat-icon class="page-icon" aria-hidden="true">phone_iphone</mat-icon>Application mobile
+      </h1>
     </div>
     <mat-card>
       <p class="lede">
-        Le suivi parent et élève (notes, absences, emploi du temps) se fait depuis
-        l'application mobile, pas depuis cette console établissement.
+        Le suivi parent et élève (notes, absences, emploi du temps) se fait depuis l'application
+        mobile, pas depuis cette console établissement.
       </p>
     </mat-card>
   `,

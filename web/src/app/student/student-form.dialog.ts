@@ -13,6 +13,7 @@ import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
 import { Student } from './student.model';
 import { StudentService } from './student.service';
+import { fieldError } from '../core/form-error.util';
 
 export interface StudentFormDialogData {
   student?: Student;
@@ -35,6 +36,7 @@ export interface StudentFormDialogData {
   styleUrl: './student-form.dialog.scss',
 })
 export class StudentFormDialog {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly studentService = inject(StudentService);
   private readonly schoolClassService = inject(SchoolClassService);
@@ -46,10 +48,18 @@ export class StudentFormDialog {
   protected readonly classes = signal<SchoolClass[]>([]);
 
   protected readonly form = this.formBuilder.nonNullable.group({
-    studentNumber: [this.data.student?.studentNumber ?? '', [Validators.required, Validators.maxLength(64)]],
-    firstName: [this.data.student?.firstName ?? '', [Validators.required, Validators.maxLength(100)]],
+    studentNumber: [
+      this.data.student?.studentNumber ?? '',
+      [Validators.required, Validators.maxLength(64)],
+    ],
+    firstName: [
+      this.data.student?.firstName ?? '',
+      [Validators.required, Validators.maxLength(100)],
+    ],
     lastName: [this.data.student?.lastName ?? '', [Validators.required, Validators.maxLength(100)]],
-    birthDate: [this.data.student?.birthDate ? new Date(this.data.student.birthDate) : (null as Date | null)],
+    birthDate: [
+      this.data.student?.birthDate ? new Date(this.data.student.birthDate) : (null as Date | null),
+    ],
     gender: [this.data.student?.gender ?? ''],
     schoolClassId: [this.data.student?.schoolClassId ?? null],
   });

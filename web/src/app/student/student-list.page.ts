@@ -12,7 +12,14 @@ import { StudentService } from './student.service';
 
 @Component({
   selector: 'app-student-list-page',
-  imports: [MatTableModule, MatButtonModule, MatIconModule, MatChipsModule, MatDialogModule, RouterLink],
+  imports: [
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatChipsModule,
+    MatDialogModule,
+    RouterLink,
+  ],
   templateUrl: './student-list.page.html',
   styleUrl: './student-list.page.scss',
 })
@@ -22,7 +29,14 @@ export class StudentListPage {
 
   protected readonly students = signal<Student[]>([]);
   protected readonly loading = signal(false);
-  protected readonly columns = ['studentNumber', 'firstName', 'lastName', 'schoolClassId', 'active', 'actions'];
+  protected readonly columns = [
+    'studentNumber',
+    'firstName',
+    'lastName',
+    'schoolClassId',
+    'active',
+    'actions',
+  ];
 
   constructor() {
     void this.refresh();

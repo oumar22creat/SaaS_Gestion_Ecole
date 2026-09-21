@@ -4,21 +4,25 @@
     <mat-form-field appearance="outline">
       <mat-label>Prénom</mat-label>
       <input matInput formControlName="firstName" />
+      <mat-error>{{ fieldError(form.controls.firstName) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Nom</mat-label>
       <input matInput formControlName="lastName" />
+      <mat-error>{{ fieldError(form.controls.lastName) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>E-mail</mat-label>
       <input matInput type="email" formControlName="email" />
+      <mat-error>{{ fieldError(form.controls.email) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Téléphone</mat-label>
       <input matInput formControlName="phone" />
+      <mat-error>{{ fieldError(form.controls.phone) }}</mat-error>
     </mat-form-field>
 
     @if (errorMessage()) {

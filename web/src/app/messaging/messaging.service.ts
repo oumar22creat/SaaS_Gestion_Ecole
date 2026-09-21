@@ -42,7 +42,11 @@ export class MessagingService {
     return response.data;
   }
 
-  async create(title: string, announcement: boolean, participantUserIds: number[]): Promise<Conversation> {
+  async create(
+    title: string,
+    announcement: boolean,
+    participantUserIds: number[],
+  ): Promise<Conversation> {
     const response = await firstValueFrom(
       this.http.post<ApiResponse<Conversation>>(`${environment.apiUrl}/conversations`, {
         title,
@@ -64,7 +68,9 @@ export class MessagingService {
 
   async send(id: number, content: string): Promise<Message> {
     const response = await firstValueFrom(
-      this.http.post<ApiResponse<Message>>(`${environment.apiUrl}/conversations/${id}/messages`, { content }),
+      this.http.post<ApiResponse<Message>>(`${environment.apiUrl}/conversations/${id}/messages`, {
+        content,
+      }),
     );
     return response.data;
   }
@@ -75,7 +81,9 @@ export class MessagingService {
 
   async listUsers(): Promise<StaffUser[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<StaffUser[]>>(`${environment.apiUrl}/users`, { params: { pageSize: 200 } }),
+      this.http.get<ApiResponse<StaffUser[]>>(`${environment.apiUrl}/users`, {
+        params: { pageSize: 200 },
+      }),
     );
     return response.data;
   }

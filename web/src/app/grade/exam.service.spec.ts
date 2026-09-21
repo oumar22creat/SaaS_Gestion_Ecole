@@ -9,7 +9,9 @@ describe('ExamService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(ExamService);
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -17,7 +19,14 @@ describe('ExamService', () => {
   afterEach(() => httpMock.verify());
 
   it('creates an exam', async () => {
-    const request = { schoolClassId: 1, subjectId: 1, label: 'Contrôle', maxScore: 20, coefficient: 1, examDate: '2026-09-20' };
+    const request = {
+      schoolClassId: 1,
+      subjectId: 1,
+      label: 'Contrôle',
+      maxScore: 20,
+      coefficient: 1,
+      examDate: '2026-09-20',
+    };
     const promise = service.create(request);
     const req = httpMock.expectOne(`${environment.apiUrl}/exams`);
     expect(req.request.method).toBe('POST');

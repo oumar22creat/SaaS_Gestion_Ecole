@@ -16,7 +16,15 @@ import { Lesson, LessonService } from './lesson.service';
 
 @Component({
   selector: 'app-lesson-page',
-  imports: [FormsModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, MatTableModule, MatIconModule],
+  imports: [
+    FormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    MatButtonModule,
+    MatTableModule,
+    MatIconModule,
+  ],
   template: `
     <div class="page-header">
       <h1><mat-icon class="page-icon" aria-hidden="true">history_edu</mat-icon>Cahier de textes</h1>
@@ -62,28 +70,28 @@ import { Lesson, LessonService } from './lesson.service';
       <p class="flash-error">{{ errorMessage() }}</p>
     }
     <div class="table-scroll">
-<table mat-table [dataSource]="lessons()" class="data-table">
-      <ng-container matColumnDef="date">
-        <th mat-header-cell *matHeaderCellDef>Date</th>
-        <td mat-cell *matCellDef="let lesson">{{ lesson.sessionDate }}</td>
-      </ng-container>
-      <ng-container matColumnDef="content">
-        <th mat-header-cell *matHeaderCellDef>Cours</th>
-        <td mat-cell *matCellDef="let lesson">{{ lesson.content }}</td>
-      </ng-container>
-      <ng-container matColumnDef="homework">
-        <th mat-header-cell *matHeaderCellDef>Devoir</th>
-        <td mat-cell *matCellDef="let lesson">{{ lesson.homework || '—' }}</td>
-      </ng-container>
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let lesson">
-          <button mat-button (click)="remove(lesson)"><mat-icon>delete</mat-icon></button>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
-      <tr mat-row *matRowDef="let row; columns: columns"></tr>
-    </table>
+      <table mat-table [dataSource]="lessons()" class="data-table">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let lesson">{{ lesson.sessionDate }}</td>
+        </ng-container>
+        <ng-container matColumnDef="content">
+          <th mat-header-cell *matHeaderCellDef>Cours</th>
+          <td mat-cell *matCellDef="let lesson">{{ lesson.content }}</td>
+        </ng-container>
+        <ng-container matColumnDef="homework">
+          <th mat-header-cell *matHeaderCellDef>Devoir</th>
+          <td mat-cell *matCellDef="let lesson">{{ lesson.homework || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let lesson">
+            <button mat-button (click)="remove(lesson)"><mat-icon>delete</mat-icon></button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
     </div>
   `,
 })

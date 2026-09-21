@@ -10,7 +10,14 @@ import { Conversation, Message, MessagingService, StaffUser } from './messaging.
 
 @Component({
   selector: 'app-messaging-page',
-  imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule],
+  imports: [
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatIconModule,
+  ],
   template: `
     <div class="page-header">
       <h1><mat-icon class="page-icon" aria-hidden="true">forum</mat-icon>Messagerie</h1>
@@ -28,7 +35,9 @@ import { Conversation, Message, MessagingService, StaffUser } from './messaging.
           }
         </mat-select>
       </mat-form-field>
-      <button mat-stroked-button (click)="create(false)"><mat-icon>mail</mat-icon> Nouvelle conversation</button>
+      <button mat-stroked-button (click)="create(false)">
+        <mat-icon>mail</mat-icon> Nouvelle conversation
+      </button>
       <button mat-flat-button (click)="create(true)"><mat-icon>campaign</mat-icon> Annonce</button>
     </div>
     @if (errorMessage()) {
@@ -51,7 +60,9 @@ import { Conversation, Message, MessagingService, StaffUser } from './messaging.
       <div style="flex:1">
         @if (active()) {
           @for (message of messages(); track message.id) {
-            <p><strong>#{{ message.senderId }}</strong> — {{ message.content }}</p>
+            <p>
+              <strong>#{{ message.senderId }}</strong> — {{ message.content }}
+            </p>
           }
           <mat-form-field appearance="outline">
             <mat-label>Message</mat-label>

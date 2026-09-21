@@ -11,11 +11,22 @@ import { AdvancedStatisticsService, EvolutionPoint } from './advanced-statistics
 
 @Component({
   selector: 'app-advanced-statistics-page',
-  imports: [FormsModule, MatFormFieldModule, MatSelectModule, MatButtonModule, MatTableModule, MatIconModule],
+  imports: [
+    FormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatTableModule,
+    MatIconModule,
+  ],
   template: `
     <div class="page-header">
-      <h1><mat-icon class="page-icon" aria-hidden="true">monitoring</mat-icon>Évolution des résultats</h1>
-      <button mat-stroked-button (click)="csv()" [disabled]="schoolClassId === null">Export CSV</button>
+      <h1>
+        <mat-icon class="page-icon" aria-hidden="true">monitoring</mat-icon>Évolution des résultats
+      </h1>
+      <button mat-stroked-button (click)="csv()" [disabled]="schoolClassId === null">
+        Export CSV
+      </button>
     </div>
     <div class="filters-row">
       <mat-form-field appearance="outline">
@@ -28,22 +39,22 @@ import { AdvancedStatisticsService, EvolutionPoint } from './advanced-statistics
       </mat-form-field>
     </div>
     <div class="table-scroll">
-<table mat-table [dataSource]="points()" class="data-table">
-      <ng-container matColumnDef="period">
-        <th mat-header-cell *matHeaderCellDef>Mois</th>
-        <td mat-cell *matCellDef="let point">{{ point.period }}</td>
-      </ng-container>
-      <ng-container matColumnDef="average">
-        <th mat-header-cell *matHeaderCellDef>Moyenne /20</th>
-        <td mat-cell *matCellDef="let point">{{ point.average }}</td>
-      </ng-container>
-      <ng-container matColumnDef="count">
-        <th mat-header-cell *matHeaderCellDef>Notes</th>
-        <td mat-cell *matCellDef="let point">{{ point.gradeCount }}</td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
-      <tr mat-row *matRowDef="let row; columns: columns"></tr>
-    </table>
+      <table mat-table [dataSource]="points()" class="data-table">
+        <ng-container matColumnDef="period">
+          <th mat-header-cell *matHeaderCellDef>Mois</th>
+          <td mat-cell *matCellDef="let point">{{ point.period }}</td>
+        </ng-container>
+        <ng-container matColumnDef="average">
+          <th mat-header-cell *matHeaderCellDef>Moyenne /20</th>
+          <td mat-cell *matCellDef="let point">{{ point.average }}</td>
+        </ng-container>
+        <ng-container matColumnDef="count">
+          <th mat-header-cell *matHeaderCellDef>Notes</th>
+          <td mat-cell *matCellDef="let point">{{ point.gradeCount }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
     </div>
   `,
 })

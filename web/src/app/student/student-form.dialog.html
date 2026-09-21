@@ -4,16 +4,19 @@
     <mat-form-field appearance="outline">
       <mat-label>Matricule</mat-label>
       <input matInput formControlName="studentNumber" />
+      <mat-error>{{ fieldError(form.controls.studentNumber) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Prénom</mat-label>
       <input matInput formControlName="firstName" />
+      <mat-error>{{ fieldError(form.controls.firstName) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Nom</mat-label>
       <input matInput formControlName="lastName" />
+      <mat-error>{{ fieldError(form.controls.lastName) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -21,11 +24,13 @@
       <input matInput [matDatepicker]="picker" formControlName="birthDate" />
       <mat-datepicker-toggle matIconSuffix [for]="picker" />
       <mat-datepicker #picker />
+      <mat-error>{{ fieldError(form.controls.birthDate) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Sexe</mat-label>
       <input matInput formControlName="gender" placeholder="F / M" />
+      <mat-error>{{ fieldError(form.controls.gender) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -36,6 +41,7 @@
           <mat-option [value]="schoolClass.id">{{ schoolClass.name }}</mat-option>
         }
       </mat-select>
+      <mat-error>{{ fieldError(form.controls.schoolClassId) }}</mat-error>
     </mat-form-field>
 
     @if (errorMessage()) {

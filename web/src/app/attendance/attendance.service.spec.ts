@@ -9,7 +9,9 @@ describe('AttendanceService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(AttendanceService);
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -20,12 +22,28 @@ describe('AttendanceService', () => {
     const request = {
       schoolClassId: 1,
       date: '2026-09-15',
-      entries: [{ studentId: 1, status: 'PRESENT' as const, reason: null, justified: false, comment: null }],
+      entries: [
+        { studentId: 1, status: 'PRESENT' as const, reason: null, justified: false, comment: null },
+      ],
     };
     const promise = service.submitRollCall(request);
     const req = httpMock.expectOne(`${environment.apiUrl}/attendance/roll-call`);
     expect(req.request.method).toBe('POST');
-    req.flush({ data: [{ id: 1, studentId: 1, schoolClassId: 1, date: '2026-09-15', status: 'PRESENT', reason: null, justified: false, comment: null, parentNotified: false }] });
+    req.flush({
+      data: [
+        {
+          id: 1,
+          studentId: 1,
+          schoolClassId: 1,
+          date: '2026-09-15',
+          status: 'PRESENT',
+          reason: null,
+          justified: false,
+          comment: null,
+          parentNotified: false,
+        },
+      ],
+    });
 
     expect((await promise).length).toBe(1);
   });

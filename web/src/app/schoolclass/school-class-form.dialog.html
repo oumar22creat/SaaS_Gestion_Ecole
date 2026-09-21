@@ -4,6 +4,7 @@
     <mat-form-field appearance="outline">
       <mat-label>Nom de la classe</mat-label>
       <input matInput formControlName="name" placeholder="6ème A" />
+      <mat-error>{{ fieldError(form.controls.name) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -16,6 +17,7 @@
           >
         }
       </mat-select>
+      <mat-error>{{ fieldError(form.controls.headTeacherId) }}</mat-error>
     </mat-form-field>
 
     @if (errorMessage()) {

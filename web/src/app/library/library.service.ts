@@ -28,12 +28,19 @@ export class LibraryService {
 
   async search(query: string): Promise<Book[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<Book[]>>(`${environment.apiUrl}/library/books`, { params: { query } }),
+      this.http.get<ApiResponse<Book[]>>(`${environment.apiUrl}/library/books`, {
+        params: { query },
+      }),
     );
     return response.data;
   }
 
-  async createBook(barcode: string, title: string, author: string, totalCopies: number): Promise<Book> {
+  async createBook(
+    barcode: string,
+    title: string,
+    author: string,
+    totalCopies: number,
+  ): Promise<Book> {
     const response = await firstValueFrom(
       this.http.post<ApiResponse<Book>>(`${environment.apiUrl}/library/books`, {
         barcode,
@@ -47,11 +54,15 @@ export class LibraryService {
   }
 
   async borrow(bookId: number, studentId: number, dueDate: string): Promise<void> {
-    await firstValueFrom(this.http.post(`${environment.apiUrl}/library/books/${bookId}/loans`, { studentId, dueDate }));
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/library/books/${bookId}/loans`, { studentId, dueDate }),
+    );
   }
 
   async returnLoan(loanId: number): Promise<void> {
-    await firstValueFrom(this.http.post(`${environment.apiUrl}/library/loans/${loanId}/return`, {}));
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/library/loans/${loanId}/return`, {}),
+    );
   }
 
   async overdue(): Promise<BookLoan[]> {

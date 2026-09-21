@@ -11,6 +11,7 @@ import { Teacher } from '../teacher/teacher.model';
 import { TeacherService } from '../teacher/teacher.service';
 import { SchoolClass } from './school-class.model';
 import { SchoolClassService } from './school-class.service';
+import { fieldError } from '../core/form-error.util';
 
 export interface SchoolClassFormDialogData {
   schoolClass?: SchoolClass;
@@ -31,6 +32,7 @@ export interface SchoolClassFormDialogData {
   styleUrl: './school-class-form.dialog.scss',
 })
 export class SchoolClassFormDialog {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly schoolClassService = inject(SchoolClassService);
   private readonly teacherService = inject(TeacherService);

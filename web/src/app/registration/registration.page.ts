@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthTokenService } from '../auth/auth-token.service';
 import { RegistrationService } from './registration.service';
+import { fieldError } from '../core/form-error.util';
 
 interface ApiErrorBody {
   error?: { code?: string; message?: string };
@@ -17,17 +18,21 @@ interface ApiErrorBody {
 
 @Component({
   selector: 'app-registration-page',
-  imports: [ReactiveFormsModule,
+  imports: [
+    ReactiveFormsModule,
     RouterLink,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatProgressSpinnerModule, MatIconModule],
+    MatProgressSpinnerModule,
+    MatIconModule,
+  ],
   templateUrl: './registration.page.html',
   styleUrl: './registration.page.scss',
 })
 export class RegistrationPage {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly registrationService = inject(RegistrationService);
   private readonly authTokenService = inject(AuthTokenService);
@@ -38,7 +43,10 @@ export class RegistrationPage {
 
   protected readonly form = this.formBuilder.nonNullable.group({
     schoolName: ['', [Validators.required, Validators.maxLength(255)]],
-    subdomain: ['', [Validators.required, Validators.pattern(/^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?$/)]],
+    subdomain: [
+      '',
+      [Validators.required, Validators.pattern(/^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?$/)],
+    ],
     adminFirstName: ['', [Validators.required, Validators.maxLength(100)]],
     adminLastName: ['', [Validators.required, Validators.maxLength(100)]],
     adminEmail: ['', [Validators.required, Validators.email]],
@@ -71,6 +79,6 @@ export class RegistrationPage {
         return body.error.message;
       }
     }
-    return "Une erreur est survenue. Merci de réessayer.";
+    return 'Une erreur est survenue. Merci de réessayer.';
   }
 }

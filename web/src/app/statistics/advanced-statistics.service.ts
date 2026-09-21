@@ -26,9 +26,12 @@ export class AdvancedStatisticsService {
       params['subjectId'] = subjectId;
     }
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<ResultsEvolution>>(`${environment.apiUrl}/statistics/advanced/results-evolution`, {
-        params,
-      }),
+      this.http.get<ApiResponse<ResultsEvolution>>(
+        `${environment.apiUrl}/statistics/advanced/results-evolution`,
+        {
+          params,
+        },
+      ),
     );
     return response.data;
   }

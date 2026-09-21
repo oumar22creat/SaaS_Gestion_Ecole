@@ -19,7 +19,9 @@ export class StaffAccountService {
   }
 
   async create(request: StaffAccountRequest): Promise<StaffAccount> {
-    const response = await firstValueFrom(this.http.post<ApiResponse<StaffAccount>>(BASE_URL, request));
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<StaffAccount>>(BASE_URL, request),
+    );
     return response.data;
   }
 

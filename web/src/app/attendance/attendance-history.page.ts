@@ -19,7 +19,12 @@ export class AttendanceHistoryPage {
 
   protected readonly recordId = Number(this.route.snapshot.paramMap.get('recordId'));
   protected readonly changes = signal<AttendanceRecordChange[]>([]);
-  protected readonly columns = ['changedAt', 'previousStatus', 'previousReason', 'previousJustified'];
+  protected readonly columns = [
+    'changedAt',
+    'previousStatus',
+    'previousReason',
+    'previousJustified',
+  ];
 
   constructor() {
     void this.attendanceService.history(this.recordId).then((changes) => this.changes.set(changes));

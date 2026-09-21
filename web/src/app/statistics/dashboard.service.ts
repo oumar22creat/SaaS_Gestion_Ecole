@@ -10,7 +10,9 @@ export class DashboardService {
   private readonly http = inject(HttpClient);
 
   async summary(): Promise<DashboardSummary> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<DashboardSummary>>(`${environment.apiUrl}/dashboard/summary`));
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<DashboardSummary>>(`${environment.apiUrl}/dashboard/summary`),
+    );
     return response.data;
   }
 }

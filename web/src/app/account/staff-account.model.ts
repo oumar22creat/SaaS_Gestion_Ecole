@@ -21,7 +21,11 @@ export interface StaffAccountRequest {
  * portail ne leur est construit (ADR-010), le backend refuse d'ailleurs ces rôles.
  */
 export const ASSIGNABLE_ROLES: { value: string; label: string; hint: string }[] = [
-  { value: 'TEACHER', label: 'Enseignant', hint: 'Feuille d’appel, saisie des notes, emploi du temps' },
+  {
+    value: 'TEACHER',
+    label: 'Enseignant',
+    hint: 'Feuille d’appel, saisie des notes, emploi du temps',
+  },
   { value: 'SECRETARY', label: 'Secrétariat', hint: 'Élèves, parents, inscriptions' },
   { value: 'VIE_SCOLAIRE', label: 'Vie scolaire', hint: 'Absences, incidents, sanctions' },
   { value: 'ACCOUNTANT', label: 'Comptabilité', hint: 'Frais de scolarité, factures, règlements' },

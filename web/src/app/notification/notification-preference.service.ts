@@ -37,12 +37,16 @@ export class NotificationPreferenceService {
 
   async list(): Promise<NotificationPreference[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<NotificationPreference[]>>(`${environment.apiUrl}/notification-preferences`),
+      this.http.get<ApiResponse<NotificationPreference[]>>(
+        `${environment.apiUrl}/notification-preferences`,
+      ),
     );
     return response.data;
   }
 
   async update(type: NotificationType, enabled: boolean): Promise<void> {
-    await firstValueFrom(this.http.put(`${environment.apiUrl}/notification-preferences/${type}`, { enabled }));
+    await firstValueFrom(
+      this.http.put(`${environment.apiUrl}/notification-preferences/${type}`, { enabled }),
+    );
   }
 }

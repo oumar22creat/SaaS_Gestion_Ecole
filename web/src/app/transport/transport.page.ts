@@ -12,13 +12,25 @@ import { BusRoute, BusStop, TransportService } from './transport.service';
 
 @Component({
   selector: 'app-transport-page',
-  imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule],
+  imports: [
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatIconModule,
+  ],
   template: `
     <div class="page-header">
-      <h1><mat-icon class="page-icon" aria-hidden="true">directions_bus</mat-icon>Transport scolaire</h1>
+      <h1>
+        <mat-icon class="page-icon" aria-hidden="true">directions_bus</mat-icon>Transport scolaire
+      </h1>
     </div>
     <form class="stack-form" (submit)="createRoute($event)">
-      <mat-form-field appearance="outline"><mat-label>Nouvelle ligne</mat-label><input matInput [(ngModel)]="routeLabel" name="routeLabel" /></mat-form-field>
+      <mat-form-field appearance="outline"
+        ><mat-label>Nouvelle ligne</mat-label
+        ><input matInput [(ngModel)]="routeLabel" name="routeLabel"
+      /></mat-form-field>
       <button mat-flat-button type="submit">Créer la ligne</button>
     </form>
     <div class="filters-row">
@@ -32,7 +44,9 @@ import { BusRoute, BusStop, TransportService } from './transport.service';
       </mat-form-field>
     </div>
     <form class="stack-form" (submit)="addStop($event)">
-      <mat-form-field appearance="outline"><mat-label>Arrêt</mat-label><input matInput [(ngModel)]="stopName" name="stopName" /></mat-form-field>
+      <mat-form-field appearance="outline"
+        ><mat-label>Arrêt</mat-label><input matInput [(ngModel)]="stopName" name="stopName"
+      /></mat-form-field>
       <button mat-stroked-button type="submit">Ajouter un arrêt</button>
     </form>
     <form class="stack-form" (submit)="assign($event)">
@@ -40,7 +54,9 @@ import { BusRoute, BusStop, TransportService } from './transport.service';
         <mat-label>Élève</mat-label>
         <mat-select [(ngModel)]="studentId" name="studentId">
           @for (student of students(); track student.id) {
-            <mat-option [value]="student.id">{{ student.lastName }} {{ student.firstName }}</mat-option>
+            <mat-option [value]="student.id"
+              >{{ student.lastName }} {{ student.firstName }}</mat-option
+            >
           }
         </mat-select>
       </mat-form-field>

@@ -12,6 +12,7 @@ import { extractErrorMessage } from '../core/http-error.util';
 import { firstPathForRole } from '../shell/nav-links';
 import { AuthTokenService } from './auth-token.service';
 import { AuthService } from './auth.service';
+import { fieldError } from '../core/form-error.util';
 
 @Component({
   selector: 'app-login-page',
@@ -29,6 +30,7 @@ import { AuthService } from './auth.service';
   styleUrl: './login.page.scss',
 })
 export class LoginPage {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly authTokenService = inject(AuthTokenService);

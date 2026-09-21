@@ -11,6 +11,7 @@
         <mat-option [value]="subject.id">{{ subject.name }}</mat-option>
       }
     </mat-select>
+    <mat-error>{{ fieldError(form.controls.subjectId) }}</mat-error>
   </mat-form-field>
 
   <mat-form-field appearance="outline">
@@ -20,6 +21,7 @@
         <mat-option [value]="teacher.id">{{ teacher.firstName }} {{ teacher.lastName }}</mat-option>
       }
     </mat-select>
+    <mat-error>{{ fieldError(form.controls.teacherId) }}</mat-error>
   </mat-form-field>
 
   <button mat-flat-button type="submit">Affecter</button>

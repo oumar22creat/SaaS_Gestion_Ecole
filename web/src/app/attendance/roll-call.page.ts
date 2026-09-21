@@ -34,14 +34,17 @@ interface RollCallRow {
  */
 @Component({
   selector: 'app-roll-call-page',
-  imports: [FormsModule,
+  imports: [
+    FormsModule,
     MatFormFieldModule,
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
     MatButtonToggleModule,
     MatButtonModule,
-    MatInputModule, MatIconModule],
+    MatInputModule,
+    MatIconModule,
+  ],
   templateUrl: './roll-call.page.html',
   styleUrl: './roll-call.page.scss',
 })

@@ -12,7 +12,9 @@ export class AttendanceService {
   private readonly http = inject(HttpClient);
 
   async submitRollCall(request: RollCallRequest): Promise<AttendanceRecord[]> {
-    const response = await firstValueFrom(this.http.post<ApiResponse<AttendanceRecord[]>>(`${BASE_URL}/roll-call`, request));
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<AttendanceRecord[]>>(`${BASE_URL}/roll-call`, request),
+    );
     return response.data;
   }
 

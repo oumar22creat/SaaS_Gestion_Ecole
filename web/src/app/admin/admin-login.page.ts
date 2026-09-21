@@ -9,10 +9,19 @@ import { MatIconModule } from '@angular/material/icon';
 import { extractErrorMessage } from '../core/http-error.util';
 import { AuthTokenService } from '../auth/auth-token.service';
 import { AuthService } from '../auth/auth.service';
+import { fieldError } from '../core/form-error.util';
 
 @Component({
   selector: 'app-admin-login-page',
-  imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+  ],
   styleUrl: '../auth/login.page.scss',
   template: `
     <div class="auth-page">
@@ -20,8 +29,8 @@ import { AuthService } from '../auth/auth.service';
         <p class="auth-brand-icon" aria-hidden="true"><mat-icon>shield</mat-icon></p>
         <h2 class="auth-brand-title">Console de la plateforme</h2>
         <p class="auth-brand-lede">
-          Suivi des établissements abonnés, des utilisateurs et du revenu récurrent. Accès
-          réservé à l'équipe de la plateforme.
+          Suivi des établissements abonnés, des utilisateurs et du revenu récurrent. Accès réservé à
+          l'équipe de la plateforme.
         </p>
         <ul class="auth-brand-list">
           <li>Établissements et abonnements</li>
@@ -38,6 +47,7 @@ import { AuthService } from '../auth/auth.service';
             <mat-form-field appearance="outline">
               <mat-label>E-mail</mat-label>
               <input matInput formControlName="email" autocomplete="username" />
+              <mat-error>{{ fieldError(form.controls.email) }}</mat-error>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Mot de passe</mat-label>
@@ -47,19 +57,23 @@ import { AuthService } from '../auth/auth.service';
                 formControlName="password"
                 autocomplete="current-password"
               />
+              <mat-error>{{ fieldError(form.controls.password) }}</mat-error>
             </mat-form-field>
             @if (errorMessage()) {
               <p class="error-message">{{ errorMessage() }}</p>
             }
             <button mat-flat-button type="submit"><mat-icon>login</mat-icon> Entrer</button>
           </form>
-          <p class="alt-links"><a routerLink="/login"><mat-icon>school</mat-icon> Retour espace établissement</a></p>
+          <p class="alt-links">
+            <a routerLink="/login"><mat-icon>school</mat-icon> Retour espace établissement</a>
+          </p>
         </mat-card>
       </section>
     </div>
   `,
 })
 export class AdminLoginPage {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly authTokenService = inject(AuthTokenService);

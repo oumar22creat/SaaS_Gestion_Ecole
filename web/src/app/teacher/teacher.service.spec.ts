@@ -9,7 +9,9 @@ describe('TeacherService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(TeacherService);
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -20,9 +22,15 @@ describe('TeacherService', () => {
     const promise = service.list();
     const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/teachers`);
     expect(req.request.method).toBe('GET');
-    req.flush({ data: [{ id: 1, firstName: 'Marie', lastName: 'Curie', email: null, phone: null, active: true }] });
+    req.flush({
+      data: [
+        { id: 1, firstName: 'Marie', lastName: 'Curie', email: null, phone: null, active: true },
+      ],
+    });
 
-    expect(await promise).toEqual([{ id: 1, firstName: 'Marie', lastName: 'Curie', email: null, phone: null, active: true }]);
+    expect(await promise).toEqual([
+      { id: 1, firstName: 'Marie', lastName: 'Curie', email: null, phone: null, active: true },
+    ]);
   });
 
   it('creates a teacher', async () => {

@@ -42,7 +42,12 @@ export class SchoolFeesService {
     return response.data;
   }
 
-  async createSchedule(schoolClassId: number, label: string, amountCents: number, dueDate: string): Promise<FeeSchedule> {
+  async createSchedule(
+    schoolClassId: number,
+    label: string,
+    amountCents: number,
+    dueDate: string,
+  ): Promise<FeeSchedule> {
     const response = await firstValueFrom(
       this.http.post<ApiResponse<FeeSchedule>>(`${environment.apiUrl}/school-fees/schedules`, {
         schoolClassId,

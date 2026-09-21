@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { extractErrorMessage } from '../core/http-error.util';
 import { Parent } from './parent.model';
 import { ParentService } from './parent.service';
+import { fieldError } from '../core/form-error.util';
 
 export interface ParentFormDialogData {
   parent?: Parent;
@@ -15,11 +16,19 @@ export interface ParentFormDialogData {
 
 @Component({
   selector: 'app-parent-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+  ],
   templateUrl: './parent-form.dialog.html',
   styleUrl: './parent-form.dialog.scss',
 })
 export class ParentFormDialog {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly parentService = inject(ParentService);
   private readonly dialogRef = inject(MatDialogRef<ParentFormDialog, Parent | undefined>);
@@ -29,7 +38,10 @@ export class ParentFormDialog {
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly form = this.formBuilder.nonNullable.group({
-    firstName: [this.data.parent?.firstName ?? '', [Validators.required, Validators.maxLength(100)]],
+    firstName: [
+      this.data.parent?.firstName ?? '',
+      [Validators.required, Validators.maxLength(100)],
+    ],
     lastName: [this.data.parent?.lastName ?? '', [Validators.required, Validators.maxLength(100)]],
     email: [this.data.parent?.email ?? '', [Validators.email]],
     phone: [this.data.parent?.phone ?? ''],

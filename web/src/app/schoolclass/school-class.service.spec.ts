@@ -9,7 +9,9 @@ describe('SchoolClassService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(SchoolClassService);
     httpMock = TestBed.inject(HttpTestingController);
   });

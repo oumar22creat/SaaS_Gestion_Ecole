@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { extractErrorMessage } from '../core/http-error.util';
 import { StaffAccount } from './staff-account.model';
 import { StaffAccountService } from './staff-account.service';
+import { fieldError } from '../core/form-error.util';
 
 export interface ResetPasswordDialogData {
   account: StaffAccount;
@@ -37,6 +38,7 @@ export interface ResetPasswordDialogData {
           <mat-label>Nouveau mot de passe</mat-label>
           <input matInput type="password" formControlName="password" autocomplete="new-password" />
           <mat-hint>8 caractères minimum. À communiquer à la personne concernée.</mat-hint>
+          <mat-error>{{ fieldError(form.controls.password) }}</mat-error>
         </mat-form-field>
 
         @if (errorMessage()) {
@@ -69,6 +71,7 @@ export interface ResetPasswordDialogData {
   `,
 })
 export class ResetPasswordDialog {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly accountService = inject(StaffAccountService);
   private readonly dialogRef = inject(MatDialogRef<ResetPasswordDialog, boolean>);

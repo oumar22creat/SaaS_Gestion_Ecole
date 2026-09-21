@@ -8,6 +8,7 @@
           <mat-option [value]="schoolClass.id">{{ schoolClass.name }}</mat-option>
         }
       </mat-select>
+      <mat-error>{{ fieldError(form.controls.schoolClassId) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -17,6 +18,7 @@
           <mat-option [value]="subject.id">{{ subject.name }}</mat-option>
         }
       </mat-select>
+      <mat-error>{{ fieldError(form.controls.subjectId) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -28,6 +30,7 @@
           >
         }
       </mat-select>
+      <mat-error>{{ fieldError(form.controls.teacherId) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -37,6 +40,7 @@
           <mat-option [value]="room.id">{{ room.name }}</mat-option>
         }
       </mat-select>
+      <mat-error>{{ fieldError(form.controls.roomId) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -46,16 +50,19 @@
           <mat-option [value]="day.value">{{ day.label }}</mat-option>
         }
       </mat-select>
+      <mat-error>{{ fieldError(form.controls.dayOfWeek) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Heure de début</mat-label>
       <input matInput type="time" formControlName="startTime" />
+      <mat-error>{{ fieldError(form.controls.startTime) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Heure de fin</mat-label>
       <input matInput type="time" formControlName="endTime" />
+      <mat-error>{{ fieldError(form.controls.endTime) }}</mat-error>
     </mat-form-field>
 
     @if (errorMessage()) {

@@ -13,11 +13,13 @@
         >
       }
     </mat-select>
+    <mat-error>{{ fieldError(form.controls.studentId) }}</mat-error>
   </mat-form-field>
 
   <mat-form-field appearance="outline">
     <mat-label>Lien de parenté</mat-label>
     <input matInput formControlName="relationship" placeholder="MERE / PERE / TUTEUR" />
+    <mat-error>{{ fieldError(form.controls.relationship) }}</mat-error>
   </mat-form-field>
 
   <mat-checkbox formControlName="primaryContact">Contact principal</mat-checkbox>

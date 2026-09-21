@@ -26,7 +26,9 @@ export class BillingService {
   private readonly http = inject(HttpClient);
 
   async plans(): Promise<BillingPlan[]> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<BillingPlan[]>>(`${environment.apiUrl}/billing/plans`));
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<BillingPlan[]>>(`${environment.apiUrl}/billing/plans`),
+    );
     return response.data;
   }
 
@@ -39,7 +41,10 @@ export class BillingService {
 
   async checkout(planCode: string): Promise<string> {
     const response = await firstValueFrom(
-      this.http.post<ApiResponse<{ checkoutUrl: string }>>(`${environment.apiUrl}/billing/checkout`, { planCode }),
+      this.http.post<ApiResponse<{ checkoutUrl: string }>>(
+        `${environment.apiUrl}/billing/checkout`,
+        { planCode },
+      ),
     );
     return response.data.checkoutUrl;
   }

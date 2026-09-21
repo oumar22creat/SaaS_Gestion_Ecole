@@ -33,29 +33,34 @@
           <mat-form-field appearance="outline">
             <mat-label>Nom de l'établissement</mat-label>
             <input matInput formControlName="schoolName" />
+            <mat-error>{{ fieldError(form.controls.schoolName) }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Sous-domaine</mat-label>
             <input matInput formControlName="subdomain" placeholder="mon-ecole" />
             <mat-hint>mon-ecole.monapp.com — lettres minuscules, chiffres, tirets</mat-hint>
+            <mat-error>{{ fieldError(form.controls.subdomain) }}</mat-error>
           </mat-form-field>
 
           <div class="form-row">
             <mat-form-field appearance="outline">
               <mat-label>Prénom (administrateur)</mat-label>
               <input matInput formControlName="adminFirstName" />
+              <mat-error>{{ fieldError(form.controls.adminFirstName) }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Nom (administrateur)</mat-label>
               <input matInput formControlName="adminLastName" />
+              <mat-error>{{ fieldError(form.controls.adminLastName) }}</mat-error>
             </mat-form-field>
           </div>
 
           <mat-form-field appearance="outline">
             <mat-label>E-mail (administrateur)</mat-label>
             <input matInput type="email" formControlName="adminEmail" autocomplete="username" />
+            <mat-error>{{ fieldError(form.controls.adminEmail) }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -67,6 +72,7 @@
               autocomplete="new-password"
             />
             <mat-hint>8 caractères minimum</mat-hint>
+            <mat-error>{{ fieldError(form.controls.adminPassword) }}</mat-error>
           </mat-form-field>
 
           @if (errorMessage()) {

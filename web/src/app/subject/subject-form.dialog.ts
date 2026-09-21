@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { extractErrorMessage } from '../core/http-error.util';
 import { Subject } from './subject.model';
 import { SubjectService } from './subject.service';
+import { fieldError } from '../core/form-error.util';
 
 export interface SubjectFormDialogData {
   subject?: Subject;
@@ -15,11 +16,19 @@ export interface SubjectFormDialogData {
 
 @Component({
   selector: 'app-subject-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+  ],
   templateUrl: './subject-form.dialog.html',
   styleUrl: './subject-form.dialog.scss',
 })
 export class SubjectFormDialog {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly subjectService = inject(SubjectService);
   private readonly dialogRef = inject(MatDialogRef<SubjectFormDialog, Subject | undefined>);

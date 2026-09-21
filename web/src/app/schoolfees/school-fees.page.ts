@@ -15,7 +15,15 @@ import { FeeInvoice, FeeReporting, FeeSchedule, SchoolFeesService } from './scho
 
 @Component({
   selector: 'app-school-fees-page',
-  imports: [FormsModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, MatTableModule, MatIconModule],
+  imports: [
+    FormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    MatButtonModule,
+    MatTableModule,
+    MatIconModule,
+  ],
   template: `
     <div class="page-header">
       <h1><mat-icon class="page-icon" aria-hidden="true">payments</mat-icon>Frais scolaires</h1>
@@ -49,52 +57,61 @@ import { FeeInvoice, FeeReporting, FeeSchedule, SchoolFeesService } from './scho
       <p class="flash-error">{{ errorMessage() }}</p>
     }
     @if (reporting()) {
-      <p>Dû {{ money(reporting()!.totalDueCents) }} · Payé {{ money(reporting()!.totalPaidCents) }} · Impayé {{ money(reporting()!.totalOutstandingCents) }}</p>
+      <p>
+        Dû {{ money(reporting()!.totalDueCents) }} · Payé {{ money(reporting()!.totalPaidCents) }} ·
+        Impayé {{ money(reporting()!.totalOutstandingCents) }}
+      </p>
     }
     <div class="table-scroll">
-<table mat-table [dataSource]="schedules()" class="data-table">
-      <ng-container matColumnDef="label">
-        <th mat-header-cell *matHeaderCellDef>Échéance</th>
-        <td mat-cell *matCellDef="let schedule">{{ schedule.label }}</td>
-      </ng-container>
-      <ng-container matColumnDef="amount">
-        <th mat-header-cell *matHeaderCellDef>Montant</th>
-        <td mat-cell *matCellDef="let schedule">{{ money(schedule.amountCents) }}</td>
-      </ng-container>
-      <ng-container matColumnDef="due">
-        <th mat-header-cell *matHeaderCellDef>Date</th>
-        <td mat-cell *matCellDef="let schedule">{{ schedule.dueDate }}</td>
-      </ng-container>
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let schedule">
-          <button mat-button (click)="generate(schedule)"><mat-icon>receipt_long</mat-icon> Facturer</button>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
-      <tr mat-row *matRowDef="let row; columns: columns"></tr>
-    </table>
+      <table mat-table [dataSource]="schedules()" class="data-table">
+        <ng-container matColumnDef="label">
+          <th mat-header-cell *matHeaderCellDef>Échéance</th>
+          <td mat-cell *matCellDef="let schedule">{{ schedule.label }}</td>
+        </ng-container>
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef>Montant</th>
+          <td mat-cell *matCellDef="let schedule">{{ money(schedule.amountCents) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="due">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let schedule">{{ schedule.dueDate }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let schedule">
+            <button mat-button (click)="generate(schedule)">
+              <mat-icon>receipt_long</mat-icon> Facturer
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
     </div>
     <h2>Impayés</h2>
     <div class="table-scroll">
-<table mat-table [dataSource]="unpaid()" class="data-table">
-      <ng-container matColumnDef="student">
-        <th mat-header-cell *matHeaderCellDef>Élève</th>
-        <td mat-cell *matCellDef="let invoice">#{{ invoice.studentId }}</td>
-      </ng-container>
-      <ng-container matColumnDef="dueAmount">
-        <th mat-header-cell *matHeaderCellDef>Reste</th>
-        <td mat-cell *matCellDef="let invoice">{{ money(invoice.amountDueCents - invoice.amountPaidCents) }}</td>
-      </ng-container>
-      <ng-container matColumnDef="pay">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let invoice">
-          <button mat-button (click)="pay(invoice)"><mat-icon>payments</mat-icon> Encaisser le solde</button>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="unpaidColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: unpaidColumns"></tr>
-    </table>
+      <table mat-table [dataSource]="unpaid()" class="data-table">
+        <ng-container matColumnDef="student">
+          <th mat-header-cell *matHeaderCellDef>Élève</th>
+          <td mat-cell *matCellDef="let invoice">#{{ invoice.studentId }}</td>
+        </ng-container>
+        <ng-container matColumnDef="dueAmount">
+          <th mat-header-cell *matHeaderCellDef>Reste</th>
+          <td mat-cell *matCellDef="let invoice">
+            {{ money(invoice.amountDueCents - invoice.amountPaidCents) }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="pay">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let invoice">
+            <button mat-button (click)="pay(invoice)">
+              <mat-icon>payments</mat-icon> Encaisser le solde
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="unpaidColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: unpaidColumns"></tr>
+      </table>
     </div>
   `,
 })
@@ -137,7 +154,12 @@ export class SchoolFeesPage {
       return;
     }
     try {
-      await this.schoolFeesService.createSchedule(this.schoolClassId, this.label, this.amountCents, this.dueDate);
+      await this.schoolFeesService.createSchedule(
+        this.schoolClassId,
+        this.label,
+        this.amountCents,
+        this.dueDate,
+      );
       await this.load();
     } catch (error) {
       this.errorMessage.set(extractErrorMessage(error));

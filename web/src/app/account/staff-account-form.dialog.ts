@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { extractErrorMessage } from '../core/http-error.util';
 import { ASSIGNABLE_ROLES, StaffAccount } from './staff-account.model';
 import { StaffAccountService } from './staff-account.service';
+import { fieldError } from '../core/form-error.util';
 
 @Component({
   selector: 'app-staff-account-form-dialog',
@@ -24,9 +25,12 @@ import { StaffAccountService } from './staff-account.service';
   templateUrl: './staff-account-form.dialog.html',
 })
 export class StaffAccountFormDialog {
+  protected readonly fieldError = fieldError;
   private readonly formBuilder = inject(FormBuilder);
   private readonly accountService = inject(StaffAccountService);
-  private readonly dialogRef = inject(MatDialogRef<StaffAccountFormDialog, StaffAccount | undefined>);
+  private readonly dialogRef = inject(
+    MatDialogRef<StaffAccountFormDialog, StaffAccount | undefined>,
+  );
 
   protected readonly roles = ASSIGNABLE_ROLES;
   protected readonly submitting = signal(false);

@@ -13,7 +13,15 @@ import { DocumentService, SchoolDocument } from './document.service';
 
 @Component({
   selector: 'app-document-page',
-  imports: [FormsModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, MatTableModule, MatIconModule],
+  imports: [
+    FormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    MatButtonModule,
+    MatTableModule,
+    MatIconModule,
+  ],
   template: `
     <div class="page-header">
       <h1><mat-icon class="page-icon" aria-hidden="true">folder_open</mat-icon>Documents</h1>
@@ -40,25 +48,27 @@ import { DocumentService, SchoolDocument } from './document.service';
       <p class="flash-error">{{ errorMessage() }}</p>
     }
     <div class="table-scroll">
-<table mat-table [dataSource]="documents()" class="data-table">
-      <ng-container matColumnDef="title">
-        <th mat-header-cell *matHeaderCellDef>Titre</th>
-        <td mat-cell *matCellDef="let doc">{{ doc.title }}</td>
-      </ng-container>
-      <ng-container matColumnDef="file">
-        <th mat-header-cell *matHeaderCellDef>Fichier</th>
-        <td mat-cell *matCellDef="let doc">{{ doc.fileName }}</td>
-      </ng-container>
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let doc">
-          <button mat-button (click)="download(doc)"><mat-icon>download</mat-icon></button>
-          <button mat-button (click)="archive(doc)"><mat-icon>inventory_2</mat-icon> Archiver</button>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
-      <tr mat-row *matRowDef="let row; columns: columns"></tr>
-    </table>
+      <table mat-table [dataSource]="documents()" class="data-table">
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Titre</th>
+          <td mat-cell *matCellDef="let doc">{{ doc.title }}</td>
+        </ng-container>
+        <ng-container matColumnDef="file">
+          <th mat-header-cell *matHeaderCellDef>Fichier</th>
+          <td mat-cell *matCellDef="let doc">{{ doc.fileName }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let doc">
+            <button mat-button (click)="download(doc)"><mat-icon>download</mat-icon></button>
+            <button mat-button (click)="archive(doc)">
+              <mat-icon>inventory_2</mat-icon> Archiver
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
     </div>
     @if (documents().length === 0) {
       <p class="empty-state">Aucun document pour cette classe.</p>

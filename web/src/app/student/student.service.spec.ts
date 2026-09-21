@@ -9,7 +9,9 @@ describe('StudentService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(StudentService);
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -17,7 +19,14 @@ describe('StudentService', () => {
   afterEach(() => httpMock.verify());
 
   it('creates a student', async () => {
-    const request = { studentNumber: 'E001', firstName: 'Léa', lastName: 'Martin', birthDate: null, gender: null, schoolClassId: null };
+    const request = {
+      studentNumber: 'E001',
+      firstName: 'Léa',
+      lastName: 'Martin',
+      birthDate: null,
+      gender: null,
+      schoolClassId: null,
+    };
     const promise = service.create(request);
     const req = httpMock.expectOne(`${environment.apiUrl}/students`);
     expect(req.request.method).toBe('POST');
@@ -27,7 +36,9 @@ describe('StudentService', () => {
   });
 
   it('imports a CSV file', async () => {
-    const file = new File(['studentNumber,firstName,lastName\nE001,Léa,Martin'], 'students.csv', { type: 'text/csv' });
+    const file = new File(['studentNumber,firstName,lastName\nE001,Léa,Martin'], 'students.csv', {
+      type: 'text/csv',
+    });
     const promise = service.importCsv(file);
     const req = httpMock.expectOne(`${environment.apiUrl}/students/import`);
     expect(req.request.method).toBe('POST');

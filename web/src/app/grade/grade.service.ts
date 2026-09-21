@@ -12,7 +12,9 @@ export class GradeService {
   private readonly http = inject(HttpClient);
 
   async listForExam(examId: number): Promise<Grade[]> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<Grade[]>>(`${BASE_URL}/exams/${examId}/grades`));
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<Grade[]>>(`${BASE_URL}/exams/${examId}/grades`),
+    );
     return response.data;
   }
 

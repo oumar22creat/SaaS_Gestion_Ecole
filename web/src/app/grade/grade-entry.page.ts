@@ -28,7 +28,15 @@ interface GradeRow {
  */
 @Component({
   selector: 'app-grade-entry-page',
-  imports: [FormsModule, RouterLink, MatTableModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule],
+  imports: [
+    FormsModule,
+    RouterLink,
+    MatTableModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCheckboxModule,
+    MatButtonModule,
+  ],
   templateUrl: './grade-entry.page.html',
   styleUrl: './grade-entry.page.scss',
 })

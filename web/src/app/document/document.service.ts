@@ -35,12 +35,16 @@ export class DocumentService {
   }
 
   async upload(formData: FormData): Promise<SchoolDocument> {
-    const response = await firstValueFrom(this.http.post<ApiResponse<SchoolDocument>>(BASE_URL, formData));
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<SchoolDocument>>(BASE_URL, formData),
+    );
     return response.data;
   }
 
   async download(id: number, fileName: string): Promise<void> {
-    const blob = await firstValueFrom(this.http.get(`${BASE_URL}/${id}/download`, { responseType: 'blob' }));
+    const blob = await firstValueFrom(
+      this.http.get(`${BASE_URL}/${id}/download`, { responseType: 'blob' }),
+    );
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;

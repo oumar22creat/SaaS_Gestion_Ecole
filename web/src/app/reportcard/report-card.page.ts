@@ -16,7 +16,15 @@ import { ReportCard, ReportCardService } from './report-card.service';
 
 @Component({
   selector: 'app-report-card-page',
-  imports: [FormsModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, MatTableModule, MatIconModule],
+  imports: [
+    FormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    MatButtonModule,
+    MatTableModule,
+    MatIconModule,
+  ],
   template: `
     <div class="page-header">
       <h1><mat-icon class="page-icon" aria-hidden="true">description</mat-icon>Bulletins</h1>
@@ -43,7 +51,9 @@ import { ReportCard, ReportCardService } from './report-card.service';
         <input matInput type="date" [(ngModel)]="periodTo" />
       </mat-form-field>
       <button mat-stroked-button (click)="load()"><mat-icon>search</mat-icon> Afficher</button>
-      <button mat-flat-button (click)="generate()"><mat-icon>auto_awesome</mat-icon> Générer</button>
+      <button mat-flat-button (click)="generate()">
+        <mat-icon>auto_awesome</mat-icon> Générer
+      </button>
     </div>
     @if (errorMessage()) {
       <p class="flash-error">{{ errorMessage() }}</p>
@@ -52,35 +62,35 @@ import { ReportCard, ReportCardService } from './report-card.service';
       <p class="flash-success">{{ successMessage() }}</p>
     }
     <div class="table-scroll">
-<table mat-table [dataSource]="cards()" class="data-table">
-      <ng-container matColumnDef="student">
-        <th mat-header-cell *matHeaderCellDef>Élève</th>
-        <td mat-cell *matCellDef="let card">{{ studentLabel(card.studentId) }}</td>
-      </ng-container>
-      <ng-container matColumnDef="average">
-        <th mat-header-cell *matHeaderCellDef>Moyenne</th>
-        <td mat-cell *matCellDef="let card">{{ card.generalAverage ?? '—' }}</td>
-      </ng-container>
-      <ng-container matColumnDef="absences">
-        <th mat-header-cell *matHeaderCellDef>Absences / retards</th>
-        <td mat-cell *matCellDef="let card">{{ card.absenceCount }} / {{ card.lateCount }}</td>
-      </ng-container>
-      <ng-container matColumnDef="comment">
-        <th mat-header-cell *matHeaderCellDef>Appréciation</th>
-        <td mat-cell *matCellDef="let card">
-          <input [(ngModel)]="card.generalComment" />
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let card">
-          <button mat-button (click)="save(card)"><mat-icon>more_horiz</mat-icon></button>
-          <button mat-button (click)="pdf(card)"><mat-icon>download</mat-icon> PDF</button>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
-      <tr mat-row *matRowDef="let row; columns: columns"></tr>
-    </table>
+      <table mat-table [dataSource]="cards()" class="data-table">
+        <ng-container matColumnDef="student">
+          <th mat-header-cell *matHeaderCellDef>Élève</th>
+          <td mat-cell *matCellDef="let card">{{ studentLabel(card.studentId) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="average">
+          <th mat-header-cell *matHeaderCellDef>Moyenne</th>
+          <td mat-cell *matCellDef="let card">{{ card.generalAverage ?? '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="absences">
+          <th mat-header-cell *matHeaderCellDef>Absences / retards</th>
+          <td mat-cell *matCellDef="let card">{{ card.absenceCount }} / {{ card.lateCount }}</td>
+        </ng-container>
+        <ng-container matColumnDef="comment">
+          <th mat-header-cell *matHeaderCellDef>Appréciation</th>
+          <td mat-cell *matCellDef="let card">
+            <input [(ngModel)]="card.generalComment" />
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let card">
+            <button mat-button (click)="save(card)"><mat-icon>more_horiz</mat-icon></button>
+            <button mat-button (click)="pdf(card)"><mat-icon>download</mat-icon> PDF</button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
     </div>
     @if (cards().length === 0) {
       <p class="empty-state">Aucun bulletin pour cette période.</p>
@@ -146,7 +156,11 @@ export class ReportCardPage {
   }
 
   async save(card: ReportCard): Promise<void> {
-    await this.reportCardService.update(card.id, card.generalComment ?? '', card.councilDecision ?? '');
+    await this.reportCardService.update(
+      card.id,
+      card.generalComment ?? '',
+      card.councilDecision ?? '',
+    );
     this.successMessage.set('Appréciation enregistrée.');
   }
 

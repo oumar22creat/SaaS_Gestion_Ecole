@@ -13,7 +13,9 @@ export class ParentService {
   private readonly http = inject(HttpClient);
 
   async list(): Promise<Parent[]> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<Parent[]>>(BASE_URL, { params: { pageSize: 200 } }));
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<Parent[]>>(BASE_URL, { params: { pageSize: 200 } }),
+    );
     return response.data;
   }
 
@@ -23,7 +25,9 @@ export class ParentService {
   }
 
   async update(id: number, request: ParentRequest): Promise<Parent> {
-    const response = await firstValueFrom(this.http.put<ApiResponse<Parent>>(`${BASE_URL}/${id}`, request));
+    const response = await firstValueFrom(
+      this.http.put<ApiResponse<Parent>>(`${BASE_URL}/${id}`, request),
+    );
     return response.data;
   }
 
@@ -32,7 +36,9 @@ export class ParentService {
   }
 
   async childrenOf(parentId: number): Promise<number[]> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<number[]>>(`${BASE_URL}/${parentId}/students`));
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<number[]>>(`${BASE_URL}/${parentId}/students`),
+    );
     return response.data;
   }
 
@@ -45,12 +51,17 @@ export class ParentService {
 
   async link(studentId: number, request: StudentParentLinkRequest): Promise<StudentParentLink> {
     const response = await firstValueFrom(
-      this.http.post<ApiResponse<StudentParentLink>>(`${STUDENTS_URL}/${studentId}/parents`, request),
+      this.http.post<ApiResponse<StudentParentLink>>(
+        `${STUDENTS_URL}/${studentId}/parents`,
+        request,
+      ),
     );
     return response.data;
   }
 
   async unlink(studentId: number, parentId: number): Promise<void> {
-    await firstValueFrom(this.http.delete<void>(`${STUDENTS_URL}/${studentId}/parents/${parentId}`));
+    await firstValueFrom(
+      this.http.delete<void>(`${STUDENTS_URL}/${studentId}/parents/${parentId}`),
+    );
   }
 }

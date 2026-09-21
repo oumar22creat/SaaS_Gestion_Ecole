@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>School Manager | Plateforme de gestion scolaire</title>
+<meta name="description" content="School Manager réunit inscriptions, notes, bulletins, absences, finances et services scolaires dans une seule plateforme web et mobile, pensée pour les établissements francophones.">
+<meta property="og:title" content="School Manager | Plateforme de gestion scolaire">
+<meta property="og:description" content="Une seule plateforme pour piloter votre établissement. Essai gratuit de 30 jours.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=4">
+<script>document.documentElement.className += " js";</script>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1" defer></script>
+<script src="main.js?v=4" defer></script>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Aller au contenu principal</a>
+
+<header class="nav">
+  <div class="shell nav-inner">
+    <a class="brand" href="#main" aria-label="School Manager, retour en haut de page">
+      <span class="brand-mark" aria-hidden="true"><i class="ph-bold ph-graduation-cap"></i></span>
+      <span class="brand-word">School Manager</span>
+    </a>
+    <nav class="nav-links" aria-label="Navigation principale">
+      <a href="#modules">Modules</a>
+      <a href="#terrain">Sur le terrain</a>
+      <a href="#securite">Sécurité</a>
+      <a href="#tarifs">Tarifs</a>
+    </nav>
+    <a class="btn btn-primary btn-sm" href="/register">Démarrer l'essai gratuit</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- Hero : split asymétrique -->
+  <section class="hero">
+    <div class="shell hero-grid">
+      <div class="reveal" style="--i:0">
+        <p class="eyebrow">Plateforme de gestion scolaire</p>
+        <h1>Toute votre école, dans <span class="gold">une seule plateforme.</span></h1>
+        <p class="lede">Inscriptions, notes, bulletins, absences, cantine, transport. Une seule plateforme, sur web et mobile, pensée pour les établissements francophones.</p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="/register">Démarrer l'essai gratuit</a>
+          <a class="btn btn-ghost" href="#tarifs">Demander une démo</a>
+        </div>
+      </div>
+      <!-- Photo de substitution CC0 (voir assets/CREDITS.md). À remplacer par une photo de votre établissement. -->
+      <figure class="media hero-media reveal" style="--i:1; margin:0">
+        <img src="assets/hero-classe.jpg" width="1280" height="871" alt="Élève levant la main dans une salle de classe" fetchpriority="high">
+      </figure>
+    </div>
+  </section>
+
+  <!-- Bandeau de chiffres produit -->
+  <section class="facts">
+    <div class="shell facts-grid">
+      <div class="fact reveal" style="--i:0">
+        <p class="fact-value">20</p>
+        <p class="fact-label">modules métier livrés, de l'inscription au bulletin</p>
+      </div>
+      <div class="fact reveal" style="--i:1">
+        <p class="fact-value">8</p>
+        <p class="fact-label">rôles distincts, des enseignants à la comptabilité</p>
+      </div>
+      <div class="fact reveal" style="--i:2">
+        <p class="fact-value">30 j</p>
+        <p class="fact-label">d'essai complet, sans engagement</p>
+      </div>
+      <div class="fact reveal" style="--i:3">
+        <p class="fact-value">0</p>
+        <p class="fact-label">donnée partagée entre deux établissements</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Déclaration éditoriale -->
+  <section class="section statement">
+    <div class="shell">
+      <h2 class="reveal" style="--i:0">Trois semaines pour sortir les bulletins. Un cahier d'appel égaré.</h2>
+      <div class="statement-body reveal" style="--i:1">
+        <p>La plupart des établissements ne manquent pas de rigueur. Ils manquent d'outils. Les notes vivent dans un tableur, les absences sur papier, les frais dans un cahier, et personne ne voit l'ensemble au même moment.</p>
+        <p>School Manager rassemble ces informations au même endroit, avec les droits de chacun. La direction obtient une vue d'ensemble, l'enseignant saisit en quelques secondes, le secrétariat cesse de ressaisir deux fois la même chose.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bento des modules : 6 contenus, 6 cellules -->
+  <section class="section" id="modules">
+    <div class="shell">
+      <p class="eyebrow reveal" style="--i:0">Les modules</p>
+      <h2 class="reveal" style="--i:0; font-size:clamp(2rem,4vw,3.1rem); max-width:20ch">Tout ce qu'un établissement gère vraiment.</h2>
+
+      <div class="bento">
+        <article class="tile tile-lg tile-photo reveal" style="--i:0">
+          <div class="tile-bg" aria-hidden="true">
+            <img src="assets/scolarite.jpg" width="1280" height="900" alt="" loading="lazy">
+          </div>
+          <div class="tile-inner">
+            <span class="tile-icon" aria-hidden="true"><i class="ph-bold ph-student"></i></span>
+            <h3>Scolarité, notes et bulletins</h3>
+            <p>Élèves, parents, classes et matières, avec import CSV en masse. Les moyennes se calculent seules, les bulletins se génèrent en PDF avec appréciations, coefficients et récapitulatif des absences.</p>
+          </div>
+        </article>
+
+        <article class="tile tile-md reveal" style="--i:1">
+          <div class="tile-inner">
+            <span class="tile-icon" aria-hidden="true"><i class="ph-bold ph-calendar-check"></i></span>
+            <h3>Absences et emploi du temps</h3>
+            <p>Feuille d'appel en temps réel, motifs et justificatifs, détection des conflits de salle ou d'enseignant.</p>
+          </div>
+        </article>
+
+        <article class="tile tile-md tile-gradient reveal" style="--i:2">
+          <div class="tile-inner">
+            <span class="tile-icon" aria-hidden="true"><i class="ph-bold ph-chats-circle"></i></span>
+            <h3>Communication aux familles</h3>
+            <p>Messagerie interne, annonces de l'établissement, notification automatique du parent dès qu'une absence est saisie.</p>
+          </div>
+        </article>
+
+        <article class="tile tile-sm tile-photo reveal" style="--i:3">
+          <div class="tile-bg" aria-hidden="true">
+            <img src="assets/ecriture.jpg" width="1280" height="956" alt="" loading="lazy">
+          </div>
+          <div class="tile-inner">
+            <span class="tile-icon" aria-hidden="true"><i class="ph-bold ph-coins"></i></span>
+            <h3>Frais de scolarité</h3>
+            <p>Grille tarifaire par classe, échéanciers, factures par élève et suivi des impayés.</p>
+          </div>
+        </article>
+
+        <article class="tile tile-sm reveal" style="--i:4">
+          <div class="tile-inner">
+            <span class="tile-icon" aria-hidden="true"><i class="ph-bold ph-bus"></i></span>
+            <h3>Cantine, transport, bibliothèque</h3>
+            <p>Menus et réservations, lignes et arrêts de bus, catalogue, emprunts et relances automatiques.</p>
+          </div>
+        </article>
+
+        <article class="tile tile-sm reveal" style="--i:5">
+          <div class="tile-inner">
+            <span class="tile-icon" aria-hidden="true"><i class="ph-bold ph-chart-line-up"></i></span>
+            <h3>Pilotage de direction</h3>
+            <p>Effectifs, taux de présence, moyennes par classe et évolution des résultats, exportables.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Duo 1 : texte à gauche, image à droite -->
+  <section class="section" id="terrain">
+    <div class="shell duo">
+      <div class="duo-copy reveal" style="--i:0">
+        <h2>L'appel se fait en trente secondes, depuis le téléphone.</h2>
+        <p>L'application mobile n'est pas une version réduite du site. Elle a été conçue pour le seul moment qui compte vraiment : un enseignant debout, entre deux cours, avec une classe qui attend.</p>
+        <ul class="duo-points">
+          <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Feuille d'appel tactile, toute la classe validée d'un écran.</span></li>
+          <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Saisie des notes et consultation de l'emploi du temps.</span></li>
+          <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Disponible sur Android et iOS, avec le logo de votre établissement.</span></li>
+        </ul>
+      </div>
+      <figure class="media duo-media reveal" style="--i:1; margin:0">
+        <img src="assets/mobile-classe.jpg" width="1280" height="831" alt="Salle de classe pendant un cours, élèves à leur table" loading="lazy">
+      </figure>
+    </div>
+  </section>
+
+  <!-- Duo 2 : inversé -->
+  <section class="section">
+    <div class="shell duo duo-reverse">
+      <div class="duo-copy reveal" style="--i:1">
+        <h2>Les bulletins arrivent prêts, pas à refaire.</h2>
+        <p>Les notes saisies pendant le trimestre alimentent directement le bulletin. Moyennes par matière, moyenne générale, coefficients, appréciations et absences de la période : tout est déjà en place au moment de l'éditer.</p>
+        <ul class="duo-points">
+          <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Export PDF conforme à votre modèle d'établissement.</span></li>
+          <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>En-tête, logo et mentions légales personnalisables.</span></li>
+          <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Aucune ressaisie entre le carnet de notes et le bulletin.</span></li>
+        </ul>
+      </div>
+      <figure class="media duo-media reveal" style="--i:0; margin:0">
+        <img src="assets/bulletins.jpg" width="1280" height="719" alt="Élèves rédigeant un devoir sur leurs cahiers" loading="lazy">
+      </figure>
+    </div>
+  </section>
+
+  <!-- Panneau sécurité : rupture de rythme -->
+  <section class="section" id="securite">
+    <div class="shell">
+      <div class="vault reveal" style="--i:0">
+        <div class="vault-copy">
+          <h2>Vos données restent les vôtres.</h2>
+          <p>Chaque établissement dispose de son propre espace. L'isolation n'est pas une promesse commerciale, elle est imposée par la base de données elle-même.</p>
+        </div>
+        <ul class="vault-list">
+          <li>
+            <h3><i class="ph-bold ph-database" aria-hidden="true"></i>Isolation au niveau de la base</h3>
+            <p>PostgreSQL Row-Level Security filtre chaque requête par établissement. Même une erreur de code ne peut pas exposer les données d'une autre école.</p>
+          </li>
+          <li>
+            <h3><i class="ph-bold ph-lock-key" aria-hidden="true"></i>Accès par rôle, vérifié côté serveur</h3>
+            <p>Un enseignant voit ses classes, le comptable voit les règlements, la direction voit l'ensemble. Les droits sont contrôlés sur le serveur, pas dans le navigateur.</p>
+          </li>
+          <li>
+            <h3><i class="ph-bold ph-shield-check" aria-hidden="true"></i>Chiffrement et journalisation</h3>
+            <p>HTTPS obligatoire, mots de passe hachés, journal d'audit des opérations sensibles et sauvegardes régulières de la base.</p>
+          </li>
+          <li>
+            <h3><i class="ph-bold ph-export" aria-hidden="true"></i>Portabilité garantie</h3>
+            <p>En cas de résiliation, les données de l'établissement sont exportées avant toute suppression définitive.</p>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tarifs -->
+  <section class="section" id="tarifs">
+    <div class="shell">
+      <p class="eyebrow reveal" style="--i:0">Abonnement</p>
+      <h2 class="reveal" style="--i:0; font-size:clamp(2rem,4vw,3.1rem); max-width:22ch">Un plan par taille d'établissement.</h2>
+
+      <div class="plans">
+        <article class="plan reveal" style="--i:0">
+          <h3 class="plan-name">Essentiel</h3>
+          <p class="plan-scale">Jusqu'à 150 élèves</p>
+          <p class="plan-quote">180&nbsp;000 <span class="plan-unit">FCFA par an</span></p>
+          <p class="plan-note">Soit 15&nbsp;000 FCFA par mois, ou 1&nbsp;200 FCFA par élève et par an.</p>
+          <ul class="plan-features">
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Scolarité, notes et bulletins</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Absences et emploi du temps</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Application mobile incluse</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Support par e-mail</span></li>
+            <li class="off"><i class="ph-bold ph-minus" aria-hidden="true"></i><span>Cantine, transport, bibliothèque</span></li>
+          </ul>
+          <a class="btn btn-ghost" href="/register">Démarrer l'essai gratuit</a>
+        </article>
+
+        <article class="plan plan-featured reveal" style="--i:1">
+          <h3 class="plan-name">Premium</h3>
+          <p class="plan-scale">Effectif illimité</p>
+          <p class="plan-quote"><span class="plan-prefix">dès</span> 1&nbsp;800&nbsp;000 <span class="plan-unit">FCFA par an</span></p>
+          <p class="plan-note">Tarif dégressif selon l'effectif. Accompagnement à la reprise de données inclus.</p>
+          <ul class="plan-features">
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Tous les modules, services compris</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Domaine personnalisé à votre nom</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Bulletins et notifications à votre charte</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Statistiques avancées et exports</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Interlocuteur dédié et engagement de service</span></li>
+          </ul>
+          <a class="btn btn-primary" href="/register">Démarrer l'essai gratuit</a>
+        </article>
+
+        <article class="plan reveal" style="--i:2">
+          <h3 class="plan-name">Standard</h3>
+          <p class="plan-scale">Jusqu'à 800 élèves</p>
+          <p class="plan-quote">750&nbsp;000 <span class="plan-unit">FCFA par an</span></p>
+          <p class="plan-note">Soit 62&nbsp;500 FCFA par mois, ou 940 FCFA par élève et par an.</p>
+          <ul class="plan-features">
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Tout le plan Essentiel</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Frais de scolarité et facturation</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Cantine, transport, bibliothèque en option</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Statistiques de direction</span></li>
+            <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Support par e-mail et chat</span></li>
+          </ul>
+          <a class="btn btn-ghost" href="/register">Démarrer l'essai gratuit</a>
+        </article>
+      </div>
+
+      <p class="plans-note reveal" style="--i:3">Tarifs annuels payables à la rentrée, au rythme de trésorerie de l'établissement. Un effectif qui dépasse de peu un palier peut être facturé à l'élève, à 1&nbsp;000 FCFA par élève et par an. Essai de 30 jours sur tous les plans, sans engagement.</p>
+    </div>
+  </section>
+
+  <!-- CTA final -->
+  <section class="section" style="padding-top:0">
+    <div class="shell">
+      <div class="closer reveal" style="--i:0">
+        <div class="closer-bg" aria-hidden="true">
+          <img src="assets/campus.jpg" width="1280" height="1707" alt="" loading="lazy">
+        </div>
+        <div class="closer-inner">
+          <h2>Ouvrez votre espace avant la prochaine rentrée.</h2>
+          <p>Créez l'établissement, importez vos classes et vos élèves, invitez vos enseignants. L'essai couvre l'intégralité des modules pendant 30 jours.</p>
+          <div class="btn-row">
+            <a class="btn btn-primary" href="/register">Démarrer l'essai gratuit</a>
+            <a class="btn btn-ghost" href="mailto:contact@schoolmanager.example">Demander une démo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div class="footer-about">
+        <a class="brand" href="#main">
+          <span class="brand-mark" aria-hidden="true"><i class="ph-bold ph-graduation-cap"></i></span>
+          School Manager
+        </a>
+        <p>Plateforme de gestion scolaire multi-établissements, sur web et mobile.</p>
+      </div>
+      <div>
+        <h4>Produit</h4>
+        <ul>
+          <li><a href="#modules">Modules</a></li>
+          <li><a href="#terrain">Application mobile</a></li>
+          <li><a href="#tarifs">Tarifs</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Confiance</h4>
+        <ul>
+          <li><a href="#securite">Sécurité des données</a></li>
+          <li><a href="#securite">Isolation des établissements</a></li>
+          <li><a href="#securite">Portabilité</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Accès</h4>
+        <ul>
+          <li><a href="/login">Se connecter</a></li>
+          <li><a href="/register">Inscrire mon établissement</a></li>
+          <li><a href="mailto:contact@schoolmanager.example">Nous écrire</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-base">
+      <span>School Manager</span>
+      <span>Mentions légales et politique de confidentialité à compléter avant mise en ligne</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

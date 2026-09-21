@@ -128,6 +128,23 @@ en dur dans le code partagé.
   domaine placeholder (`*.schoolsaas.example`) en attendant que l'hébergement staging/prod
   soit choisi (point ouvert dans `docs/ARCHITECTURE.md`).
 
+## Site vitrine (`landing/`)
+
+Page publique de présentation commerciale de **School Manager**, destinée à convertir des
+établissements en abonnés. Statique (HTML, CSS, un script), sans build ni dépendance npm.
+
+```bash
+cd landing && python3 -m http.server 5599
+```
+
+Puis ouvrir `http://localhost:5599`. Les boutons d'appel à l'action pointent vers `/register`
+et `/login` de l'application Web : en production, le site vitrine et l'application doivent
+être servis sous le même domaine (reverse proxy Nginx) pour que ces liens fonctionnent.
+
+Les photos de `landing/assets/` sont des images de substitution sous licence CC0
+(voir `landing/assets/CREDITS.md`) et doivent être remplacées par des photos des
+établissements clients avant toute mise en ligne commerciale.
+
 ## Tests
 
 ```bash

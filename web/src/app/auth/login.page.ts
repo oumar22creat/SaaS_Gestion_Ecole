@@ -5,8 +5,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { RouterLink } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 import { extractErrorMessage } from '../core/http-error.util';
+import { firstPathForRole } from '../shell/nav-links';
 import { AuthTokenService } from './auth-token.service';
 import { AuthService } from './auth.service';
 
@@ -19,6 +22,8 @@ import { AuthService } from './auth.service';
     MatInputModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    RouterLink,
+    MatIconModule,
   ],
   templateUrl: './login.page.html',
   styleUrl: './login.page.scss',
@@ -50,7 +55,7 @@ export class LoginPage {
       const { subdomain, email, password } = this.form.getRawValue();
       const tokens = await this.authService.login(subdomain, email, password);
       this.authTokenService.store(tokens);
-      await this.router.navigateByUrl('/dashboard');
+      await this.router.navigateByUrl(firstPathForRole(this.authTokenService.role()));
     } catch (error) {
       this.errorMessage.set(extractErrorMessage(error, 'Identifiants invalides.'));
     } finally {

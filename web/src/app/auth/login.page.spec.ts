@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { AuthTokenService } from './auth-token.service';
 import { LoginPage } from './login.page';
@@ -16,7 +16,7 @@ describe('LoginPage', () => {
     sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [LoginPage],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(LoginPage);
@@ -38,7 +38,11 @@ describe('LoginPage', () => {
   });
 
   it('stores the tokens and navigates to the dashboard on success', async () => {
-    component['form'].setValue({ subdomain: 'ecole-test', email: 'admin@ecole.example', password: 'Sup3rSecret!' });
+    component['form'].setValue({
+      subdomain: 'ecole-test',
+      email: 'admin@ecole.example',
+      password: 'Sup3rSecret!',
+    });
 
     const submitPromise = component.submit();
     httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({
@@ -54,13 +58,38 @@ describe('LoginPage', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
   });
 
+  it('sends an authenticated ADMIN to the dashboard', async () => {
+    const accessToken = `h.${btoa(JSON.stringify({ role: 'ADMIN', email: 'admin@ecole.example' }))}.s`;
+    component['form'].setValue({
+      subdomain: 'ecole-test',
+      email: 'admin@ecole.example',
+      password: 'Sup3rSecret!',
+    });
+
+    const submitPromise = component.submit();
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({
+      data: { accessToken, refreshToken: 'refresh', expiresIn: 900 },
+    });
+    await submitPromise;
+
+    expect(TestBed.inject(AuthTokenService).role()).toBe('ADMIN');
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
+  });
+
   it('shows an error message when the credentials are invalid', async () => {
-    component['form'].setValue({ subdomain: 'ecole-test', email: 'admin@ecole.example', password: 'wrong' });
+    component['form'].setValue({
+      subdomain: 'ecole-test',
+      email: 'admin@ecole.example',
+      password: 'wrong',
+    });
 
     const submitPromise = component.submit();
     httpMock
       .expectOne(`${environment.apiUrl}/auth/login`)
-      .flush({ error: { code: 'INVALID_CREDENTIALS', message: 'Identifiants invalides' } }, { status: 401, statusText: 'Unauthorized' });
+      .flush(
+        { error: { code: 'INVALID_CREDENTIALS', message: 'Identifiants invalides' } },
+        { status: 401, statusText: 'Unauthorized' },
+      );
     await submitPromise;
 
     expect(component['errorMessage']()).toBe('Identifiants invalides');

@@ -1,8 +1,10 @@
 <ion-app>
-  <ion-header>
+  <ion-header class="brand-header">
     <ion-toolbar>
       @if (branding().logoUrl) {
         <img [src]="branding().logoUrl" alt="" class="tenant-logo" slot="start" />
+      } @else {
+        <ion-icon class="brand-icon" aria-hidden="true" slot="start" name="school-outline"></ion-icon>
       }
       <ion-title>{{ branding().name }}</ion-title>
     </ion-toolbar>

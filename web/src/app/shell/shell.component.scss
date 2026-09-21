@@ -1,30 +1,183 @@
+// Layout des écrans authentifiés — voir docs/DESIGN.md §3.
+// Les composants Material internes (drawer, list-item) sont repeints via leurs tokens
+// CSS : les variables traversent l'encapsulation de vue, contrairement aux sélecteurs
+// visant leurs classes internes.
+:host {
+  display: block;
+  min-height: 0;
+}
+
 .shell {
   height: 100%;
+  min-height: calc(100vh - var(--topbar-height));
+  background: var(--color-canvas);
+
+  --mat-sidenav-container-background-color: var(--color-nav);
+  --mat-sidenav-container-text-color: var(--color-nav-text);
+  --mat-sidenav-container-divider-color: transparent;
+  --mat-sidenav-container-shape: 0;
+  --mat-sidenav-content-background-color: var(--color-canvas);
+  --mat-sidenav-content-text-color: var(--color-text);
 }
 
 .shell-nav {
-  width: 220px;
-  padding-top: var(--space-2);
+  width: var(--nav-width);
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--space-4);
+  background-image: linear-gradient(180deg, var(--color-nav-elevated) 0%, var(--color-nav) 240px);
+  border-right: 1px solid color-mix(in srgb, #ffffff 7%, transparent);
+
+  --mat-list-list-item-label-text-color: var(--color-nav-muted);
+  --mat-list-list-item-hover-label-text-color: var(--color-nav-text);
+  --mat-list-list-item-focus-label-text-color: var(--color-nav-text);
+  --mat-list-list-item-hover-state-layer-color: #ffffff;
+  --mat-list-list-item-focus-state-layer-color: #ffffff;
+  --mat-list-list-item-one-line-container-height: 44px;
+  --mat-list-list-item-leading-space: var(--space-3);
+  --mat-list-list-item-trailing-space: var(--space-3);
 }
 
-.active-link {
-  font-weight: 600;
+// Carte utilisateur en tête de navigation : identité + rôle, sans dupliquer la marque
+// déjà portée par la barre supérieure (app.scss).
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) var(--space-3) var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, #ffffff 8%, transparent);
+  border: 1px solid color-mix(in srgb, #ffffff 10%, transparent);
 }
 
-.shell-toolbar {
-  .spacer {
-    flex: 1 1 auto;
-  }
+.nav-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--tenant-secondary);
+  color: #1a1a1a;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
 
-  .shell-email {
-    margin-right: var(--space-4);
-    font-size: var(--font-size-caption);
-    color: var(--color-text-secondary);
-  }
+.nav-user-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nav-user-name {
+  color: var(--color-nav-text);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-user-role {
+  color: var(--color-nav-muted);
+  font-size: 11px;
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+}
+
+.nav-section {
+  margin: var(--space-4) var(--space-5) var(--space-1);
+  color: var(--color-nav-muted);
+  font-size: 10.5px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+}
+
+.shell-nav mat-nav-list {
+  padding: 0 var(--space-2);
+}
+
+.shell-nav .mat-mdc-list-item {
+  height: 44px;
+  margin-bottom: 2px;
+  border-radius: var(--radius-sm);
+  color: var(--color-nav-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+}
+
+.shell-nav .mat-mdc-list-item:hover {
+  background: color-mix(in srgb, #ffffff 9%, transparent);
+  color: var(--color-nav-text);
+}
+
+.shell-nav .active-link {
+  background: color-mix(in srgb, var(--tenant-primary) 58%, #ffffff 4%);
+  color: #ffffff;
+  font-weight: var(--font-weight-semibold);
+  box-shadow: inset 3px 0 0 var(--tenant-secondary);
+
+  --mat-list-list-item-label-text-color: #ffffff;
+  --mat-list-list-item-hover-label-text-color: #ffffff;
+}
+
+.nav-icon {
+  width: 22px;
+  height: 22px;
+  margin-right: var(--space-3);
+  font-size: 21px;
+  flex: 0 0 auto;
+  color: inherit;
+  opacity: 0.72;
+  transition: opacity 0.18s ease;
+}
+
+.active-link .nav-icon,
+a:hover .nav-icon {
+  opacity: 1;
+}
+
+.nav-footer {
+  margin-top: auto;
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.logout-button {
+  width: 100%;
+  color: var(--color-nav-text);
+  border-color: color-mix(in srgb, #ffffff 22%, transparent);
+}
+
+// Barre de contenu affichée uniquement en dessous de 1024px (ouverture du tiroir).
+.content-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.content-bar-role {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
 }
 
 .shell-content {
+  display: block;
   max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: var(--space-6);
+  padding: var(--space-6) var(--space-6) var(--space-12);
+}
+
+@media (max-width: 599px) {
+  .shell-content {
+    padding: var(--space-4) var(--space-4) var(--space-10);
+  }
 }

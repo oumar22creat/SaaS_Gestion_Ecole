@@ -1,12 +1,15 @@
 import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatIconModule } from '@angular/material/icon';
 import { DashboardSummary } from './dashboard.model';
 import { DashboardService } from './dashboard.service';
 
 /** Dashboard établissement — cahier-des-charges.md §18, mockup docs/MOCKUPS.md §5. */
 @Component({
   selector: 'app-dashboard-page',
-  imports: [MatCardModule],
+  imports: [RouterLink, MatCardModule, MatProgressBarModule, MatIconModule],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })

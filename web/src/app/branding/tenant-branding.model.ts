@@ -11,6 +11,6 @@ export interface TenantBranding {
 export const DEFAULT_BRANDING: TenantBranding = {
   name: 'Gestion Scolaire',
   logoUrl: null,
-  primaryColor: '#3880ff',
-  secondaryColor: '#3dc2ff',
+  primaryColor: '#0f5c4c',
+  secondaryColor: '#c9a227',
 };

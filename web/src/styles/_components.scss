@@ -1,0 +1,486 @@
+/*
+ * Primitives d'interface partagées par tous les écrans Web — voir docs/DESIGN.md §3.
+ * Règle : un composant a une seule apparence dans toute l'application. Une page ne
+ * redéfinit jamais ces classes, elle les utilise (`.page-header`, `.data-table`,
+ * `.filters-row`, `.empty-state`, ...).
+ *
+ * Les sélecteurs Angular Material sont préfixés par `body` : les styles des composants
+ * Material sont injectés dans le <head> après cette feuille globale, donc une simple
+ * classe de même spécificité perdrait la cascade.
+ */
+
+/* ============================ Base ============================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+// Pas de couleur imposée : les titres héritent de leur conteneur, sinon ceux posés sur
+// un panneau sombre (écrans d'authentification) redeviendraient illisibles.
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-family-display);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+a {
+  color: var(--tenant-primary);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--tenant-primary);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--tenant-primary-soft);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: var(--radius-pill);
+}
+
+/* ====================== En-tête de page ======================= */
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0;
+    font-size: var(--font-size-title-1);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+/* L'icône du module (docs/DESIGN.md §9) est présentée comme une médaille, pas comme du texte.
+   Elle prend la couleur du tenant : c'est précisément ce que l'emoji ne permettait pas. */
+.page-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  border-radius: var(--radius-sm);
+  background: var(--tenant-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--tenant-primary-ring);
+  color: var(--tenant-primary);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.page-subtitle {
+  margin: calc(-1 * var(--space-3)) 0 var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+
+.header-actions,
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* ======================== Surfaces ============================ */
+
+.surface {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  padding: var(--space-5);
+}
+
+.section-label {
+  margin: var(--space-6) 0 var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(236px, 1fr));
+  gap: var(--space-4);
+}
+
+/* =================== Barre de filtres ========================= */
+
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+
+  /* Material réserve ~20px sous chaque champ pour les messages d'erreur : on absorbe
+   * cet espace dans le padding de la barre au lieu de le masquer (l'erreur reste
+   * affichée si le champ est invalide). */
+  .mat-mdc-form-field {
+    margin-bottom: calc(-1 * var(--space-5));
+  }
+}
+
+.stack-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 560px;
+}
+
+/* ========================= Tableaux =========================== */
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+body .data-table .mat-mdc-header-row {
+  height: 44px;
+  background: var(--color-surface-muted);
+}
+
+body .data-table .mat-mdc-header-cell {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+  border-bottom-color: var(--color-border);
+}
+
+body .data-table .mat-mdc-row {
+  height: 52px;
+  transition: background var(--transition-fast);
+}
+
+body .data-table .mat-mdc-row:hover {
+  background: var(--tenant-primary-softer);
+}
+
+body .data-table .mat-mdc-cell {
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+  border-bottom-color: var(--color-border);
+}
+
+body .data-table .mat-mdc-row:last-of-type .mat-mdc-cell {
+  border-bottom: none;
+}
+
+/* ==================== États et messages ======================= */
+
+/* Absence de données. À ne jamais utiliser pour un chargement : voir `.loading-state`.
+   Accepte une simple phrase, ou un titre + une explication + une action. */
+.empty-state {
+  display: grid;
+  place-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-10) var(--space-6);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius);
+  color: var(--color-text-secondary);
+  text-align: center;
+
+  &::before {
+    content: 'inbox';
+    font-family: 'Material Symbols Rounded', sans-serif;
+    font-size: 30px;
+    font-variation-settings:
+      'FILL' 0,
+      'wght' 300,
+      'GRAD' 0,
+      'opsz' 40;
+    line-height: 1;
+    opacity: 0.5;
+  }
+
+  .empty-title {
+    margin: 0;
+    color: var(--color-text);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-title-3);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .empty-hint {
+    margin: 0;
+    max-width: 46ch;
+    font-size: var(--font-size-small);
+  }
+
+  .empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    justify-content: center;
+    margin-top: var(--space-2);
+  }
+}
+
+/* Chargement en cours : l'utilisateur doit comprendre que des données arrivent, pas
+   qu'il n'y en a aucune. La silhouette reprend la forme du contenu attendu. */
+.loading-state {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+
+  &::before,
+  &::after {
+    content: '';
+    height: 14px;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-muted) 25%,
+      var(--color-border) 37%,
+      var(--color-surface-muted) 63%
+    );
+    background-size: 400% 100%;
+    animation: loading-sheen 1.4s ease-in-out infinite;
+  }
+
+  &::after {
+    width: 62%;
+  }
+}
+
+@keyframes loading-sheen {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0 50%;
+  }
+}
+
+/* Une animation en boucle gêne les personnes qui y sont sensibles : on retombe sur un aplat. */
+@media (prefers-reduced-motion: reduce) {
+  .loading-state::before,
+  .loading-state::after {
+    animation: none;
+    background: var(--color-surface-muted);
+  }
+}
+
+.flash-error,
+.flash-success,
+.error-message,
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-small);
+  border: 1px solid transparent;
+}
+
+.flash-error,
+.error-message {
+  background: var(--color-danger-soft);
+  border-color: color-mix(in srgb, var(--color-danger) 28%, transparent);
+  color: var(--color-danger);
+
+  &::before {
+    content: 'error';
+    font-family: 'Material Symbols Rounded', sans-serif;
+    font-size: 18px;
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  }
+}
+
+.flash-success,
+.success-message {
+  background: var(--color-success-soft);
+  border-color: color-mix(in srgb, var(--color-success) 28%, transparent);
+  color: var(--color-success);
+
+  &::before {
+    content: 'check_circle';
+    font-family: 'Material Symbols Rounded', sans-serif;
+    font-size: 18px;
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  }
+}
+
+/* Un tableau large ne doit jamais faire déborder la page entière : il défile dans sa
+   propre boîte. Sinon, sur un portable, la barre latérale et l'en-tête partent avec lui. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* État d'une ligne, porté par le texte ET la couleur (docs/DESIGN.md §6 : jamais la couleur
+   seule, sans quoi l'information disparaît pour une personne daltonienne). */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+}
+
+.status-ok {
+  background: var(--color-success-soft);
+  border-color: color-mix(in srgb, var(--color-success) 26%, transparent);
+  color: var(--color-success);
+}
+
+.status-off {
+  background: var(--color-surface-muted);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-secondary);
+}
+
+/* Une ligne désactivée reste lisible : on l'atténue sans descendre sous le contraste AA. */
+body .data-table .mat-mdc-row.row-inactive .mat-mdc-cell {
+  color: var(--color-text-secondary);
+  background: var(--color-surface-muted);
+}
+
+/* Badge d'état textuel (jamais une information portée par la seule couleur). */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.pill-success {
+  background: var(--color-success-soft);
+  border-color: color-mix(in srgb, var(--color-success) 25%, transparent);
+  color: var(--color-success);
+}
+
+.pill-warning {
+  background: var(--color-warning-soft);
+  border-color: color-mix(in srgb, var(--color-warning) 25%, transparent);
+  color: var(--color-warning);
+}
+
+.pill-danger {
+  background: var(--color-danger-soft);
+  border-color: color-mix(in srgb, var(--color-danger) 25%, transparent);
+  color: var(--color-danger);
+}
+
+/* ============== Réglages Angular Material globaux ============= */
+
+body .mat-mdc-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+body .mat-mdc-button-base {
+  border-radius: var(--radius-pill);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
+}
+
+body .mat-mdc-icon-button {
+  color: var(--color-text-secondary);
+
+  &:hover {
+    color: var(--tenant-primary);
+    background: var(--tenant-primary-softer);
+  }
+}
+
+body .mat-mdc-standard-chip {
+  border-radius: var(--radius-pill);
+}
+
+body .inactive-chip {
+  opacity: 0.65;
+}
+
+body .mat-mdc-form-field {
+  width: 100%;
+}
+
+body .mat-mdc-tab-header {
+  border-bottom: 1px solid var(--color-border);
+}
+
+body .mat-mdc-dialog-surface {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+}
+
+body .mat-mdc-menu-panel,
+body .mat-mdc-select-panel {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-2);
+}
+
+body .mat-mdc-progress-spinner {
+  --mdc-circular-progress-active-indicator-color: var(--tenant-primary);
+}

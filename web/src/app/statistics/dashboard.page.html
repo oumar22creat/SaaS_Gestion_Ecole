@@ -1,22 +1,72 @@
-<h1>Tableau de bord établissement</h1>
+<div class="page-header">
+  <h1><mat-icon class="page-icon" aria-hidden="true">space_dashboard</mat-icon>Tableau de bord</h1>
+  @if (summary()) {
+    <span class="pill">Du {{ summary()!.periodFrom }} au {{ summary()!.periodTo }}</span>
+  }
+</div>
 
-@if (summary()) {
-  <div class="cards">
-    <mat-card>
-      <p class="card-label">Effectifs</p>
-      <p class="card-value">{{ summary()!.studentCount }} élèves</p>
-      <p class="card-detail">{{ summary()!.teacherCount }} enseignants · {{ summary()!.classCount }} classes</p>
+@if (summary(); as data) {
+  <div class="stat-grid">
+    <mat-card class="stat-card">
+      <mat-icon class="stat-icon" aria-hidden="true">school</mat-icon>
+      <p class="stat-label">Effectif</p>
+      <p class="stat-value">{{ data.studentCount }} <small>élèves</small></p>
+      <p class="stat-detail">{{ data.teacherCount }} enseignants · {{ data.classCount }} classes</p>
     </mat-card>
 
-    <mat-card>
-      <p class="card-label">Taux de présence</p>
-      <p class="card-value">{{ summary()!.attendanceRate !== null ? summary()!.attendanceRate + ' %' : '—' }}</p>
-      <p class="card-detail">Du {{ summary()!.periodFrom }} au {{ summary()!.periodTo }}</p>
+    <mat-card class="stat-card">
+      <mat-icon class="stat-icon" aria-hidden="true">how_to_reg</mat-icon>
+      <p class="stat-label">Taux de présence</p>
+      <p class="stat-value">
+        {{ data.attendanceRate !== null ? data.attendanceRate + ' %' : '—' }}
+      </p>
+      @if (data.attendanceRate !== null) {
+        <mat-progress-bar mode="determinate" [value]="data.attendanceRate" />
+      }
+      <p class="stat-detail">Sur la période affichée</p>
     </mat-card>
 
-    <mat-card>
-      <p class="card-label">Moyenne générale</p>
-      <p class="card-value">{{ summary()!.averageGrade !== null ? summary()!.averageGrade + ' / 20' : '—' }}</p>
+    <mat-card class="stat-card">
+      <mat-icon class="stat-icon" aria-hidden="true">edit_note</mat-icon>
+      <p class="stat-label">Moyenne générale</p>
+      <p class="stat-value">
+        {{ data.averageGrade !== null ? data.averageGrade : '—' }} <small>/ 20</small>
+      </p>
+      <p class="stat-detail">Toutes classes, toutes matières</p>
     </mat-card>
   </div>
+
+  <p class="section-label">Accès rapides</p>
+  <div class="quick-grid">
+    <a class="quick-tile" routerLink="/attendance">
+      <mat-icon class="quick-icon" aria-hidden="true">how_to_reg</mat-icon>
+      <span class="quick-text">
+        <strong>Feuille d'appel</strong>
+        <small>Saisir les absences du jour</small>
+      </span>
+    </a>
+    <a class="quick-tile" routerLink="/exams">
+      <mat-icon class="quick-icon" aria-hidden="true">edit_note</mat-icon>
+      <span class="quick-text">
+        <strong>Notes</strong>
+        <small>Évaluations et saisie des notes</small>
+      </span>
+    </a>
+    <a class="quick-tile" routerLink="/report-cards">
+      <mat-icon class="quick-icon" aria-hidden="true">description</mat-icon>
+      <span class="quick-text">
+        <strong>Bulletins</strong>
+        <small>Générer et consulter</small>
+      </span>
+    </a>
+    <a class="quick-tile" routerLink="/students">
+      <mat-icon class="quick-icon" aria-hidden="true">school</mat-icon>
+      <span class="quick-text">
+        <strong>Élèves</strong>
+        <small>Inscriptions et dossiers</small>
+      </span>
+    </a>
+  </div>
+} @else {
+  <p class="loading-state" role="status" aria-label="Chargement du tableau de bord"></p>
 }

@@ -1,57 +1,91 @@
-<div class="registration-page">
-  @if (success()) {
-    <mat-card>
-      <h1>Établissement créé</h1>
-      <p>Votre établissement a été créé et vous êtes maintenant connecté.</p>
-    </mat-card>
-  } @else {
-    <mat-card>
-      <h1>Créer votre établissement</h1>
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <mat-form-field appearance="outline">
-          <mat-label>Nom de l'établissement</mat-label>
-          <input matInput formControlName="schoolName" />
-        </mat-form-field>
+<div class="auth-page">
+  <aside class="auth-brand">
+    <p class="auth-brand-icon" aria-hidden="true"><mat-icon>school</mat-icon></p>
+    <h2 class="auth-brand-title">Ouvrez l'espace de votre établissement</h2>
+    <p class="auth-brand-lede">
+      Quelques informations suffisent : votre école obtient son propre espace, son sous-domaine et
+      son compte administrateur.
+    </p>
+    <ul class="auth-brand-list">
+      <li>Données isolées par établissement</li>
+      <li>Logo et couleurs personnalisables</li>
+      <li>Import des élèves par fichier CSV</li>
+    </ul>
+  </aside>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Sous-domaine</mat-label>
-          <input matInput formControlName="subdomain" placeholder="mon-ecole" />
-          <mat-hint>mon-ecole.monapp.com — lettres minuscules, chiffres, tirets</mat-hint>
-        </mat-form-field>
+  <section class="auth-form-panel">
+    @if (success()) {
+      <mat-card class="auth-card">
+        <p class="auth-eyebrow">Établissement créé</p>
+        <h1>Bienvenue</h1>
+        <p class="lede">
+          Votre établissement est créé et vous êtes connecté en tant qu'administrateur.
+        </p>
+        <a mat-flat-button routerLink="/dashboard">Ouvrir le tableau de bord</a>
+      </mat-card>
+    } @else {
+      <mat-card class="auth-card auth-card-wide">
+        <p class="auth-eyebrow">Création</p>
+        <h1>Créer votre établissement</h1>
+        <p class="lede">L'administrateur créé ici pourra ensuite inviter le reste du personnel.</p>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Prénom (administrateur)</mat-label>
-          <input matInput formControlName="adminFirstName" />
-        </mat-form-field>
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <mat-form-field appearance="outline">
+            <mat-label>Nom de l'établissement</mat-label>
+            <input matInput formControlName="schoolName" />
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Nom (administrateur)</mat-label>
-          <input matInput formControlName="adminLastName" />
-        </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Sous-domaine</mat-label>
+            <input matInput formControlName="subdomain" placeholder="mon-ecole" />
+            <mat-hint>mon-ecole.monapp.com — lettres minuscules, chiffres, tirets</mat-hint>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>E-mail (administrateur)</mat-label>
-          <input matInput type="email" formControlName="adminEmail" />
-        </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Prénom (administrateur)</mat-label>
+              <input matInput formControlName="adminFirstName" />
+            </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Mot de passe</mat-label>
-          <input matInput type="password" formControlName="adminPassword" />
-          <mat-hint>8 caractères minimum</mat-hint>
-        </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Nom (administrateur)</mat-label>
+              <input matInput formControlName="adminLastName" />
+            </mat-form-field>
+          </div>
 
-        @if (errorMessage()) {
-          <p class="error-message">{{ errorMessage() }}</p>
-        }
+          <mat-form-field appearance="outline">
+            <mat-label>E-mail (administrateur)</mat-label>
+            <input matInput type="email" formControlName="adminEmail" autocomplete="username" />
+          </mat-form-field>
 
-        <button mat-flat-button type="submit" [disabled]="submitting()">
-          @if (submitting()) {
-            <mat-spinner diameter="20" />
-          } @else {
-            Créer l'établissement
+          <mat-form-field appearance="outline">
+            <mat-label>Mot de passe</mat-label>
+            <input
+              matInput
+              type="password"
+              formControlName="adminPassword"
+              autocomplete="new-password"
+            />
+            <mat-hint>8 caractères minimum</mat-hint>
+          </mat-form-field>
+
+          @if (errorMessage()) {
+            <p class="error-message">{{ errorMessage() }}</p>
           }
-        </button>
-      </form>
-    </mat-card>
-  }
+
+          <button mat-flat-button type="submit" [disabled]="submitting()">
+            @if (submitting()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              <mat-icon>school</mat-icon> Créer l'établissement
+            }
+          </button>
+        </form>
+
+        <p class="alt-links">
+          <a routerLink="/login">J'ai déjà un compte</a>
+        </p>
+      </mat-card>
+    }
+  </section>
 </div>

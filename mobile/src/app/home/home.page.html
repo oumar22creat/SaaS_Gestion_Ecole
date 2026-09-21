@@ -1,4 +1,29 @@
 <ion-content class="ion-padding">
-  <p>Connecté en tant que {{ email }}</p>
-  <ion-button (click)="logout()">Déconnexion</ion-button>
+  <section class="greeting">
+    <p class="greeting-eyebrow">{{ eyebrow }}</p>
+    <h1 class="greeting-title">Bonjour</h1>
+    <p class="greeting-user">{{ email ?? 'Compte connecté' }}</p>
+  </section>
+
+  <p class="section-label">Actions du jour</p>
+  <div class="tiles">
+    @for (tile of tiles; track tile.label) {
+      @if (tile.path) {
+        <a [routerLink]="tile.path" class="tile" [class.tile-wide]="tile.path === '/timetable'">
+          <ion-icon class="tile-icon" aria-hidden="true" [name]="tile.icon"></ion-icon>
+          <span class="tile-label">{{ tile.label }}</span>
+          <span class="tile-hint">{{ tile.hint }}</span>
+        </a>
+      } @else {
+        <article class="tile">
+          <ion-icon class="tile-icon" aria-hidden="true" [name]="tile.icon"></ion-icon>
+          <span class="tile-label">{{ tile.label }}</span>
+          <span class="tile-hint">{{ tile.hint }}</span>
+        </article>
+      }
+    }
+  </div>
+
+  <ion-button expand="block" fill="clear" class="logout" (click)="logout()"><ion-icon aria-hidden="true" name="log-out-outline"></ion-icon> Déconnexion
+  </ion-button>
 </ion-content>

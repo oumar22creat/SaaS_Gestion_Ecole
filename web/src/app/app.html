@@ -1,8 +1,15 @@
-<mat-toolbar>
-  @if (branding().logoUrl) {
-    <img [src]="branding().logoUrl" alt="" class="tenant-logo" />
-  }
-  {{ branding().name }}
+<mat-toolbar class="brand-bar">
+  <a class="brand" routerLink="/" aria-label="Accueil">
+    @if (branding().logoUrl) {
+      <img [src]="branding().logoUrl" alt="" class="tenant-logo" />
+    } @else {
+      <mat-icon class="brand-icon" aria-hidden="true">school</mat-icon>
+    }
+    <span class="brand-text">
+      <span class="brand-name">{{ branding().name }}</span>
+      <span class="brand-tagline">Espace scolaire</span>
+    </span>
+  </a>
 </mat-toolbar>
 
 <router-outlet />

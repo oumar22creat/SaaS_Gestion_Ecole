@@ -1,27 +1,21 @@
-.registration-page {
-  display: flex;
-  justify-content: center;
-  padding: var(--space-8);
+// Création d'établissement — même gabarit que la connexion (core/_auth-layout.scss),
+// avec une carte plus large : le formulaire compte six champs.
+@use '../core/auth-layout' as authLayout;
 
-  mat-card {
-    max-width: 480px;
-    width: 100%;
-    padding: var(--space-6);
-  }
+@include authLayout.styles;
 
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
+.auth-card-wide {
+  max-width: 520px;
+}
 
-  h1 {
-    font-size: var(--font-size-title-2);
-    margin-bottom: var(--space-4);
-  }
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
 
-  .error-message {
-    color: var(--color-danger);
-    font-size: var(--font-size-caption);
+@media (max-width: 599px) {
+  .form-row {
+    grid-template-columns: 1fr;
   }
 }

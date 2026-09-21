@@ -1,31 +1,124 @@
-h1 {
-  font-size: var(--font-size-title-2);
-  margin-bottom: var(--space-4);
+// Dashboard établissement (desktop-first, densité d'info élevée) — docs/DESIGN.md §5.
+// `.stat-grid`, `.page-header`, `.pill` et `.section-label` viennent de la couche
+// globale (web/src/styles/_components.scss).
+.stat-card {
+  position: relative;
+  padding: var(--space-5);
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(90deg, var(--tenant-primary), var(--tenant-secondary));
+  }
 }
 
-.cards {
+.stat-icon {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4);
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--tenant-primary-soft);
+  color: var(--tenant-primary);
+  font-size: 21px;
+  line-height: 1;
 }
 
-mat-card {
+.stat-label {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+}
+
+.stat-value {
+  margin: var(--space-1) 0 var(--space-2);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-display);
+  font-weight: 700;
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: 1.1;
+
+  small {
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+  }
+}
+
+.stat-detail {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+}
+
+mat-progress-bar {
+  --mat-progress-bar-active-indicator-color: var(--tenant-primary);
+  --mat-progress-bar-track-color: var(--color-border);
+
+  border-radius: var(--radius-pill);
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.quick-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  color: var(--color-text);
+  text-decoration: none;
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition),
+    border-color var(--transition);
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--tenant-primary-ring);
+    box-shadow: var(--shadow-2);
+  }
 }
 
-.card-label {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-caption);
-  margin: 0;
+.quick-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  color: var(--tenant-primary);
+  font-size: 21px;
 }
 
-.card-value {
-  font-size: var(--font-size-title-1);
-  margin: var(--space-1) 0;
-}
+.quick-text {
+  display: flex;
+  flex-direction: column;
 
-.card-detail {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-caption);
-  margin: 0;
+  strong {
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  small {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+  }
 }

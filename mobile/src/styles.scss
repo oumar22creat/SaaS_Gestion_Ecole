@@ -16,12 +16,243 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
+/*
+ * Couche de design de l'application mobile — voir docs/DESIGN.md §3.
+ * On repeint les composants Ionic standards via leurs variables CSS (pas de composants
+ * custom qui dupliqueraient ion-card / ion-item / ion-button).
+ */
+
 html,
 body {
   font-family: var(--font-family-base);
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--font-family-display);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+/* ------------------------------ Chrome ------------------------------ */
+
+ion-toolbar {
+  --background: var(--color-nav);
+  --color: var(--color-nav-text);
+  --border-width: 0;
+  --padding-start: var(--space-2);
+  --padding-end: var(--space-2);
+  --min-height: 54px;
+}
+
+ion-title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-title-3);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+ion-toolbar ion-button {
+  --color: var(--color-nav-text);
+  font-weight: var(--font-weight-medium);
+}
+
 .tenant-logo {
-  height: 28px;
+  height: 26px;
   margin-inline-end: var(--space-2);
+  border-radius: var(--radius-xs);
+  background: #ffffff;
+}
+
+/* ----------------------------- Surfaces ----------------------------- */
+
+ion-content {
+  --background: var(--color-canvas);
+}
+
+ion-list {
+  background: transparent;
+  padding: 0;
+}
+
+ion-card {
+  margin: 0 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+ion-card-title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-title-3);
+  font-weight: var(--font-weight-semibold);
+}
+
+ion-item {
+  --background: var(--color-surface);
+  --border-color: var(--color-border);
+  --padding-start: var(--space-4);
+  --inner-padding-end: var(--space-3);
+  --min-height: 56px;
+}
+
+/* Élément de liste isolé (une ligne = une carte) : cible tactile large et lisible. */
+.card-item {
+  margin-bottom: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+/* ------------------------- Actions et libellés ---------------------- */
+
+ion-button {
+  --border-radius: var(--radius-pill);
+  --box-shadow: none;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
+  min-height: 46px;
+}
+
+ion-segment {
+  --background: var(--color-surface-muted);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+}
+
+ion-segment-button {
+  --border-radius: var(--radius-pill);
+  --indicator-color: var(--color-surface);
+  --color-checked: var(--tenant-primary);
+  font-weight: var(--font-weight-semibold);
+  min-height: 40px;
+  text-transform: none;
+}
+
+/* ---------------------- Primitives d'écran ------------------------- */
+
+.screen-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.screen-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--tenant-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--tenant-primary-ring);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.screen-title {
+  margin: 0;
+  font-size: var(--font-size-title-2);
+  font-weight: var(--font-weight-semibold);
+}
+
+.section-label {
+  margin: var(--space-5) 0 var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+}
+
+.flash-error,
+.flash-success {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-small);
+}
+
+.flash-error {
+  background: #fdeaea;
+  border: 1px solid rgba(198, 40, 40, 0.28);
+  color: var(--ion-color-danger);
+}
+
+.flash-success {
+  background: #e6f4ea;
+  border: 1px solid rgba(31, 122, 67, 0.28);
+  color: var(--ion-color-success);
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-8) var(--space-4);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius);
+  color: var(--color-text-secondary);
+  text-align: center;
+
+}
+
+/* Médailles d'icônes (docs/DESIGN.md §9). Le conteneur porte la pastille, l'icône porte sa
+   taille et sa couleur : une ion-icon se dimensionne par `font-size` et hérite de `color`,
+   donc elle suit la charte du tenant — ce que l'emoji ne permettait pas. */
+.brand-icon,
+.tile-icon,
+.screen-icon,
+.exam-icon {
+  color: var(--tenant-primary);
+  font-size: 22px;
+}
+
+.brand-icon {
+  color: var(--color-nav-text);
+  font-size: 18px;
+}
+
+.tile-icon {
+  font-size: 24px;
+}
+
+.login-hero-icon ion-icon {
+  color: var(--tenant-primary);
+  font-size: 32px;
+}
+
+/* Une icône posée avant un libellé de bouton a besoin d'air, sinon elle colle au texte. */
+ion-button ion-icon[aria-hidden='true'] + * ,
+ion-button ion-icon[aria-hidden='true'] {
+  margin-inline-end: 6px;
+}
+
+/* L'en-tête de marque vit dans app.html, hors du router-outlet. Or Ionic positionne
+   `ion-router-outlet` en `absolute; top: 0`, si bien que le haut de chaque écran passait
+   sous l'en-tête (visible sur la connexion : le médaillon était rogné). On empile donc
+   explicitement en colonne, et l'outlet occupe la hauteur restante. Il garde `position`
+   non-`static` pour rester le bloc conteneur des pages animées par Ionic. */
+ion-app {
+  display: flex;
+  flex-direction: column;
+}
+
+ion-app > ion-header {
+  flex: 0 0 auto;
+}
+
+ion-app > ion-router-outlet {
+  position: relative;
+  top: 0;
+  flex: 1 1 auto;
+  min-height: 0;
 }

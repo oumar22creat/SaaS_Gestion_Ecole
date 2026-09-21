@@ -1,40 +1,44 @@
 /*
  * Design tokens partagés — voir docs/DESIGN.md §2.
- * Couleurs neutres : identiques à web/src/styles/tokens.scss (contraste >= 4.5:1 sur fond
- * blanc, WCAG AA). Pas de package partagé entre les deux workspaces Angular pour
- * l'instant : les valeurs sont dupliquées intentionnellement.
+ * Couleurs neutres : identiques à web/src/styles/tokens.scss (contraste >= 4.5:1, WCAG AA).
+ * Pas de package partagé entre les deux workspaces Angular pour l'instant : les valeurs
+ * sont dupliquées intentionnellement.
  * --ion-color-primary/secondary sont mappés sur --tenant-primary/--tenant-secondary :
- * le futur service de branding tenant écrasera ces deux variables au runtime.
+ * le service de branding tenant écrase ces deux variables au runtime.
  */
 
 :root {
-  /* Couleurs de marque du tenant (défaut neutre, remplacé au runtime) */
-  --tenant-primary: #3880ff;
-  --tenant-secondary: #3dc2ff;
+  /* Couleurs de marque du tenant (défaut "école", remplacé au runtime) */
+  --tenant-primary: #0f5c4c;
+  --tenant-secondary: #c9a227;
   --tenant-on-primary: #ffffff;
 
+  --tenant-primary-soft: color-mix(in srgb, var(--tenant-primary) 12%, #ffffff);
+  --tenant-primary-softer: color-mix(in srgb, var(--tenant-primary) 6%, #ffffff);
+  --tenant-primary-ring: color-mix(in srgb, var(--tenant-primary) 32%, transparent);
+
   --ion-color-primary: var(--tenant-primary);
-  --ion-color-primary-rgb: 56, 128, 255;
+  --ion-color-primary-rgb: 15, 92, 76;
   --ion-color-primary-contrast: var(--tenant-on-primary);
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #3171e0;
-  --ion-color-primary-tint: #4c8dff;
+  --ion-color-primary-shade: #0c4a3d;
+  --ion-color-primary-tint: #276c5e;
 
   --ion-color-secondary: var(--tenant-secondary);
-  --ion-color-secondary-rgb: 61, 194, 255;
-  --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #36abe0;
-  --ion-color-secondary-tint: #50c8ff;
+  --ion-color-secondary-rgb: 201, 162, 39;
+  --ion-color-secondary-contrast: #1a1a1a;
+  --ion-color-secondary-contrast-rgb: 26, 26, 26;
+  --ion-color-secondary-shade: #b08e22;
+  --ion-color-secondary-tint: #ceab3d;
 
   /* Couleurs sémantiques neutres — identiques à web/src/styles/tokens.scss,
    * ne changent jamais avec le tenant (voir docs/DESIGN.md §2). */
-  --ion-color-success: #2e7d32;
-  --ion-color-success-rgb: 46, 125, 50;
+  --ion-color-success: #1f7a43;
+  --ion-color-success-rgb: 31, 122, 67;
   --ion-color-success-contrast: #ffffff;
   --ion-color-success-contrast-rgb: 255, 255, 255;
-  --ion-color-success-shade: #1b5e20;
-  --ion-color-success-tint: #388e3c;
+  --ion-color-success-shade: #175c33;
+  --ion-color-success-tint: #358855;
 
   --ion-color-warning: #7a4a00;
   --ion-color-warning-rgb: 122, 74, 0;
@@ -50,45 +54,79 @@
   --ion-color-danger-shade: #b71c1c;
   --ion-color-danger-tint: #e53935;
 
-  --ion-color-medium: #92949c;
-  --ion-color-medium-rgb: 146, 148, 156;
+  --ion-color-medium: #566a64;
+  --ion-color-medium-rgb: 86, 106, 100;
   --ion-color-medium-contrast: #ffffff;
   --ion-color-medium-contrast-rgb: 255, 255, 255;
-  --ion-color-medium-shade: #808289;
-  --ion-color-medium-tint: #9d9fa6;
+  --ion-color-medium-shade: #465752;
+  --ion-color-medium-tint: #6b7d77;
 
-  --ion-color-light: #f4f5f8;
-  --ion-color-light-rgb: 244, 245, 248;
-  --ion-color-light-contrast: #000000;
-  --ion-color-light-contrast-rgb: 0, 0, 0;
-  --ion-color-light-shade: #d7d8da;
-  --ion-color-light-tint: #f5f6f9;
+  --ion-color-light: #eef1f0;
+  --ion-color-light-rgb: 238, 241, 240;
+  --ion-color-light-contrast: #12211d;
+  --ion-color-light-contrast-rgb: 18, 33, 29;
+  --ion-color-light-shade: #d2d4d3;
+  --ion-color-light-tint: #f0f2f2;
 
-  /* Couleurs neutres additionnelles pour le texte/les bordures (identiques au Web) */
-  --color-text: #1a1a1a;
-  --color-text-secondary: #666666;
-  --color-border: #d0d0d0;
+  /* Neutres additionnels (identiques au Web) */
+  --color-canvas: #eef1f0;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f6f8f7;
+  --color-text: #12211d;
+  --color-text-secondary: #566a64;
+  --color-border: #dde5e2;
+  --color-border-strong: #c3d0cc;
+  --color-nav: #0b231e;
+  --color-nav-elevated: #13382f;
+  --color-nav-text: #eef5f2;
+  --color-nav-muted: #a3bcb4;
+
+  /* Surfaces Ionic : canevas papier clair, listes et cartes blanches */
+  --ion-background-color: var(--color-canvas);
+  --ion-background-color-rgb: 238, 241, 240;
+  --ion-text-color: var(--color-text);
+  --ion-text-color-rgb: 18, 33, 29;
+  --ion-card-background: var(--color-surface);
+  --ion-item-background: var(--color-surface);
+  --ion-border-color: var(--color-border);
+  --ion-toolbar-background: var(--color-nav);
+  --ion-toolbar-color: var(--color-nav-text);
 
   /* Espacement — grille de 4px (nom = multiple de 4px, ex. --space-4 = 16px) */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
+  --space-10: 40px;
   --space-12: 48px;
   --space-16: 64px;
 
-  /* Rayon de bordure unique pour tous les composants */
-  --radius: 8px;
+  /* Rayons et élévation (identiques au Web) */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --shadow-1: 0 1px 2px rgba(11, 35, 30, 0.06), 0 1px 3px rgba(11, 35, 30, 0.04);
+  --shadow-2: 0 6px 16px rgba(11, 35, 30, 0.08), 0 1px 3px rgba(11, 35, 30, 0.05);
 
-  /* Typographie — une seule famille, échelle limitée (identique au Web) */
-  --font-family-base: Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-size-title-1: 28px;
-  --font-size-title-2: 22px;
-  --font-size-title-3: 18px;
-  --font-size-body: 16px;
-  --font-size-caption: 13px;
+  /* Typographie — identique au Web */
+  --font-family-base: Inter, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-display: Outfit, Inter, 'Segoe UI', Roboto, sans-serif;
+  --font-size-display: 30px;
+  --font-size-title-1: 26px;
+  --font-size-title-2: 21px;
+  --font-size-title-3: 17px;
+  --font-size-body: 15px;
+  --font-size-small: 14px;
+  --font-size-caption: 12.5px;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-caps: 0.09em;
 
   --ion-font-family: var(--font-family-base);
 }

@@ -1,33 +1,62 @@
-<div class="login-page">
-  <mat-card>
-    <h1>Connexion</h1>
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <mat-form-field appearance="outline">
-        <mat-label>Sous-domaine</mat-label>
-        <input matInput formControlName="subdomain" placeholder="mon-ecole" />
-      </mat-form-field>
+<div class="auth-page">
+  <aside class="auth-brand">
+    <p class="auth-brand-icon" aria-hidden="true"><mat-icon>school</mat-icon></p>
+    <h2 class="auth-brand-title">Toute la vie de l'école, au même endroit</h2>
+    <p class="auth-brand-lede">
+      Scolarité, absences, notes, bulletins et communication : un seul espace pour votre
+      établissement, sur ordinateur comme sur mobile.
+    </p>
+    <ul class="auth-brand-list">
+      <li>Feuille d'appel bouclée en une minute</li>
+      <li>Notes saisies, bulletins calculés</li>
+      <li>Messagerie interne et notifications</li>
+    </ul>
+  </aside>
 
-      <mat-form-field appearance="outline">
-        <mat-label>E-mail</mat-label>
-        <input matInput type="email" formControlName="email" />
-      </mat-form-field>
+  <section class="auth-form-panel">
+    <mat-card class="auth-card">
+      <p class="auth-eyebrow">Connexion</p>
+      <h1>Espace établissement</h1>
+      <p class="lede">Personnel, enseignants et direction.</p>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Mot de passe</mat-label>
-        <input matInput type="password" formControlName="password" />
-      </mat-form-field>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Sous-domaine</mat-label>
+          <input matInput formControlName="subdomain" placeholder="mon-ecole" />
+        </mat-form-field>
 
-      @if (errorMessage()) {
-        <p class="error-message">{{ errorMessage() }}</p>
-      }
+        <mat-form-field appearance="outline">
+          <mat-label>E-mail</mat-label>
+          <input matInput type="email" formControlName="email" autocomplete="username" />
+        </mat-form-field>
 
-      <button mat-flat-button type="submit" [disabled]="submitting()">
-        @if (submitting()) {
-          <mat-spinner diameter="20" />
-        } @else {
-          Se connecter
+        <mat-form-field appearance="outline">
+          <mat-label>Mot de passe</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <p class="error-message">{{ errorMessage() }}</p>
         }
-      </button>
-    </form>
-  </mat-card>
+
+        <button mat-flat-button type="submit" [disabled]="submitting()">
+          @if (submitting()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            <mat-icon>login</mat-icon> Se connecter
+          }
+        </button>
+      </form>
+
+      <p class="alt-links">
+        <a routerLink="/register"><mat-icon>add_business</mat-icon> Créer un établissement</a>
+        <a routerLink="/admin/login">Console Super-Admin</a>
+      </p>
+    </mat-card>
+  </section>
 </div>

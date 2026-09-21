@@ -1,28 +1,7 @@
-// Styles partagés par toutes les pages de liste (Teacher/Subject/SchoolClass/Student/...).
+// Compat : les primitives des pages de liste (`.page-header`, `.data-table`,
+// `.empty-state`, `.inactive-chip`) sont désormais définies une seule fois dans
+// web/src/styles/_components.scss. Le mixin est conservé vide pour ne pas toucher les
+// 14 pages qui l'incluent déjà ; ne rien y ajouter — tout nouveau style partagé va
+// dans la couche globale.
 @mixin styles {
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-4);
-
-    h1 {
-      font-size: var(--font-size-title-2);
-      margin: 0;
-    }
-  }
-
-  .data-table {
-    width: 100%;
-  }
-
-  .inactive-chip {
-    opacity: 0.6;
-  }
-
-  .empty-state {
-    color: var(--color-text-secondary);
-    padding: var(--space-6) 0;
-    text-align: center;
-  }
 }

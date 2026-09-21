@@ -4,7 +4,7 @@ describe('design tokens', () => {
   }
 
   it('defines a neutral fallback for the tenant brand color', () => {
-    expect(tokenValue('--tenant-primary')).toBe('#3880ff');
+    expect(tokenValue('--tenant-primary')).toBe('#0f5c4c');
   });
 
   it('maps the Material system primary color onto the tenant token', () => {

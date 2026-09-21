@@ -1,36 +1,43 @@
 <ion-content class="ion-padding">
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>Connexion</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <ion-item>
-          <ion-input label="Sous-domaine" labelPlacement="floating" placeholder="mon-ecole" formControlName="subdomain" />
-        </ion-item>
+  <section class="login-hero">
+    <p class="login-hero-icon" aria-hidden="true"><ion-icon name="school-outline"></ion-icon></p>
+    <h1 class="login-hero-title">Connexion</h1>
+    <p class="login-hero-lede">Espace enseignants et personnel de l'établissement.</p>
+  </section>
 
-        <ion-item>
-          <ion-input label="E-mail" labelPlacement="floating" type="email" formControlName="email" />
-        </ion-item>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <ion-item class="card-item">
+      <ion-input
+        label="Sous-domaine"
+        labelPlacement="floating"
+        placeholder="mon-ecole"
+        formControlName="subdomain"
+      />
+    </ion-item>
 
-        <ion-item>
-          <ion-input label="Mot de passe" labelPlacement="floating" type="password" formControlName="password" />
-        </ion-item>
+    <ion-item class="card-item">
+      <ion-input label="E-mail" labelPlacement="floating" type="email" formControlName="email" />
+    </ion-item>
 
-        @if (errorMessage()) {
-          <ion-text color="danger">
-            <p>{{ errorMessage() }}</p>
-          </ion-text>
-        }
+    <ion-item class="card-item">
+      <ion-input
+        label="Mot de passe"
+        labelPlacement="floating"
+        type="password"
+        formControlName="password"
+      />
+    </ion-item>
 
-        <ion-button expand="block" type="submit" [disabled]="submitting()" class="ion-margin-top">
-          @if (submitting()) {
-            <ion-spinner name="dots" />
-          } @else {
-            Se connecter
-          }
-        </ion-button>
-      </form>
-    </ion-card-content>
-  </ion-card>
+    @if (errorMessage()) {
+      <p class="flash-error">{{ errorMessage() }}</p>
+    }
+
+    <ion-button expand="block" type="submit" [disabled]="submitting()" class="ion-margin-top">
+      @if (submitting()) {
+        <ion-spinner name="dots" />
+      } @else {
+        <ion-icon aria-hidden="true" name="log-in-outline"></ion-icon> Se connecter
+      }
+    </ion-button>
+  </form>
 </ion-content>

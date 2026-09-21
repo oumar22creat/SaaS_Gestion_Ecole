@@ -16,7 +16,11 @@ export class AuthService {
 
   async login(subdomain: string, email: string, password: string): Promise<TokenPair> {
     const response = await firstValueFrom(
-      this.http.post<ApiResponse<TokenPair>>(`${environment.apiUrl}/auth/login`, { subdomain, email, password }),
+      this.http.post<ApiResponse<TokenPair>>(`${environment.apiUrl}/auth/login`, {
+        subdomain,
+        email,
+        password,
+      }),
     );
     return response.data;
   }

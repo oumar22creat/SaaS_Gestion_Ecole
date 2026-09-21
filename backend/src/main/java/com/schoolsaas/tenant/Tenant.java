@@ -35,11 +35,13 @@ public class Tenant {
     @Column(name = "logo_url")
     private String logoUrl;
 
+    // Couleurs par défaut = design tokens du produit (docs/DESIGN.md §2), identiques au
+    // DEFAULT de la colonne côté base (V53__align_tenant_default_branding_with_design_tokens.sql).
     @Column(name = "primary_color", nullable = false)
-    private String primaryColor = "#3880ff";
+    private String primaryColor = "#0f5c4c";
 
     @Column(name = "secondary_color", nullable = false)
-    private String secondaryColor = "#3dc2ff";
+    private String secondaryColor = "#c9a227";
 
     @Column(name = "custom_domain", unique = true)
     private String customDomain;

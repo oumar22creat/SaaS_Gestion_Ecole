@@ -1,18 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  IonButton,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardTitle,
-  IonContent,
-  IonInput,
-  IonItem,
-  IonSpinner,
-  IonText,
-} from '@ionic/angular';
+import { IonButton, IonContent, IonIcon, IonInput, IonItem, IonSpinner } from '@ionic/angular';
 import { extractErrorMessage } from '../core/http-error.util';
 import { AuthTokenService } from './auth-token.service';
 import { AuthService } from './auth.service';
@@ -20,20 +9,36 @@ import { AuthService } from './auth.service';
 /** Identique en logique à web/src/app/auth/login.page.ts — composants Ionic natifs (docs/DESIGN.md §3). */
 @Component({
   selector: 'app-login-page',
-  imports: [
-    ReactiveFormsModule,
-    IonContent,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardContent,
-    IonItem,
-    IonInput,
-    IonButton,
-    IonSpinner,
-    IonText,
-  ],
+  imports: [ReactiveFormsModule, IonContent, IonItem, IonInput, IonButton, IonSpinner, IonIcon],
   templateUrl: './login.page.html',
+  styles: `
+    .login-hero {
+      margin: var(--space-4) 0 var(--space-6);
+      text-align: center;
+    }
+    .login-hero-icon {
+      display: grid;
+      place-items: center;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto var(--space-4);
+      border-radius: var(--radius-lg);
+      background: var(--tenant-primary-soft);
+      box-shadow: inset 0 0 0 1px var(--tenant-primary-ring);
+      font-size: 32px;
+      line-height: 1;
+    }
+    .login-hero-title {
+      margin: 0 0 var(--space-1);
+      font-size: var(--font-size-display);
+      font-weight: 700;
+    }
+    .login-hero-lede {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-small);
+    }
+  `,
 })
 export class LoginPage {
   private readonly formBuilder = inject(FormBuilder);

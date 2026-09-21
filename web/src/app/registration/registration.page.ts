@@ -1,11 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 import { AuthTokenService } from '../auth/auth-token.service';
 import { RegistrationService } from './registration.service';
 
@@ -15,14 +17,13 @@ interface ApiErrorBody {
 
 @Component({
   selector: 'app-registration-page',
-  imports: [
-    ReactiveFormsModule,
+  imports: [ReactiveFormsModule,
+    RouterLink,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatProgressSpinnerModule,
-  ],
+    MatProgressSpinnerModule, MatIconModule],
   templateUrl: './registration.page.html',
   styleUrl: './registration.page.scss',
 })

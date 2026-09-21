@@ -1,0 +1,177 @@
+// Gabarit partagé des écrans publics (connexion établissement, console Super-Admin,
+// création d'établissement) : panneau de marque à gauche, formulaire à droite.
+// Le panneau de marque disparaît sous 900px — sur mobile on ne montre que le formulaire.
+@mixin styles {
+  .auth-page {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    min-height: calc(100vh - var(--topbar-height));
+    background: var(--color-canvas);
+  }
+
+  .auth-brand {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-12) var(--space-10);
+    color: var(--color-nav-text);
+    background:
+      radial-gradient(
+        900px 420px at 12% 12%,
+        color-mix(in srgb, var(--tenant-primary) 62%, transparent),
+        transparent
+      ),
+      linear-gradient(160deg, var(--color-nav-elevated), var(--color-nav));
+  }
+
+  .auth-brand-emoji {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin: 0;
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, #ffffff 12%, transparent);
+    border: 1px solid color-mix(in srgb, #ffffff 18%, transparent);
+    font-size: 32px;
+    line-height: 1;
+  }
+
+  .auth-brand-title {
+    max-width: 22ch;
+    margin: 0;
+    font-size: var(--font-size-display);
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  .auth-brand-lede {
+    max-width: 44ch;
+    margin: 0;
+    color: var(--color-nav-muted);
+  }
+
+  .auth-brand-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-size: var(--font-size-small);
+
+      /* Puce en ligature Material Symbols : une seule police d'icônes dans toute
+         l'application, et une couleur qui suit la charte du tenant. */
+      &::before {
+        content: 'check_circle';
+        flex: 0 0 auto;
+        font-family: 'Material Symbols Rounded', sans-serif;
+        font-size: 18px;
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 20;
+        color: var(--tenant-secondary, currentColor);
+        opacity: 0.9;
+      }
+    }
+
+    li span {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, #ffffff 10%, transparent);
+      font-size: 16px;
+    }
+  }
+
+  .auth-form-panel {
+    display: grid;
+    place-items: center;
+    padding: var(--space-10) var(--space-6);
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 420px;
+    padding: var(--space-8) var(--space-6);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+
+    h1 {
+      margin: var(--space-1) 0 var(--space-2);
+      font-size: var(--font-size-title-1);
+      font-weight: var(--font-weight-semibold);
+    }
+  }
+
+  .auth-eyebrow {
+    margin: 0;
+    color: var(--tenant-primary);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--letter-spacing-caps);
+    text-transform: uppercase;
+  }
+
+  .lede {
+    margin: 0 0 var(--space-5);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-small);
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  form button[type='submit'] {
+    height: 46px;
+    margin-top: var(--space-2);
+  }
+
+  .alt-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin: var(--space-5) 0 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--font-size-caption);
+
+    a {
+      font-weight: var(--font-weight-medium);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  }
+
+  @media (max-width: 899px) {
+    .auth-page {
+      grid-template-columns: 1fr;
+    }
+
+    .auth-brand {
+      display: none;
+    }
+
+    .auth-form-panel {
+      padding: var(--space-6) var(--space-4);
+      align-items: start;
+    }
+  }
+}

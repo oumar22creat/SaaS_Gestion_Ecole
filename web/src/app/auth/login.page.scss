@@ -1,27 +1,5 @@
-.login-page {
-  display: flex;
-  justify-content: center;
-  padding: var(--space-8);
+// Connexion établissement + console Super-Admin (admin/admin-login.page.ts réutilise ce
+// fichier via styleUrl) — gabarit partagé dans core/_auth-layout.scss.
+@use '../core/auth-layout' as authLayout;
 
-  mat-card {
-    max-width: 400px;
-    width: 100%;
-    padding: var(--space-6);
-  }
-
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-
-  h1 {
-    font-size: var(--font-size-title-2);
-    margin-bottom: var(--space-4);
-  }
-
-  .error-message {
-    color: var(--color-danger);
-    font-size: var(--font-size-caption);
-  }
-}
+@include authLayout.styles;

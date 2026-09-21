@@ -51,7 +51,7 @@ class TenantSettingsTest extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/tenants/current/branding").header(TenantResolver.TENANT_HEADER, tenant.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.primaryColor").value("#3880ff"))
+                .andExpect(jsonPath("$.primaryColor").value("#0f5c4c"))
                 .andExpect(jsonPath("$.logoUrl").doesNotExist());
 
         String adminToken = TestAuthSupport.createUserAndLogin(
@@ -157,7 +157,7 @@ class TenantSettingsTest extends AbstractIntegrationTest {
         // Tenant B, résolu par en-tête, ne doit jamais voir le branding de A.
         mockMvc.perform(get("/api/v1/tenants/current/branding").header(TenantResolver.TENANT_HEADER, tenantB.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.primaryColor").value("#3880ff"));
+                .andExpect(jsonPath("$.primaryColor").value("#0f5c4c"));
 
         // Le domaine personnalisé de A, résolu par nom d'hôte (sans en-tête X-Tenant-Id), doit
         // renvoyer exactement le branding de A — jamais celui d'un autre tenant.

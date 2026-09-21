@@ -4,6 +4,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -27,6 +28,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
+// La limitation de débit compte par adresse IP, or MockMvc présente toujours la même : active,
+// elle ferait échouer en 429 des tests sans rapport avec elle. Déclarée ici en
+// @TestPropertySource et non en @DynamicPropertySource, afin qu'un test ciblant le limiteur
+// puisse la réactiver via @DynamicPropertySource, qui prime.
+@TestPropertySource(properties = "app.rate-limit.enabled=false")
 public abstract class AbstractIntegrationTest {
 
     @ServiceConnection

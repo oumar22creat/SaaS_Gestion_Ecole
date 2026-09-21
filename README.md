@@ -95,8 +95,12 @@ Copier `backend/.env.example` vers `backend/.env` et ajuster :
 | `DB_URL` | URL de connexion PostgreSQL | `jdbc:postgresql://localhost:5433/school_saas` |
 | `DB_USER` / `DB_PASSWORD` | Rôle applicatif restreint (runtime, non superutilisateur) | voir `docker-compose.yml` |
 | `DB_ADMIN_USER` / `DB_ADMIN_PASSWORD` | Rôle superutilisateur, migrations Flyway uniquement | voir `docker-compose.yml` |
-| `JWT_SECRET` | Clé de signature des tokens | générer une valeur aléatoire, ne jamais committer |
+| `JWT_SECRET` | Clé de signature des tokens (32 octets minimum) | générer une valeur aléatoire, ne jamais committer. **Hors profil `dev`/`test`, le backend refuse de démarrer si la variable est absente ou laissée à la valeur du dépôt.** |
 | `REDIS_URL` | URL Redis | `redis://localhost:6379` |
+| `RATE_LIMIT_ENABLED` | Limitation de débit sur la connexion et l'inscription | `true` (laisser actif en staging/production) |
+| `RATE_LIMIT_LOGIN_PER_IP` / `RATE_LIMIT_LOGIN_PER_ACCOUNT` | Tentatives de connexion tolérées par fenêtre | `20` / `10` |
+| `RATE_LIMIT_REGISTRATION_PER_IP` | Inscriptions d'établissement tolérées par fenêtre | `5` |
+| `RATE_LIMIT_WINDOW` | Durée de la fenêtre | `15m` |
 | `CORS_ALLOWED_ORIGINS` | Origine(s) Web autorisées à appeler l'API (dev/staging uniquement) | `http://localhost:4200` |
 | `STRIPE_SECRET_KEY` | Clé API Stripe (mode test en local) | à récupérer sur le dashboard Stripe |
 | `STRIPE_WEBHOOK_SECRET` | Secret de vérification de signature du webhook Stripe | dashboard Stripe > Webhooks |

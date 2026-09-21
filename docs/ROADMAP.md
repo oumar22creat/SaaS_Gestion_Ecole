@@ -39,6 +39,12 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
       `permissions` dynamiques — simplification MVP assumée, voir ADR-008)
 - [ ] Inscription / connexion avec JWT (access token + refresh token) — connexion faite,
       inscription = tâche 1.3 (onboarding)
+- [x] Gestion des comptes du personnel par l'Administrateur (`POST /api/v1/users` +
+      `PUT /users/{id}/status|role|password`, écran `/accounts` : création, désactivation,
+      changement de rôle, réinitialisation de mot de passe) — **comble un trou bloquant découvert le 2026-09-20** : seul le compte
+      Administrateur créé à l'inscription pouvait exister, donc aucun enseignant ne pouvait se
+      connecter et l'application mobile restait inutilisable. Rôles Élève/Parent volontairement
+      non attribuables (ADR-010, aucun portail construit)
 - [x] RBAC appliqué côté serveur sur chaque endpoint (`@PreAuthorize`, à reconduire sur
       chaque nouvel endpoint)
 - [x] Rôle Super-Administrateur (hors tenant, gestion de la plateforme)
@@ -101,9 +107,13 @@ Mobile (connexion avec sous-domaine/e-mail/mot de passe, garde de route, interce
 déconnexion, écran d'accueil minimal) est désormais construite, en miroir du Web — voir
 SESSION_LOG.md 2026-09-17. Les écrans métier eux-mêmes (feuille d'appel, notes, etc.) sur
 Mobile restent à construire un par un, module par module, dans de prochaines tâches.
-De même, les mockups "Parent — dashboard enfants" et "Élève — emploi du temps" restent hors
-portée : ils supposent un portail élève/parent (compte `User` lié à un `Student`/`Parent`),
-explicitement différé depuis l'ADR-010 (Phase 1.5).
+**Portail parent/élève livré le 2026-09-21** : l'ADR-010 est levée sur son volet bloquant.
+`students.user_id` et `parents.user_id` (migration V54) rattachent un compte à une fiche ;
+`POST /students/{id}/account` et `POST /parents/{id}/account` ouvrent l'accès ;
+`GET /portal/children` et `/portal/students/{id}/grades|attendance` servent les familles.
+Écrans mobiles : liste des enfants et dossier (notes + absences). Le mockup
+"Élève — emploi du temps" reste **non couvert** : l'emploi du temps d'un élève demanderait un
+endpoint portail supplémentaire, non construit.
 
 **Deux bugs réels découverts en testant contre un vrai backend** (jamais visibles avec
 Testcontainers en rôle superutilisateur, qui contourne toujours RLS) — voir ADR-015 dans
@@ -169,17 +179,13 @@ un test de régression qui échoue sans le correctif.
 - [x] Taux de churn et taux de conversion essai → abonnement payant — **taux cumulés depuis
       l'origine**, pas des cohortes par période (aucun historique d'événements d'abonnement,
       voir ADR-021)
-- [ ] Écran Web réservé au rôle Super-Administrateur — **hors périmètre de cette tâche** :
-      `GET /api/v1/admin/dashboard/summary` existe et est testé côté backend, mais aucun
-      frontend Super-Admin n'a été construit (le shell Angular actuel est pour les rôles
-      staff d'un tenant, pas pour `PlatformAdmin`) ; à traiter comme une tâche frontend dédiée
+- [x] Écran Web réservé au rôle Super-Administrateur — `/admin/login` + `/admin`
+      (garde `superAdminGuard`), consomme `GET /api/v1/admin/dashboard/summary`
 
-**État au 2026-09-14** : Phase 2 backend complète et testée (87/87 tests) — bulletins avec
-export PDF, bibliothèque de documents, cahier de textes/devoirs, messagerie interne avec
-annonces, registre centralisé de notifications (ADR-020, FCM non câblé) et dashboard
-Super-Admin (ADR-021, écran Web non construit). Chaque module a son test d'isolation
-cross-tenant (au niveau HTTP quand l'endpoint accepte un id, au niveau du filtre Hibernate
-sinon — voir `notification-preferences`/`PlatformDashboardTest`).
+**État au 2026-09-17** : Phase 2 backend inchangée ; **frontend Web opérationnel** pour
+bulletins, documents, cahier de textes, messagerie, notifications, dashboard Super-Admin.
+Mobile : feuille d'appel, notes, emploi du temps (DESIGN.md §5, rôles staff — pas de
+portail élève/parent, ADR-010).
 
 **Critère de sortie de Phase 2** : mêmes garde-fous que la Phase 1 — chaque module testé
 (y compris isolation cross-tenant), documenté, et son périmètre réel (vs. différé) explicite
@@ -264,9 +270,10 @@ avant de passer à la Phase 3.
 
 **Critère de sortie de Phase 3** : mêmes garde-fous que les Phases 1 et 2 — chaque module
 testé (isolation cross-tenant comprise), documenté, périmètre réel (vs. différé) explicite.
-Deux sous-phases (3.3, 3.4) ont un point bloquant nécessitant une décision utilisateur avant
-codage — à lever avant de les démarrer plutôt que de deviner silencieusement (voir CLAUDE.md
-"Comment démarrer une session de travail", point 4).
+
+**État frontend au 2026-09-17** : écrans Web staff pour 3.1–3.7 (vie scolaire, stats,
+frais, cantine, bibliothèque, transport, branding/domaine) + Mobile (appel, notes, EDT).
+Hors périmètre inchangé : QR/NFC, reçus PDF, mobile money gateway, portail parent.
 
 ## Phase 4 — Innovation et scalabilité
 *(à détailler en tâches fines une fois la Phase 3 terminée)*

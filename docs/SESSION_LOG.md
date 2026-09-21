@@ -816,3 +816,144 @@ password)` était déjà le bon contrat à répliquer côté Mobile dès le dép
 **Prochaine étape :** Cadrer avec l'utilisateur quels écrans métier Mobile construire ensuite
 — candidats naturels selon docs/DESIGN.md §5 (mobile-first) : Feuille d'appel et Saisie de
 notes (rôle Enseignant).
+
+## [2026-09-17] — Session (produit opérationnel Web + Mobile)
+**Tâche(s) réalisée(s) :** Frontend staff des Phases 2–3 branché sur les APIs existantes
+(bulletins, documents, cahier de textes, messagerie, notifications, discipline, stats
+avancées, frais, cantine, bibliothèque, transport, abonnement, paramètres) + console
+Super-Admin (`/admin`) + Mobile opérationnel (accueil tuiles 🏫, feuille d'appel ✅,
+notes 📝, emploi du temps 🗓️). Design école (teal `#0f5c4c` / or `#c9a227`, canvas
+crème) et emojis fixes par module (docs/DESIGN.md §9).
+**Décisions prises (et pourquoi) :** Pas de portail élève/parent (ADR-010). Pas de Phase 4
+(QR, e-sign, K8s). Accueil Web par rôle (`firstPathForRole`) pour ne pas envoyer un
+enseignant sur le dashboard Direction. Emojis comme identifiants visuels, pas une
+nouvelle bibliothèque d'icônes.
+**Problèmes rencontrés / points de vigilance :** `GET /users` est ADMIN/DIRECTION — le
+sélecteur de destinataires messagerie échoue en douceur pour les autres rôles. FCM/S3/
+mobile money restent hors périmètre (gateways log / stockage local).
+**Prochaine étape :** Phase 4 seulement si demandée ; sinon raffiner les écrans staff
+après usage réel (reçus PDF, rang bulletin, FCM).
+
+## [2026-09-20] — Vérification RBAC + tests par rôle
+**Tâche(s) réalisée(s) :** Audit de la gestion des rôles (cahier §5 / ADR-008 / ADR-010) et
+tests ciblés : matrice API des 8 rôles établissement + Super-Admin ; gardes Web
+(`roleGuard`, `tenantWebGuard`) pour ADMIN vs SUPER_ADMIN ; accueil Mobile différencié
+PARENT / TEACHER / STUDENT. Correction : lecture emploi du temps ouverte à `TEACHER`
+(l'UI mobile l'affichait déjà, l'API renvoyait 403). Les routes Web staff ne sont plus
+accessibles par simple URL hors rôle.
+**Décisions prises (et pourquoi) :** Pas de portail parent/élève (ADR-010 inchangé) — PARENT
+et STUDENT s'authentifient, voient un espace mobile de suivi, et restent 403 sur les APIs
+staff. Super-Admin reste hors shell établissement (`/admin` uniquement).
+**Problèmes rencontrés / points de vigilance :** Le JWT client ne fait qu'afficher/rediriger ;
+`@PreAuthorize` reste la source de vérité. Lier `User` à une fiche `Parent`/`Student` est
+toujours hors périmètre.
+**Prochaine étape :** Portail parent/élève seulement si le porteur lève ADR-010.
+
+## [2026-09-20] — Session (socle design + création des comptes du personnel)
+**Tâche(s) réalisée(s) :** (1) Remplacement des emojis par **Material Symbols Rounded** dans
+tout le Web (175 occurrences au départ, 0 restante) : barre latérale, 26 en-têtes de page,
+cartes du tableau de bord, libellés de boutons, puces d'authentification et pseudo-éléments
+CSS d'état. Police déclarée une seule fois via `MatIconRegistry.setDefaultFontSetClass` dans
+`app.config.ts`. (2) `.empty-state` enrichi (titre + explication + action) sur les écrans
+d'amorçage, et nouveau `.loading-state` en silhouette animée. (3) **Création des comptes du
+personnel** : `POST /api/v1/users` + écran `/accounts`.
+**Décisions prises (et pourquoi) :** `docs/DESIGN.md` §9 réécrit — la décision « emojis comme
+identifiants visuels » est annulée, avec ses trois raisons : rendu dépendant du système,
+couleurs non surchargeables (contradiction directe avec la contrainte white-label §0), et
+graisses incohérentes. Décision validée explicitement par le porteur avant exécution. Rôles
+Élève/Parent non attribuables à la création de compte : aucun portail ne leur est construit
+(ADR-010), un tel compte n'aurait aucun écran.
+**Problèmes rencontrés / points de vigilance :** Découvert en voulant tester chaque profil que
+`TenantRegistrationService` était le **seul** code créant un `User` : la base ne contenait que
+des `ADMIN`. Tout le RBAC (barre latérale filtrée, `roleGuard`, `firstPathForRole`) était écrit
+et testé unitairement mais ne pouvait jamais s'exécuter en vrai, et l'application mobile,
+conçue pour l'enseignant, n'avait aucun utilisateur possible. D'où la fonctionnalité (3).
+Deux autres défauts corrigés au passage : le chargement du tableau de bord était rendu comme un
+état vide (bordure pointillée, icône « boîte vide » alors que les données arrivaient), et
+`setDefaultFontSetClass` retourne le registre, ce qui cassait `provideAppInitializer` en
+silence (build rouge, ancien bundle servi).
+**Tests :** 118/118 backend (dont `UserCreationTest`, 5 cas avec isolation cross-tenant),
+54/54 Web. Les 6 profils (Administration, Direction, Enseignant, Secrétariat, Vie scolaire,
+Comptabilité) ont été testés en conditions réelles dans le navigateur : page d'accueil par rôle
+et barre latérale filtrée conformes.
+**Prochaine étape :** Socle mobile (39 emojis restants, tokens Ionic), puis tableaux et
+formulaires. L'écran `/accounts` ne gère que la création : désactivation, changement de rôle et
+réinitialisation de mot de passe restent à faire.
+
+## [2026-09-21] — Session (socle design mobile)
+**Tâche(s) réalisée(s) :** Socle mobile en miroir du web : 45 emojis remplacés par des
+**Ionicons** (0 restant), enregistrés une seule fois via `addIcons(APP_ICONS)` dans
+`mobile/src/app/app.config.ts`. Champs `emoji` renommés en `icon` dans `HomeTile`
+(`core/role-access.ts`) et `ATTENDANCE_STATUSES` (`attendance/attendance.model.ts`).
+`IonIcon` ajouté aux 7 composants concernés. Médailles d'icônes stylées globalement dans
+`styles.scss` (couleur du tenant, taille par contexte).
+**Décisions prises (et pourquoi) :** Ionicons plutôt que Material Symbols sur mobile, alors
+que le web utilise Material Symbols. Raison : Material Symbols est une police téléchargée
+depuis Google Fonts au démarrage ; dans une application Capacitor utilisée dans une salle mal
+couverte, l'enseignant verrait les libellés d'icônes à la place des icônes. Ionicons est
+embarqué dans le paquet, donc hors ligne. `docs/DESIGN.md` §9 amendé en conséquence : un jeu
+par application, pas un jeu pour les deux. Icônes retirées des `<ion-title>` : un titre de
+barre mobile se lit mieux en texte seul.
+**Problèmes rencontrés / points de vigilance :** Défaut de mise en page découvert en vérifiant
+le rendu : `ion-router-outlet` est positionné par Ionic en `absolute; top: 0`, alors que
+l'en-tête de marque vit dans `app.html`, **hors** du router-outlet. Le haut de *chaque* écran
+mobile passait donc sous l'en-tête de 54px — visible sur la connexion, dont le médaillon était
+rogné. Corrigé à la racine (`ion-app` en colonne, outlet en `flex: 1`), pas écran par écran.
+Le défaut préexistait au passage aux icônes.
+**Tests :** 29/29 mobile. Vérifié en viewport 390x844 contre un vrai backend avec un compte
+Enseignant réel : connexion, accueil (tuiles), feuille d'appel.
+**Prochaine étape :** Tableaux et formulaires (web), et sur `/accounts` la désactivation d'un
+compte, le changement de rôle et la réinitialisation de mot de passe.
+
+## [2026-09-21] — Session (gestion des comptes + primitives de tableau)
+**Tâche(s) réalisée(s) :** Écran `/accounts` complété : désactivation/réactivation, changement
+de rôle et réinitialisation de mot de passe (`PUT /users/{id}/status|role|password`, réservés
+à ADMIN/DIRECTION). Colonne « Accès » avec badge d'état, ligne atténuée pour un compte
+désactivé, menu d'actions par ligne. Côté primitives partagées : `.status-badge`
+(`.status-ok`/`.status-off`) et `.table-scroll`, ce dernier appliqué aux 22 tableaux du Web.
+**Décisions prises (et pourquoi) :** Les rôles Élève et Parent restent refusés à la création
+et au changement de rôle — décision explicite du porteur, le temps que le portail existe ;
+créer ces comptes aujourd'hui mènerait à un accueil mobile sans fonction. La réinitialisation
+n'invalide pas les jetons déjà émis (15 minutes de validité résiduelle) : c'est documenté dans
+le service, à revoir si le besoin de révocation immédiate apparaît.
+**Problèmes rencontrés / points de vigilance :** J'avais écrit un garde-fou « dernier
+administrateur » (interdire de retirer le dernier compte capable d'administrer) **et** une
+garde anti-auto-ciblage. En écrivant le test, constaté que le premier est inatteignable :
+l'auteur de l'action est forcément un administrateur actif et ne peut pas se cibler lui-même,
+donc le compte d'administrateurs actifs vaut toujours au moins 2 quand la vérification
+s'exécute. Le garde-fou et sa requête de dépôt ont été supprimés plutôt que livrés avec un
+test qui ne les exerçait pas. La garde anti-auto-ciblage suffit et est testée.
+Autre point : `.table-scroll` corrige un débordement réel — sans conteneur, un tableau à 5
+colonnes faisait défiler la page entière, barre latérale comprise, sur écran étroit.
+**Tests :** 122/122 backend (9 dans `UserCreationTest`), 54/54 Web. Vérifié dans le navigateur
+contre le vrai backend : désactivation d'un enseignant puis connexion refusée (401),
+auto-désactivation refusée (422), rôle Élève refusé (422), réactivation (200).
+**Prochaine étape :** Portail parent/élève (lien `User ↔ Student/Parent`, endpoints filtrés
+« mes enfants / moi », écrans mobiles), puis passe complète sur les formulaires Web.
+
+## [2026-09-21] — Session (portail parent/élève)
+**Tâche(s) réalisée(s) :** Migration V54 (`students.user_id`, `parents.user_id`, index uniques
+partiels par tenant). `UserService.createFamilyAccount` + `POST /students/{id}/account` et
+`POST /parents/{id}/account` pour ouvrir un accès. `PortalService` / `PortalController` :
+`GET /portal/children`, `/portal/students/{id}/grades`, `/portal/students/{id}/attendance`.
+Mobile : service portail, liste des enfants, dossier élève (onglets Notes / Absences), tuiles
+d'accueil Parent et Élève désormais actives, règle `/portal` dans `canAccessMobilePath`.
+**Décisions prises (et pourquoi) :** (1) Les rôles PARENT/STUDENT ne sont **pas** attribuables
+via `POST /users` ; ils ne s'obtiennent qu'en ouvrant un accès depuis une fiche existante.
+Un compte parent sans enfant rattaché devient impossible par construction. (2) Un accès refusé
+répond 404 et non 403 : répondre "interdit" confirmerait à l'appelant que cet élève existe
+dans l'établissement, ce qui est déjà une fuite. (3) Un élève n'a qu'un dossier : la liste est
+court-circuitée et il arrive directement sur son suivi.
+**Problèmes rencontrés / points de vigilance :** Le risque propre à ce portail n'est **pas**
+l'isolation entre établissements — RLS la garantit déjà — mais l'isolation **entre familles du
+même établissement** : deux parents partagent le même tenant, donc seul le contrôle applicatif
+empêche l'un de lire le dossier de l'enfant de l'autre. D'où `requireAccessibleStudent`, qui
+confronte systématiquement l'identifiant de l'URL à la liste calculée depuis le compte, et le
+test `parentSeesOnlyTheirOwnChildren` qui tente explicitement l'accès croisé.
+Trois tests mobiles sont tombés : ils figeaient l'ancien état (toutes les tuiles famille en
+`path: null`). Assertions réécrites vers le comportement voulu, pas affaiblies.
+**Tests :** 126/126 backend (dont `PortalAccessTest`, 4 cas), 29/29 mobile, 54/54 Web.
+Vérifié contre un vrai backend avec une famille réelle (élève Fatoumata Sidibe, mère Aminata) :
+parcours mobile accueil → Mes enfants → dossier, et accès croisé refusé en 404.
+**Prochaine étape :** Emploi du temps de l'élève dans le portail (mockup non couvert), puis
+passe complète sur les formulaires Web.

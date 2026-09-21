@@ -119,3 +119,121 @@ les patterns (carte, tableau, formulaire) réutilisés partout ailleurs.
 - Si Claude Code propose une solution custom qui s'écarte de la bibliothèque de composants
   choisie (section 3), le signaler explicitement — sinon l'incohérence s'accumule écran
   après écran sans qu'on s'en rende compte avant la fin du projet.
+
+## 9. Icônes de l'application (Material Symbols Rounded)
+
+**Décision révisée le 2026-09-20.** Les emojis servaient auparavant d'identifiants visuels de
+module. Ils ont été remplacés par **Material Symbols Rounded** pour trois raisons :
+
+1. Un emoji est dessiné par le système d'exploitation : la même interface n'a pas le même
+   aspect sur macOS, Windows et Android.
+2. Un emoji porte ses propres couleurs, qu'aucun token ne peut surcharger. Il contredit donc
+   la contrainte white-label de la section 0 : une icône doit prendre la couleur du tenant.
+3. Les graisses et les tailles optiques des emojis sont incohérentes entre eux, ce qui
+   empêche un rendu homogène.
+
+### Deux jeux d'icônes, un par application (et pourquoi)
+| Application | Jeu | Enregistrement |
+|---|---|---|
+| Web (Angular Material) | **Material Symbols Rounded** | `MatIconRegistry.setDefaultFontSetClass` dans `web/src/app/app.config.ts` |
+| Mobile (Ionic) | **Ionicons** | `addIcons(APP_ICONS)` dans `mobile/src/app/app.config.ts` |
+
+Le mobile ne réutilise pas Material Symbols parce que c'est une police **téléchargée depuis
+Google Fonts au démarrage**. Acceptable dans un navigateur, inacceptable dans une application
+Capacitor : un enseignant qui fait l'appel dans une salle mal couverte verrait des libellés
+d'icônes à la place des icônes. Ionicons est embarqué dans le paquet de l'application, donc
+disponible hors connexion. Le **sens** des icônes reste aligné entre les deux applications,
+seul le dessin diffère.
+
+### Règles
+- Un seul jeu d'icônes par application, celui du tableau ci-dessus. Ne jamais ajouter une
+  deuxième bibliothèque ni dessiner un SVG à la main pour un pictogramme courant.
+- L'enregistrement se fait une seule fois, dans le `app.config.ts` de l'application concernée.
+  Aucun composant ne redéclare la police ni ne réimporte une icône.
+- Ajouter une icône côté mobile = l'ajouter à `APP_ICONS`, pas l'importer dans le composant.
+- Dans une feuille de style, utiliser la ligature directement
+  (`content: 'inbox'; font-family: 'Material Symbols Rounded'`) plutôt qu'un caractère décoratif.
+- Chaque module garde **une icône fixe**, réutilisée dans la navigation, le titre de page et
+  les raccourcis. Ne pas inventer un autre pictogramme pour le même module.
+
+| Icône | Module / action |
+|---|---|
+| `school` | Élèves, marque, établissement |
+| `space_dashboard` | Tableau de bord |
+| `monitoring` | Résultats, statistiques avancées |
+| `family_restroom` | Parents / tuteurs |
+| `co_present` | Enseignants |
+| `groups` | Classes |
+| `menu_book` | Matières |
+| `calendar_month` | Emploi du temps |
+| `meeting_room` | Salles |
+| `how_to_reg` | Absences / feuille d'appel |
+| `edit_note` | Notes / évaluations |
+| `description` | Bulletins |
+| `history_edu` | Cahier de textes |
+| `folder_open` | Documents |
+| `forum` | Messagerie |
+| `campaign` | Annonce |
+| `notifications` | Notifications |
+| `gavel` | Vie scolaire |
+| `payments` | Frais scolaires |
+| `restaurant` | Cantine |
+| `local_library` | Bibliothèque |
+| `directions_bus` | Transport |
+| `credit_card` | Abonnement |
+| `palette` | Paramètres établissement |
+| `shield` | Super-Admin |
+| `login` / `logout` | Connexion / déconnexion |
+| `add` / `search` / `upload` / `download` / `delete` | Actions génériques |
+| `inbox` / `error` / `check_circle` | État vide / erreur / succès |
+
+## 10. Système de design implémenté (état du code)
+Cette section décrit ce qui existe réellement dans le code ; les sections 1 à 8 restent les
+principes. Toute nouvelle page doit réutiliser ces fichiers plutôt que redéfinir un style local.
+
+### Fichiers source
+| Fichier | Rôle |
+|---|---|
+| `web/src/styles/tokens.scss` | tokens web (couleurs, espacement, rayons, ombres, typo, layout) + mapping des tokens système Angular Material (`--mat-sys-*`) |
+| `web/src/styles/_components.scss` | primitives d'interface partagées et overrides globaux Angular Material |
+| `web/src/app/core/_auth-layout.scss` | mixin de mise en page split-screen des écrans publics (login, inscription, admin) |
+| `mobile/src/theme/variables.scss` | mêmes tokens, mappés sur les variables Ionic (`--ion-color-*`) |
+| `mobile/src/styles.scss` | overrides globaux Ionic + primitives d'écran mobile |
+
+Les tokens sont dupliqués entre les deux workspaces Angular (pas de package partagé pour
+l'instant) : toute modification d'un token doit être appliquée dans les **deux** fichiers.
+
+### Palette
+- Marque par défaut : vert profond `#0f5c4c` (primaire) et or `#c9a227` (secondaire) — c'est
+  aussi le défaut côté backend (`Tenant.java`, migration `V53`), pour qu'un établissement
+  fraîchement inscrit n'apparaisse pas en bleu Ionic.
+- Tous les dérivés de marque (`--tenant-primary-strong`, `-soft`, `-softer`, `-ring`) sont
+  calculés en `color-mix()` : ils suivent automatiquement le branding chargé au runtime.
+- Navigation en ardoise sombre `#0b231e`, indépendante du tenant, pour rester lisible quel
+  que soit le logo et la couleur choisis par l'établissement.
+
+### Typographie
+Deux familles : **Inter** pour le corps de texte, **Outfit** pour les titres et les chiffres
+mis en avant. Échelle fermée de `--font-size-display` (32px) à `--font-size-caption` (12,5px).
+
+### Primitives web réutilisables
+`.page-header` + `.page-emoji` (emoji du module en médaillon), `.surface` (carte élevée),
+`.section-label` (intertitre en capitales), `.stat-grid` / `.stat-card`, `.filters-row`,
+`.stack-form`, `.data-table`, `.empty-state`, `.pill`, et les bandeaux `.flash-error` /
+`.flash-success`.
+
+### Primitives mobiles réutilisables
+`.screen-header` + `.screen-emoji`, `.card-item` (une ligne de liste = une carte),
+`.section-label`, `.empty-state`, `.flash-error` / `.flash-success`.
+
+### Patterns de mise en page
+- **Écrans publics** (login, inscription, connexion Super-Admin) : split-screen — panneau de
+  marque sombre à gauche (nom, promesse produit, liste de fonctionnalités), formulaire à
+  droite ; empilés verticalement sous 960px.
+- **Application connectée** : barre de marque du tenant en haut, barre latérale sombre de
+  264px avec carte utilisateur et liens groupés par domaine ; sous 1024px la barre latérale
+  passe en tiroir derrière un bouton menu.
+- **Écrans de saisie terrain** (feuille d'appel, saisie de notes) : mobile-first, une carte
+  par élève, cibles tactiles ≥ 44px, statut posé en un seul appui (pas de liste déroulante
+  par élève), bouton d'enregistrement en bas avec le décompte des lignes.
+

@@ -25,6 +25,10 @@ public class Parent extends TenantScopedEntity {
     @Column
     private String phone;
 
+    /** Compte de connexion du parent, NULL tant qu'aucun accès ne lui a été ouvert. */
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -73,5 +77,13 @@ public class Parent extends TenantScopedEntity {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }

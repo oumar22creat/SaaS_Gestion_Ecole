@@ -35,6 +35,10 @@ public class Student extends TenantScopedEntity {
     @Column(nullable = false)
     private boolean active = true;
 
+    /** Compte de connexion du élève, NULL tant qu'aucun accès ne lui a été ouvert. */
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -111,5 +115,13 @@ public class Student extends TenantScopedEntity {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }

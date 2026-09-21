@@ -15,4 +15,7 @@ public interface GradeRepository extends JpaRepository<Grade, Long> {
     List<Grade> findAllByExamIdInAndStudentId(List<Long> examIds, Long studentId);
 
     List<Grade> findAllByAbsentFalseAndScoreIsNotNull();
+
+    /** Toutes les notes d'un élève (portail parent/élève). */
+    List<Grade> findAllByStudentId(Long studentId);
 }

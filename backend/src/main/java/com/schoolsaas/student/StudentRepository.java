@@ -14,4 +14,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Student> findAllBySchoolClassId(Long schoolClassId);
 
     long countByActiveTrue();
+
+    /** Fiche rattachée à un compte de connexion (portail parent/élève). */
+    java.util.Optional<Student> findByUserId(Long userId);
 }

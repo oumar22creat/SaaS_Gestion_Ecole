@@ -983,3 +983,32 @@ l'établissement de test (1/5, étape Élèves cochée) et messages d'erreur à 
 formulaire vide.
 **Prochaine étape :** Paiement mobile money (Orange Money), explicitement reporté par le
 porteur. Reste aussi la Phase 4 (QR présence, signature électronique, API publique).
+
+## [2026-09-22] — Session (socle mobile money)
+**Tâche(s) réalisée(s) :** Table `mobile_money_payments` (V55, avec politique RLS),
+`MobileMoneyGateway` + `LoggingMobileMoneyGateway`, `MobileMoneyService` (déclenchement depuis
+une facture, traitement du callback), contrôleur d'initiation réservé à ADMIN/DIRECTION/
+ACCOUNTANT et callback public protégé par secret partagé.
+**Décisions prises (et pourquoi) :** (1) **Aucune implémentation réseau Orange.** Leur API Web
+Payment exige un compte marchand et des identifiants indisponibles, et je ne peux valider ni
+les endpoints ni les schémas ; écrire l'appel à l'aveugle donnerait du code d'apparence
+terminée qui échouerait en production. Même parti pris que FCM et S3 dans ce projet.
+(2) La référence transmise à l'opérateur porte l'identifiant d'établissement
+(`OM-<school_id>-<aléa>`), ce qui permet de poser le contexte tenant avant la première lecture
+du callback — et donc de **garder RLS sur la table**, au lieu de l'exempter comme l'est
+`subscriptions`. Une référence forgée ne donne rien : la lecture s'exécute sous la politique
+du tenant annoncé. (3) Le callback échoue fermé : sans `MOBILE_MONEY_CALLBACK_SECRET`
+configuré, tout appel est rejeté — accepter les callbacks quand la configuration est absente
+laisserait n'importe qui marquer une facture comme payée. (4) Le montant crédité est celui de
+la transaction enregistrée, jamais celui annoncé par le callback.
+**Problèmes rencontrés / points de vigilance :** Le test a révélé que
+`fee_payments.recorded_by_user_id` était NOT NULL, alors qu'un encaissement automatique n'a
+personne qui l'a saisi. Colonne rendue nullable, et un `recorded_by_user_id` vide se lit
+désormais comme « encaissement automatique ». Point de vigilance : tant que la passerelle
+réelle n'existe pas, déclencher un paiement crée une transaction PENDING qui ne se résoudra
+jamais, puisque personne n'appellera le callback.
+**Tests :** 134/134 backend, dont `MobileMoneyPaymentTest` (4 cas : callback rejoué trois fois
+ne crédite qu'une fois, secret absent ou faux ne change rien, échec laisse la facture intacte,
+référence forgée rejetée).
+**Prochaine étape :** Choisir l'opérateur ou l'agrégateur et obtenir les accès marchands, puis
+écrire l'implémentation HTTP et le bouton Web. Reste par ailleurs la Phase 4.

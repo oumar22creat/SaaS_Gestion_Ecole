@@ -224,9 +224,14 @@ avant de passer à la Phase 3.
 - [x] Rapprochement avec les moyens de paiement — saisie manuelle du personnel (méthode :
       espèces/virement/mobile money/autre), pas de rapprochement automatique bancaire
 - [x] Reporting financier consolidé pour Direction/Comptable (total dû/payé/impayé par classe/période)
-- [ ] Paiement mobile money local (cahier §4.3) — **questionné à l'utilisateur, réponse :
-      décision reportée**. `FeePaymentMethod.MOBILE_MONEY` existe pour tracer un paiement reçu
-      hors-ligne, mais aucun fournisseur/gateway n'est intégré (voir ADR-024)
+- [ ] Paiement mobile money local (cahier §4.3) — **socle livré le 2026-09-22, opérateur non
+      branché**. Table `mobile_money_payments` (V55, avec RLS), `MobileMoneyGateway`,
+      déclenchement depuis une facture et callback public idempotent protégé par secret
+      partagé, le tout testé. Reste à faire, et qui demande une décision puis des accès :
+      (1) choisir l'opérateur ou l'agrégateur, (2) obtenir compte marchand et identifiants,
+      (3) écrire l'implémentation HTTP de la passerelle, (4) ajouter le bouton côté Web.
+      `LoggingMobileMoneyGateway` journalise en attendant : aucune facture n'est créditée
+      automatiquement tant que personne n'appelle le callback
 - [ ] Génération de reçus/factures PDF téléchargeables : **hors périmètre de cette passe** —
       seules les données structurées existent (montant dû/payé/statut) ; l'export PDF suivrait
       le même pattern que `ReportCardPdfExporter` (ADR-016) si demandé séparément

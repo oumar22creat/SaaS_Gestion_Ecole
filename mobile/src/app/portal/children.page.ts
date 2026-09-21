@@ -49,8 +49,7 @@ import { PortalChild, PortalService } from './portal.service';
         <p class="empty-state">Chargement…</p>
       } @else if (children().length === 0) {
         <p class="empty-state">
-          Aucun enfant n'est rattaché à votre compte. Signalez-le au secrétariat de
-          l'établissement.
+          Aucun enfant n'est rattaché à votre compte. Signalez-le au secrétariat de l'établissement.
         </p>
       } @else {
         <div class="child-list">

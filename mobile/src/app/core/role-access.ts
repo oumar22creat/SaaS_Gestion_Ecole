@@ -27,7 +27,12 @@ const PARENT_TILES: HomeTile[] = [
 ];
 
 const STUDENT_TILES: HomeTile[] = [
-  { icon: 'create-outline', label: 'Mon suivi', hint: 'Mes notes et mes absences', path: '/portal' },
+  {
+    icon: 'create-outline',
+    label: 'Mon suivi',
+    hint: 'Mes notes et mes absences',
+    path: '/portal',
+  },
 ];
 
 const STAFF_PEDAGOGIE = ['ADMIN', 'DIRECTION', 'TEACHER', 'VIE_SCOLAIRE'];

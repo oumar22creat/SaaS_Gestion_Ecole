@@ -12,7 +12,11 @@ describe('authGuard', () => {
   afterEach(() => sessionStorage.clear());
 
   it('allows navigation when authenticated', () => {
-    TestBed.inject(AuthTokenService).store({ accessToken: 'abc', refreshToken: 'def', expiresIn: 900 });
+    TestBed.inject(AuthTokenService).store({
+      accessToken: 'abc',
+      refreshToken: 'def',
+      expiresIn: 900,
+    });
 
     const result = TestBed.runInInjectionContext(() => authGuard({} as never, {} as never));
 

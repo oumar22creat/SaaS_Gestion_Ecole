@@ -43,7 +43,9 @@ describe('authInterceptor', () => {
   });
 
   it('does not attach a header nor redirect on a 401 from an anonymous call', () => {
-    httpClient.get(`${environment.apiUrl}/tenants/current/branding`).subscribe({ error: () => undefined });
+    httpClient
+      .get(`${environment.apiUrl}/tenants/current/branding`)
+      .subscribe({ error: () => undefined });
     const req = httpMock.expectOne(`${environment.apiUrl}/tenants/current/branding`);
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush('unauthorized', { status: 401, statusText: 'Unauthorized' });

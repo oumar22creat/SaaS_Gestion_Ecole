@@ -957,3 +957,29 @@ Vérifié contre un vrai backend avec une famille réelle (élève Fatoumata Sid
 parcours mobile accueil → Mes enfants → dossier, et accès croisé refusé en 404.
 **Prochaine étape :** Emploi du temps de l'élève dans le portail (mockup non couvert), puis
 passe complète sur les formulaires Web.
+
+## [2026-09-21] — Session (mise en route guidée + fin du socle)
+**Tâche(s) réalisée(s) :** (1) Assistant de configuration, dernier point non coché de la
+Phase 1 : `GET /api/v1/onboarding/status` et liste de mise en route en tête du tableau de
+bord. (2) Emploi du temps de l'élève dans le portail (`GET /portal/students/{id}/timetable`
++ troisième onglet mobile), qui couvre le dernier mockup famille. (3) Messages d'erreur sous
+les champs de formulaire, via `core/form-error.util.ts`.
+**Décisions prises (et pourquoi) :** Liste reprenable plutôt qu'assistant modal séquentiel :
+un directeur est interrompu en permanence, et une liste qui renvoie vers les écrans existants
+évite de dupliquer les formulaires, donc d'avoir deux chemins divergents pour créer une même
+donnée. Avancement **déduit des données**, jamais stocké : une école qui supprime toutes ses
+classes revoit l'étape, et un établissement configuré avant l'existence de la page apparaît
+d'emblée à jour. Message d'erreur centralisé plutôt que réécrit par gabarit, pour qu'une même
+règle de validation produise la même phrase partout.
+**Problèmes rencontrés / points de vigilance :** Constaté que les 15 formulaires du Web
+utilisaient `mat-form-field` sans **aucun** `mat-error` : la saisie invalide ne produisait
+qu'une bordure rouge, sans dire quelle contrainte était violée, alors que docs/DESIGN.md §6
+l'interdit explicitement. Le script d'insertion a par ailleurs échoué à mi-parcours sur un
+fichier sans déclaration de classe, laissant une partie des composants sans la propriété
+exposée ; rattrapé en repassant sur les composants dont le gabarit référençait `fieldError`.
+**Tests :** backend complet au vert (dont `OnboardingStatusTest` 3 cas et `PortalAccessTest`
+porté à 5), 54/54 Web, 29/29 mobile. Vérifié dans le navigateur : liste de mise en route sur
+l'établissement de test (1/5, étape Élèves cochée) et messages d'erreur à la soumission d'un
+formulaire vide.
+**Prochaine étape :** Paiement mobile money (Orange Money), explicitement reporté par le
+porteur. Reste aussi la Phase 4 (QR présence, signature électronique, API publique).

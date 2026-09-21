@@ -54,10 +54,13 @@ Cocher `[x]` uniquement quand codé + testé + committé. Ajouter une entrée da
 ### 1.3 Onboarding self-service
 - [x] Formulaire public d'inscription d'un établissement (Web) — `POST /api/v1/tenants/register`
 - [x] Création automatique du tenant + compte Administrateur initial (connexion immédiate)
-- [ ] Assistant de configuration (wizard) : établissement → classes/matières →
-      import élèves/parents (CSV) → enseignants → emploi du temps → activation
-      — dépend des modules 1.5 (classes/matières/élèves) et 1.6 (emploi du temps),
-      pas encore construits ; à compléter étape par étape une fois ces modules prêts
+- [x] Assistant de configuration : `GET /api/v1/onboarding/status` + liste de mise en route
+      en tête du tableau de bord (classes → matières → élèves → enseignants → emploi du
+      temps), qui disparaît une fois la configuration terminée. **Liste reprenable plutôt
+      qu'assistant modal séquentiel** : un directeur est interrompu en permanence et ne fera
+      pas sa configuration d'une traite ; la liste renvoie vers les écrans existants au lieu
+      de dupliquer leurs formulaires. L'avancement est déduit des données réelles, jamais
+      stocké dans un drapeau, donc il ne peut pas diverger de l'état de l'établissement.
 
 ### 1.4 Abonnement (base)
 - [x] Tables `plans`, `subscriptions`, `invoices`
@@ -111,9 +114,8 @@ Mobile restent à construire un par un, module par module, dans de prochaines t�
 `students.user_id` et `parents.user_id` (migration V54) rattachent un compte à une fiche ;
 `POST /students/{id}/account` et `POST /parents/{id}/account` ouvrent l'accès ;
 `GET /portal/children` et `/portal/students/{id}/grades|attendance` servent les familles.
-Écrans mobiles : liste des enfants et dossier (notes + absences). Le mockup
-"Élève — emploi du temps" reste **non couvert** : l'emploi du temps d'un élève demanderait un
-endpoint portail supplémentaire, non construit.
+Écrans mobiles : liste des enfants et dossier à trois onglets (notes, absences, emploi du
+temps). Les deux mockups famille de docs/MOCKUPS.md sont désormais couverts.
 
 **Deux bugs réels découverts en testant contre un vrai backend** (jamais visibles avec
 Testcontainers en rôle superutilisateur, qui contourne toujours RLS) — voir ADR-015 dans

@@ -1012,3 +1012,36 @@ ne crédite qu'une fois, secret absent ou faux ne change rien, échec laisse la 
 référence forgée rejetée).
 **Prochaine étape :** Choisir l'opérateur ou l'agrégateur et obtenir les accès marchands, puis
 écrire l'implémentation HTTP et le bouton Web. Reste par ailleurs la Phase 4.
+
+## [2026-09-22] — Session (durcissement avant production : clé JWT et limitation de débit)
+**Tâche(s) réalisée(s) :** (1) `JwtSecretGuard` : le backend refuse de démarrer hors profil
+`dev`/`test` si `JWT_SECRET` est absent, trop court pour HS384, ou resté à la valeur de repli
+du dépôt. (2) Limitation de débit adossée à Redis sur `POST /auth/login` (par IP et par
+compte) et `POST /tenants/register` (par IP), avec `RateLimiter`, `RateLimitProperties` et
+`ClientIpResolver`. Redis est enfin branché au backend (`spring-boot-starter-data-redis`).
+**Décisions prises (et pourquoi) :** Échouer au démarrage plutôt qu'avertir : une application
+qui ne démarre pas se remarque immédiatement, une application signée avec une clé publique
+non. Sans profil explicite, la règle stricte s'applique — on ne peut pas supposer un poste de
+développement. Redis plutôt qu'un compteur en mémoire : derrière plusieurs instances, un
+compteur local se contourne en répartissant les tentatives. Deux quotas à la connexion : par
+IP contre le balayage de comptes, par compte contre une attaque distribuée sur un utilisateur
+précis. Les quotas se consomment **avant** la vérification du mot de passe, sinon une attaque
+par force brute — qui échoue par définition jusqu'à réussir — ne coûterait rien.
+**Indisponibilité de Redis : on laisse passer**, en journalisant en erreur. Refuser les
+connexions parce que le limiteur est en panne transformerait un incident secondaire en panne
+totale. L'identité est hachée avant de servir de clé, aucun e-mail ni IP lisible dans Redis.
+**Problèmes rencontrés / points de vigilance :** Deux pièges de configuration de test.
+(1) Un `src/test/resources/application.yml` **masque entièrement** celui de l'application au
+lieu de s'y ajouter : le secret JWT disparaissait et tout le contexte Spring échouait.
+Supprimé au profit de `@TestPropertySource` sur `AbstractIntegrationTest`. (2) Deux
+`@DynamicPropertySource` concurrents (parent qui désactive, enfant qui réactive) ont un ordre
+non garanti ; la désactivation est donc en `@TestPropertySource`, de précédence inférieure, et
+le test ciblé réactive en `@DynamicPropertySource`, qui prime.
+**Tests :** 144/144 backend, dont `JwtSecretGuardTest` (5 cas) et, pour le limiteur, un test
+de mécanique contre un vrai Redis Testcontainers plus un test de câblage qui vérifie que
+`/auth/login` répond bien 429 — sans ce dernier, le limiteur pourrait fonctionner sans jamais
+être appelé.
+**Prochaine étape :** Reste avant production, par ordre : hébergement à trancher, puis
+Dockerfile/Nginx/pipeline de déploiement (rien n'existe aujourd'hui), mentions légales et
+politique de confidentialité, sauvegardes PostgreSQL, stockage documentaire durable (S3),
+FCM, et le moyen de paiement local.

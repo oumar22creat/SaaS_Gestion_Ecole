@@ -210,7 +210,13 @@ export class RollCallPage {
   });
 
   constructor() {
-    void this.schoolClassService.list().then((classes) => this.classes.set(classes));
+    // Sans ce catch, un échec de chargement (session expirée, réseau coupé, droits refusés)
+    // laissait la liste des classes vide sans un mot : l'enseignant voyait un sélecteur vide
+    // et n'avait aucun moyen de comprendre pourquoi l'appel était impossible.
+    void this.schoolClassService
+      .list()
+      .then((classes) => this.classes.set(classes))
+      .catch((error) => this.errorMessage.set(extractErrorMessage(error)));
   }
 
   countFor(status: AttendanceStatus): number {
@@ -226,24 +232,34 @@ export class RollCallPage {
 
   async load(): Promise<void> {
     this.success.set(false);
+    this.errorMessage.set(null);
     if (this.schoolClassId === null) {
       this.rows.set([]);
       return;
     }
-    const [students, existing] = await Promise.all([
-      this.studentService.list(),
-      this.attendanceService.listForClassAndDate(this.schoolClassId, this.date),
-    ]);
-    const byStudent = new Map(existing.map((record) => [record.studentId, record]));
-    this.rows.set(
-      students
-        .filter((student: Student) => student.schoolClassId === this.schoolClassId && student.active)
-        .map((student) => ({
-          studentId: student.id,
-          studentLabel: `${student.firstName} ${student.lastName}`,
-          status: byStudent.get(student.id)?.status ?? 'PRESENT',
-        })),
-    );
+    try {
+      const [students, existing] = await Promise.all([
+        this.studentService.list(),
+        this.attendanceService.listForClassAndDate(this.schoolClassId, this.date),
+      ]);
+      const byStudent = new Map(existing.map((record) => [record.studentId, record]));
+      this.rows.set(
+        students
+          .filter(
+            (student: Student) => student.schoolClassId === this.schoolClassId && student.active,
+          )
+          .map((student) => ({
+            studentId: student.id,
+            studentLabel: `${student.firstName} ${student.lastName}`,
+            status: byStudent.get(student.id)?.status ?? 'PRESENT',
+          })),
+      );
+    } catch (error) {
+      // Une liste vide se lit comme « classe sans élève » : il faut dire que le chargement a
+      // échoué, sinon l'enseignant valide un appel sur une classe qu'il croit vide.
+      this.rows.set([]);
+      this.errorMessage.set(extractErrorMessage(error));
+    }
   }
 
   async submit(): Promise<void> {

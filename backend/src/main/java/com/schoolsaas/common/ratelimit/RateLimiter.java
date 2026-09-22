@@ -61,10 +61,11 @@ public class RateLimiter {
         }
 
         if (hits != null && hits > limit) {
+            long minutes = Math.max(1, properties.window().toMinutes());
             throw ApiException.tooManyRequests(
                     "RATE_LIMIT_EXCEEDED",
-                    "Trop de tentatives. Réessayez dans %d minute(s).".formatted(
-                            Math.max(1, properties.window().toMinutes())));
+                    "Trop de tentatives. Réessayez dans %d %s.".formatted(
+                            minutes, minutes > 1 ? "minutes" : "minute"));
         }
     }
 

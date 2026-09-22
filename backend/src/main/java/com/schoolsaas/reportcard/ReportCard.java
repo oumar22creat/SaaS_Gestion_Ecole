@@ -38,6 +38,18 @@ public class ReportCard extends TenantScopedEntity {
     @Column(name = "council_decision")
     private String councilDecision;
 
+    /**
+     * Rang dans la classe, sur la moyenne générale. Stocké et non recalculé à la lecture : un
+     * bulletin est remis à une date donnée, son rang doit rester celui du conseil de classe
+     * même si une note est corrigée ensuite.
+     */
+    @Column(name = "rank_in_class")
+    private Integer rankInClass;
+
+    /** Effectif pris en compte pour le rang : « 3e » ne veut rien dire sans « sur 42 ». */
+    @Column(name = "class_size")
+    private Integer classSize;
+
     @Column(name = "absence_count", nullable = false)
     private int absenceCount;
 
@@ -109,6 +121,22 @@ public class ReportCard extends TenantScopedEntity {
     public void setCouncilDecision(String councilDecision) {
         this.councilDecision = councilDecision;
         touch();
+    }
+
+    public Integer getRankInClass() {
+        return rankInClass;
+    }
+
+    public void setRankInClass(Integer rankInClass) {
+        this.rankInClass = rankInClass;
+    }
+
+    public Integer getClassSize() {
+        return classSize;
+    }
+
+    public void setClassSize(Integer classSize) {
+        this.classSize = classSize;
     }
 
     public int getAbsenceCount() {

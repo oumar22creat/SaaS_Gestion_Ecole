@@ -72,6 +72,8 @@ public class ReportCardPdfExporter {
                 y -= LINE_HEIGHT / 2;
                 y = writeLine(content, bold, 12, MARGIN, y,
                         "Moyenne générale : " + (reportCard.getGeneralAverage() == null ? "—" : reportCard.getGeneralAverage()) + "/20");
+                // Le rang est la première ligne que cherche un parent sur un bulletin.
+                y = writeLine(content, bold, 12, MARGIN, y, "Rang : " + formatRank(reportCard));
                 y = writeLine(content, regular, 11, MARGIN, y,
                         "Absences : " + reportCard.getAbsenceCount() + " · Retards : " + reportCard.getLateCount());
 
@@ -97,6 +99,18 @@ public class ReportCardPdfExporter {
         } catch (IOException e) {
             throw ApiException.unprocessable("PDF_GENERATION_FAILED", "Impossible de générer le PDF du bulletin");
         }
+    }
+
+    /**
+     * « 3e sur 42 ». Un élève sans moyenne n'est pas classé : le dire explicitement évite de
+     * laisser croire à une erreur de calcul.
+     */
+    private static String formatRank(ReportCard reportCard) {
+        if (reportCard.getRankInClass() == null || reportCard.getClassSize() == null) {
+            return "non classé";
+        }
+        int rank = reportCard.getRankInClass();
+        return (rank == 1 ? "1er" : rank + "e") + " sur " + reportCard.getClassSize();
     }
 
     private float writeLine(PDPageContentStream content, PDType1Font font, float fontSize, float x, float y, String text)

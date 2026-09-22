@@ -12,6 +12,9 @@ public record ReportCardResponse(
         LocalDate periodFrom,
         LocalDate periodTo,
         Double generalAverage,
+        /** Rang dans la classe ; null si l'élève n'a aucune note sur la période. */
+        Integer rankInClass,
+        Integer classSize,
         String generalComment,
         String councilDecision,
         int absenceCount,
@@ -27,6 +30,8 @@ public record ReportCardResponse(
                 reportCard.getPeriodFrom(),
                 reportCard.getPeriodTo(),
                 reportCard.getGeneralAverage(),
+                reportCard.getRankInClass(),
+                reportCard.getClassSize(),
                 reportCard.getGeneralComment(),
                 reportCard.getCouncilDecision(),
                 reportCard.getAbsenceCount(),

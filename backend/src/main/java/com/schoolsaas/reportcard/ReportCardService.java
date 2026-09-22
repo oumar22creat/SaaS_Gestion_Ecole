@@ -17,6 +17,7 @@ import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
 import com.schoolsaas.subject.Subject;
 import com.schoolsaas.subject.SubjectRepository;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -75,7 +76,45 @@ public class ReportCardService {
                 .filter(Student::isActive)
                 .toList();
 
-        return students.stream().map(student -> generateForStudent(student, subjectIds, coefficients, request)).toList();
+        List<ReportCard> reportCards = students.stream()
+                .map(student -> generateForStudent(student, subjectIds, coefficients, request))
+                .toList();
+        assignRanks(reportCards);
+        return reportCards;
+    }
+
+    /**
+     * Classe les bulletins par moyenne générale décroissante. Deux élèves à égalité partagent
+     * le même rang et le suivant est décalé d'autant — « 1er, 1er, 3e » et non « 1er, 1er,
+     * 2e » : c'est la convention des bulletins, et elle rend le rang cohérent avec l'effectif.
+     *
+     * <p>Un élève sans moyenne (aucune note sur la période) n'est pas classé : lui donner le
+     * dernier rang le sanctionnerait pour une absence d'évaluation, pas pour ses résultats.
+     * Il compte malgré tout dans l'effectif affiché, qui est celui de la classe.
+     */
+    private void assignRanks(List<ReportCard> reportCards) {
+        List<ReportCard> ranked = reportCards.stream()
+                .filter(card -> card.getGeneralAverage() != null)
+                .sorted(Comparator.comparingDouble(ReportCard::getGeneralAverage).reversed())
+                .toList();
+
+        int classSize = reportCards.size();
+        Double previousAverage = null;
+        int previousRank = 0;
+        for (int position = 0; position < ranked.size(); position++) {
+            ReportCard card = ranked.get(position);
+            int rank = card.getGeneralAverage().equals(previousAverage) ? previousRank : position + 1;
+            card.setRankInClass(rank);
+            card.setClassSize(classSize);
+            previousAverage = card.getGeneralAverage();
+            previousRank = rank;
+        }
+        reportCards.stream()
+                .filter(card -> card.getGeneralAverage() == null)
+                .forEach(card -> {
+                    card.setRankInClass(null);
+                    card.setClassSize(classSize);
+                });
     }
 
     private ReportCard generateForStudent(

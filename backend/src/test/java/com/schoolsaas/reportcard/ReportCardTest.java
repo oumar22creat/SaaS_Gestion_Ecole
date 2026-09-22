@@ -197,4 +197,71 @@ class ReportCardTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/v1/report-cards/" + reportCardB.getId()).header("Authorization", "Bearer " + tokenA))
                 .andExpect(status().isNotFound());
     }
+
+    /**
+     * Le rang manquait alors qu'au Mali c'est la première ligne que lit un parent, avant même
+     * la moyenne. Deux élèves à égalité partagent le même rang et le suivant est décalé
+     * d'autant — c'est la convention des bulletins, et elle garde le rang cohérent avec
+     * l'effectif. Un élève sans aucune note n'est pas classé : lui donner le dernier rang le
+     * sanctionnerait pour une absence d'évaluation, pas pour ses résultats.
+     */
+    @Test
+    void ranksStudentsByGeneralAverageWithSharedRanksOnTies() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Rang");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "admin-rang@ecole.example", Role.ADMIN);
+
+        SchoolClass schoolClass = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("6ème A", null), tenant.getId()));
+        Subject maths = subjectRepository.save(TestAuthSupport.withTenant(new Subject("Maths", "MATH-RANK", 1), tenant.getId()));
+        Teacher teacher = teacherRepository.save(TestAuthSupport.withTenant(new Teacher("Jean", "Dupont", null, null), tenant.getId()));
+        assignmentRepository.save(TestAuthSupport.withTenant(
+                new ClassSubjectAssignment(schoolClass.getId(), maths.getId(), teacher.getId()), tenant.getId()));
+        Exam exam = examRepository.save(TestAuthSupport.withTenant(
+                new Exam(schoolClass.getId(), maths.getId(), "Contrôle", 20, 1, LocalDate.of(2026, 10, 1)), tenant.getId()));
+
+        Student premier = student(tenant, schoolClass, "RK1", "Awa");
+        Student exAequo = student(tenant, schoolClass, "RK2", "Boubacar");
+        Student dernier = student(tenant, schoolClass, "RK3", "Fanta");
+        Student sansNote = student(tenant, schoolClass, "RK4", "Salif");
+
+        grade(tenant, exam, premier, 18.0);
+        grade(tenant, exam, exAequo, 18.0);
+        grade(tenant, exam, dernier, 9.0);
+
+        String response = mockMvc.perform(post("/api/v1/report-cards/generate")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"schoolClassId\":" + schoolClass.getId() + ",\"periodLabel\":\"Trimestre Rang\","
+                                + "\"periodFrom\":\"2026-09-01\",\"periodTo\":\"2026-10-31\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        var cards = objectMapper.readTree(response).get("data");
+        java.util.Map<Long, Integer> rankByStudent = new java.util.HashMap<>();
+        java.util.Map<Long, Integer> sizeByStudent = new java.util.HashMap<>();
+        cards.forEach(card -> {
+            Long studentId = card.get("studentId").asLong();
+            rankByStudent.put(studentId, card.get("rankInClass").isNull() ? null : card.get("rankInClass").asInt());
+            sizeByStudent.put(studentId, card.get("classSize").asInt());
+        });
+
+        org.assertj.core.api.Assertions.assertThat(rankByStudent.get(premier.getId())).isEqualTo(1);
+        org.assertj.core.api.Assertions.assertThat(rankByStudent.get(exAequo.getId())).isEqualTo(1);
+        // Deux premiers ex aequo : le suivant est 3e, pas 2e.
+        org.assertj.core.api.Assertions.assertThat(rankByStudent.get(dernier.getId())).isEqualTo(3);
+        org.assertj.core.api.Assertions.assertThat(rankByStudent.get(sansNote.getId())).isNull();
+        // L'effectif affiché est celui de la classe, y compris l'élève non classé.
+        org.assertj.core.api.Assertions.assertThat(sizeByStudent.values()).containsOnly(4);
+    }
+
+    private Student student(Tenant tenant, SchoolClass schoolClass, String number, String firstName) {
+        return studentRepository.save(TestAuthSupport.withTenant(
+                new Student(number, firstName, "Test", null, null, schoolClass.getId()), tenant.getId()));
+    }
+
+    private void grade(Tenant tenant, Exam exam, Student student, double score) {
+        gradeRepository.save(TestAuthSupport.withTenant(
+                new Grade(exam.getId(), student.getId(), score, false, null), tenant.getId()));
+    }
 }

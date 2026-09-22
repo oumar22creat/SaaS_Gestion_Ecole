@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
@@ -29,6 +30,7 @@ function schoolYearRange(): { from: string; to: string } {
 @Component({
   selector: 'app-portal-student-record-page',
   imports: [
+    DatePipe,
     IonHeader,
     IonToolbar,
     IonButtons,
@@ -74,7 +76,8 @@ function schoolYearRange(): { from: string; to: string } {
                 <span class="record-text">
                   <span class="record-label">{{ grade.label }}</span>
                   <span class="record-meta">
-                    {{ grade.examDate }} · coefficient {{ grade.coefficient }}
+                    {{ grade.examDate | date: 'dd/MM/yyyy' }} · coefficient
+                    {{ grade.coefficient }}
                   </span>
                 </span>
                 <span class="record-value">
@@ -98,7 +101,8 @@ function schoolYearRange(): { from: string; to: string } {
                 <span class="record-text">
                   <span class="record-label">{{ statusLabel(entry.status) }}</span>
                   <span class="record-meta">
-                    {{ entry.date }}{{ entry.reason ? ' · ' + entry.reason : '' }}
+                    {{ entry.date | date: 'dd/MM/yyyy'
+                    }}{{ entry.reason ? ' · ' + entry.reason : '' }}
                   </span>
                 </span>
                 <span class="record-value">
@@ -118,8 +122,8 @@ function schoolYearRange(): { from: string; to: string } {
                 <span class="record-text">
                   <span class="record-label">{{ slot.subject }}</span>
                   <span class="record-meta">
-                    {{ dayLabel(slot.dayOfWeek) }} · {{ slot.startTime }} à {{ slot.endTime
-                    }}{{ slot.room ? ' · ' + slot.room : '' }}
+                    {{ dayLabel(slot.dayOfWeek) }} · {{ hourMinute(slot.startTime) }} à
+                    {{ hourMinute(slot.endTime) }}{{ slot.room ? ' · ' + slot.room : '' }}
                   </span>
                 </span>
                 <span class="record-value">{{ slot.teacher }}</span>
@@ -133,6 +137,15 @@ function schoolYearRange(): { from: string; to: string } {
   styles: `
     ion-segment {
       margin-bottom: var(--space-4);
+    }
+
+    /* « Emploi du temps » ne tient pas dans un tiers d'un écran de 375 px à la taille de
+     * police par défaut d'Ionic : l'onglet était coupé en plein mot. */
+    ion-segment-button {
+      min-width: 0;
+      --padding-start: var(--space-1);
+      --padding-end: var(--space-1);
+      font-size: var(--font-size-caption);
     }
 
     .record-list {
@@ -186,6 +199,11 @@ export class PortalStudentRecordPage {
 
   constructor() {
     void this.load();
+  }
+
+  /** L'API renvoie HH:mm:ss ; les secondes n'apportent rien sur un emploi du temps. */
+  protected hourMinute(time: string): string {
+    return time.slice(0, 5);
   }
 
   protected dayLabel(day: string): string {

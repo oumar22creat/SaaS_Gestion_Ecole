@@ -1,3 +1,4 @@
+import { FRENCH_DATE_LOCALE } from '../core/date-locale.provider';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -5,18 +6,32 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { extractErrorMessage } from '../core/http-error.util';
 import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
-import { Student } from './student.model';
+import { GENDERS, Student } from './student.model';
 import { StudentService } from './student.service';
 import { fieldError } from '../core/form-error.util';
 
 export interface StudentFormDialogData {
   student?: Student;
+}
+
+/**
+ * Le sélecteur de date produit un Date à minuit dans le fuseau local. `toISOString()` le
+ * convertirait en UTC : à l'est de Greenwich, minuit local tombe la veille en UTC et la date
+ * de naissance serait enregistrée avec un jour de moins. On formate donc depuis les
+ * composantes locales.
+ */
+function toIsoDate(date: Date | null): string | null {
+  if (!date) {
+    return null;
+  }
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
 }
 
 @Component({
@@ -28,10 +43,10 @@ export interface StudentFormDialogData {
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatNativeDateModule,
     MatButtonModule,
     MatProgressSpinnerModule,
   ],
+  providers: [FRENCH_DATE_LOCALE],
   templateUrl: './student-form.dialog.html',
   styleUrl: './student-form.dialog.scss',
 })
@@ -46,6 +61,20 @@ export class StudentFormDialog {
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly classes = signal<SchoolClass[]>([]);
+
+  /**
+   * Le sexe était un champ libre : des fiches importées par CSV peuvent porter une valeur
+   * absente de GENDERS. Une liste déroulante n'afficherait alors rien, et la fiche
+   * repartirait vidée de son sexe à la première modification. La valeur déjà enregistrée
+   * est donc ajoutée aux choix, telle quelle.
+   */
+  protected genderOptions(): { value: string; label: string }[] {
+    const current = this.data.student?.gender;
+    if (!current || GENDERS.some((gender) => gender.value === current)) {
+      return GENDERS;
+    }
+    return [...GENDERS, { value: current, label: current }];
+  }
 
   protected readonly form = this.formBuilder.nonNullable.group({
     studentNumber: [
@@ -81,7 +110,7 @@ export class StudentFormDialog {
       const request = {
         ...value,
         gender: value.gender || null,
-        birthDate: value.birthDate ? value.birthDate.toISOString().slice(0, 10) : null,
+        birthDate: toIsoDate(value.birthDate),
       };
       const result = this.data.student
         ? await this.studentService.update(this.data.student.id, request)

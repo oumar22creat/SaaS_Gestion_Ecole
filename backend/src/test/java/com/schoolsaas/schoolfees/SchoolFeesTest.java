@@ -330,4 +330,42 @@ class SchoolFeesTest extends AbstractIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"amountCents\":" + amountCents + ",\"method\":\"" + method + "\"}"));
     }
+
+    /**
+     * Une famille pouvait consulter les notes et les absences de son enfant mais pas ce
+     * qu'elle devait : la question la plus concrète qu'elle se pose restait sans réponse.
+     */
+    @Test
+    void aFamilySeesWhatItStillOwes() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Portail Frais");
+        SchoolClass schoolClass = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("6ème A", null), tenant.getId()));
+        Student child = studentRepository.save(
+                TestAuthSupport.withTenant(new Student("PF-1", "Awa", "Traoré", null, null, schoolClass.getId()), tenant.getId()));
+
+        String staffToken = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "accountant-portal@ecole.example", Role.ACCOUNTANT);
+        Long scheduleId = createSchedule(staffToken, schoolClass.getId(), "Trimestre 1", 100000, LocalDate.now().minusDays(10));
+        Long invoiceId = generateInvoices(staffToken, scheduleId);
+        pay(staffToken, invoiceId, 40000, "CASH");
+
+        // Le compte élève lit son propre dossier : même contrôle d'accès que pour ses notes.
+        com.schoolsaas.auth.User studentAccount = TestAuthSupport.createUser(
+                userRepository, passwordEncoder, tenant, "eleve-frais@ecole.example", Role.STUDENT);
+        child.setUserId(studentAccount.getId());
+        studentRepository.save(child);
+        String familyToken = TestAuthSupport.login(mockMvc, objectMapper, tenant, "eleve-frais@ecole.example");
+
+        mockMvc.perform(get("/api/v1/portal/students/" + child.getId() + "/fees")
+                        .header("Authorization", "Bearer " + familyToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalDueCents").value(100000))
+                .andExpect(jsonPath("$.data.totalPaidCents").value(40000))
+                .andExpect(jsonPath("$.data.totalRemainingCents").value(60000))
+                // L'échéance est passée : la famille doit voir que le solde est en retard.
+                .andExpect(jsonPath("$.data.overdueCents").value(60000))
+                .andExpect(jsonPath("$.data.lines.length()").value(1))
+                .andExpect(jsonPath("$.data.lines[0].label").value("Trimestre 1"))
+                .andExpect(jsonPath("$.data.lines[0].overdue").value(true));
+    }
 }

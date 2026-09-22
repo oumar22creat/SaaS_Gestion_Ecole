@@ -138,6 +138,12 @@ class PortalAccessTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + token)
                         .header(TenantResolver.TENANT_HEADER, tenant().getId()))
                 .andExpect(status().isNotFound());
+
+        // Les frais aussi : ce que doit une autre famille ne regarde personne.
+        mockMvc.perform(get("/api/v1/portal/students/" + otherChild.getId() + "/fees")
+                        .header("Authorization", "Bearer " + token)
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId()))
+                .andExpect(status().isNotFound());
     }
 
     /** Un élève sans classe affectée obtient une liste vide, pas une erreur. */

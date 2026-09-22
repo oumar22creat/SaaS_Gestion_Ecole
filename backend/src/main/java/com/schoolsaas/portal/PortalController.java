@@ -7,6 +7,13 @@ import com.schoolsaas.grade.ExamRepository;
 import com.schoolsaas.grade.Grade;
 import com.schoolsaas.grade.GradeRepository;
 import com.schoolsaas.portal.dto.PortalResponse;
+import com.schoolsaas.schoolfees.FeeInvoiceStatus;
+import com.schoolsaas.schoolfees.FeePayment;
+import com.schoolsaas.schoolfees.FeePaymentRepository;
+import com.schoolsaas.schoolfees.FeeSchedule;
+import com.schoolsaas.schoolfees.FeeScheduleRepository;
+import com.schoolsaas.schoolfees.StudentFeeInvoice;
+import com.schoolsaas.schoolfees.StudentFeeInvoiceRepository;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.subject.Subject;
 import com.schoolsaas.subject.SubjectRepository;
@@ -41,6 +48,9 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasAnyRole('PARENT', 'STUDENT')")
 public class PortalController {
 
+    /** XOF : franc CFA, devise sans sous-unité — les montants « cents » sont des francs entiers. */
+    private static final String DEFAULT_CURRENCY = "XOF";
+
     private final PortalService portalService;
     private final AttendanceService attendanceService;
     private final GradeRepository gradeRepository;
@@ -49,6 +59,9 @@ public class PortalController {
     private final SubjectRepository subjectRepository;
     private final TeacherRepository teacherRepository;
     private final RoomRepository roomRepository;
+    private final StudentFeeInvoiceRepository invoiceRepository;
+    private final FeeScheduleRepository feeScheduleRepository;
+    private final FeePaymentRepository feePaymentRepository;
 
     public PortalController(
             PortalService portalService,
@@ -58,7 +71,10 @@ public class PortalController {
             TimetableEntryRepository timetableEntryRepository,
             SubjectRepository subjectRepository,
             TeacherRepository teacherRepository,
-            RoomRepository roomRepository) {
+            RoomRepository roomRepository,
+            StudentFeeInvoiceRepository invoiceRepository,
+            FeeScheduleRepository feeScheduleRepository,
+            FeePaymentRepository feePaymentRepository) {
         this.portalService = portalService;
         this.attendanceService = attendanceService;
         this.gradeRepository = gradeRepository;
@@ -67,6 +83,9 @@ public class PortalController {
         this.subjectRepository = subjectRepository;
         this.teacherRepository = teacherRepository;
         this.roomRepository = roomRepository;
+        this.invoiceRepository = invoiceRepository;
+        this.feeScheduleRepository = feeScheduleRepository;
+        this.feePaymentRepository = feePaymentRepository;
     }
 
     /** Enfants du parent connecté, ou l'élève lui-même s'il consulte son propre portail. */
@@ -102,6 +121,65 @@ public class PortalController {
                 })
                 .sorted((a, b) -> b.examDate().compareTo(a.examDate()))
                 .toList());
+    }
+
+    /**
+     * Frais de scolarité de l'élève (cahier §13). Une famille pouvait consulter les notes et
+     * les absences de son enfant mais pas ce qu'elle devait : la question la plus concrète
+     * qu'elle se pose restait sans réponse dans l'application.
+     *
+     * <p>Aucune action n'est exposée ici : le portail informe, l'encaissement reste au
+     * personnel. Les montants sont recalculés depuis les règlements enregistrés, jamais repris
+     * d'un champ transmis par le client.
+     */
+    @GetMapping("/students/{studentId}/fees")
+    public ApiResponse<PortalResponse.FeeSummary> fees(@PathVariable Long studentId) {
+        portalService.requireAccessibleStudent(studentId);
+
+        List<StudentFeeInvoice> invoices = invoiceRepository.findAllByStudentIdOrderByIssuedAtDesc(studentId).stream()
+                // Une facture annulée n'est plus due : l'afficher inquiéterait une famille pour rien.
+                .filter(invoice -> invoice.getStatus() != FeeInvoiceStatus.CANCELLED)
+                .toList();
+        if (invoices.isEmpty()) {
+            return ApiResponse.of(new PortalResponse.FeeSummary(0, 0, 0, 0, DEFAULT_CURRENCY, List.of()));
+        }
+
+        Map<Long, FeeSchedule> schedulesById = feeScheduleRepository
+                .findAllById(invoices.stream().map(StudentFeeInvoice::getFeeScheduleId).distinct().toList())
+                .stream()
+                .collect(Collectors.toMap(FeeSchedule::getId, Function.identity()));
+        Map<Long, Long> paidByInvoice = feePaymentRepository
+                .findAllByInvoiceIdIn(invoices.stream().map(StudentFeeInvoice::getId).toList()).stream()
+                .collect(Collectors.groupingBy(
+                        FeePayment::getInvoiceId, Collectors.summingLong(FeePayment::getAmountCents)));
+        LocalDate today = LocalDate.now();
+
+        List<PortalResponse.FeeLine> lines = invoices.stream()
+                .map(invoice -> {
+                    FeeSchedule schedule = schedulesById.get(invoice.getFeeScheduleId());
+                    long paid = paidByInvoice.getOrDefault(invoice.getId(), 0L);
+                    long remaining = invoice.getAmountDueCents() - paid;
+                    LocalDate dueDate = schedule == null ? null : schedule.getDueDate();
+                    boolean overdue = remaining > 0 && dueDate != null && dueDate.isBefore(today);
+                    return new PortalResponse.FeeLine(
+                            schedule == null ? "Frais de scolarité" : schedule.getLabel(),
+                            dueDate,
+                            invoice.getAmountDueCents(),
+                            paid,
+                            remaining,
+                            invoice.getStatus().name(),
+                            overdue);
+                })
+                .toList();
+
+        return ApiResponse.of(new PortalResponse.FeeSummary(
+                lines.stream().mapToLong(PortalResponse.FeeLine::amountDueCents).sum(),
+                lines.stream().mapToLong(PortalResponse.FeeLine::amountPaidCents).sum(),
+                lines.stream().mapToLong(PortalResponse.FeeLine::amountRemainingCents).sum(),
+                lines.stream().filter(PortalResponse.FeeLine::overdue)
+                        .mapToLong(PortalResponse.FeeLine::amountRemainingCents).sum(),
+                schedulesById.values().stream().findFirst().map(FeeSchedule::getCurrency).orElse(DEFAULT_CURRENCY),
+                lines));
     }
 
     @GetMapping("/students/{studentId}/attendance")

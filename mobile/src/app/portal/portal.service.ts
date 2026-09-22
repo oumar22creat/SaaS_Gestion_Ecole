@@ -32,6 +32,26 @@ export interface PortalAttendance {
   justified: boolean;
 }
 
+/** Une échéance de frais, telle que la famille la lit. */
+export interface PortalFeeLine {
+  label: string;
+  dueDate: string | null;
+  amountDueCents: number;
+  amountPaidCents: number;
+  amountRemainingCents: number;
+  status: string;
+  overdue: boolean;
+}
+
+export interface PortalFeeSummary {
+  totalDueCents: number;
+  totalPaidCents: number;
+  totalRemainingCents: number;
+  overdueCents: number;
+  currency: string;
+  lines: PortalFeeLine[];
+}
+
 export interface PortalTimetableSlot {
   dayOfWeek: string;
   startTime: string;
@@ -55,6 +75,13 @@ export class PortalService {
   async grades(studentId: number): Promise<PortalGrade[]> {
     const response = await firstValueFrom(
       this.http.get<ApiResponse<PortalGrade[]>>(`${BASE_URL}/students/${studentId}/grades`),
+    );
+    return response.data;
+  }
+
+  async fees(studentId: number): Promise<PortalFeeSummary> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<PortalFeeSummary>>(`${BASE_URL}/students/${studentId}/fees`),
     );
     return response.data;
   }

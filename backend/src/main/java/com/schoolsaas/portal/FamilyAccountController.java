@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -39,6 +40,10 @@ public class FamilyAccountController {
     /** Le mot de passe provisoire est communiqué hors ligne par l'établissement. */
     public record OpenAccessRequest(
             @NotBlank @Email @Size(max = 255) String email,
+            @NotBlank @Size(min = 8, max = 100, message = "8 caractères minimum") String password) {
+    }
+
+    public record ResetPasswordRequest(
             @NotBlank @Size(min = 8, max = 100, message = "8 caractères minimum") String password) {
     }
 
@@ -89,5 +94,41 @@ public class FamilyAccountController {
         parent.setUserId(account.getId());
         parentRepository.save(parent);
         return ApiResponse.of(UserResponse.from(account));
+    }
+
+    /**
+     * Réinitialise le mot de passe de l'accès d'un élève.
+     *
+     * <p>L'opération part de la fiche et non du compte : c'est depuis la fiche que le
+     * secrétariat travaille, et cela évite d'exposer l'identifiant du compte dans la liste des
+     * élèves, où il ne servirait à rien d'autre.
+     */
+    @PutMapping("/students/{studentId}/account/password")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'SECRETARY')")
+    @Transactional
+    public ApiResponse<UserResponse> resetStudentPassword(
+            @PathVariable Long studentId, @Valid @RequestBody ResetPasswordRequest request) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> ApiException.notFound("STUDENT_NOT_FOUND", "Élève introuvable"));
+        return ApiResponse.of(UserResponse.from(
+                resetPassword(student.getUserId(), request.password(), "Cet élève n'a pas d'accès mobile")));
+    }
+
+    @PutMapping("/parents/{parentId}/account/password")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'SECRETARY')")
+    @Transactional
+    public ApiResponse<UserResponse> resetParentPassword(
+            @PathVariable Long parentId, @Valid @RequestBody ResetPasswordRequest request) {
+        Parent parent = parentRepository.findById(parentId)
+                .orElseThrow(() -> ApiException.notFound("PARENT_NOT_FOUND", "Parent introuvable"));
+        return ApiResponse.of(UserResponse.from(
+                resetPassword(parent.getUserId(), request.password(), "Ce parent n'a pas d'accès mobile")));
+    }
+
+    private User resetPassword(Long userId, String password, String missingAccessMessage) {
+        if (userId == null) {
+            throw ApiException.unprocessable("NO_PORTAL_ACCESS", missingAccessMessage);
+        }
+        return userService.resetPassword(userId, password);
     }
 }

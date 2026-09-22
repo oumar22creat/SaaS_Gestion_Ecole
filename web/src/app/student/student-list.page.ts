@@ -114,6 +114,7 @@ export class StudentListPage {
       .open(FamilyAccessDialog, {
         width: '460px',
         data: {
+          mode: 'open',
           target: 'student',
           recordId: student.id,
           personName: `${student.firstName} ${student.lastName}`,
@@ -122,6 +123,23 @@ export class StudentListPage {
       })
       .afterClosed()
       .subscribe((opened) => opened && void this.refresh());
+  }
+
+  /** Réinitialise le mot de passe de l'accès mobile, depuis la fiche. */
+  resetFamilyPassword(student: Student): void {
+    this.dialog
+      .open(FamilyAccessDialog, {
+        width: '460px',
+        data: {
+          mode: 'reset',
+          target: 'student',
+          recordId: student.id,
+          personName: `${student.firstName} ${student.lastName}`,
+          suggestedEmail: null,
+        },
+      })
+      .afterClosed()
+      .subscribe((done) => done && void this.refresh());
   }
 
   openEditDialog(student: Student): void {

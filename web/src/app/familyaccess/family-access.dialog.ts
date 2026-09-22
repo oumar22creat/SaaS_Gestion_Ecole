@@ -10,7 +10,15 @@ import { fieldError } from '../core/form-error.util';
 import { extractErrorMessage } from '../core/http-error.util';
 import { FamilyAccessService, FamilyAccessTarget } from './family-access.service';
 
+/**
+ * `open` crée l'accès, `reset` change le mot de passe d'un accès existant. Les deux gestes
+ * partent de la même fiche et portent le même avertissement — aucun message n'est envoyé —
+ * d'où un seul écran plutôt que deux presque identiques.
+ */
+export type FamilyAccessMode = 'open' | 'reset';
+
 export interface FamilyAccessDialogData {
+  mode: FamilyAccessMode;
   target: FamilyAccessTarget;
   recordId: number;
   /** Nom affiché de la personne concernée, repris de sa fiche. */
@@ -20,14 +28,16 @@ export interface FamilyAccessDialogData {
 }
 
 /**
- * Ouverture d'un accès au portail mobile.
+ * Accès au portail mobile d'une famille : ouverture, ou réinitialisation du mot de passe.
  *
- * <p>Seuls l'e-mail et un mot de passe provisoire sont demandés : le nom est repris de la
- * fiche, sinon la même personne finirait avec deux orthographes selon l'écran où on la
- * regarde.
+ * <p>À l'ouverture, seuls l'e-mail et un mot de passe provisoire sont demandés : le nom est
+ * repris de la fiche, sinon la même personne finirait avec deux orthographes selon l'écran où
+ * on la regarde. À la réinitialisation, l'e-mail ne bouge pas — c'est l'identifiant de
+ * connexion, le changer reviendrait à créer un autre accès.
  *
- * <p>Aucun e-mail n'est envoyé — le mot de passe est remis à la famille par l'établissement.
- * L'écran le dit, sans quoi le secrétariat attend une notification qui n'arrivera jamais.
+ * <p>Dans les deux cas, aucun e-mail n'est envoyé : le mot de passe est remis à la famille
+ * par l'établissement. L'écran le dit, sans quoi le secrétariat attend une notification qui
+ * n'arrivera jamais.
  */
 @Component({
   selector: 'app-family-access-dialog',
@@ -41,28 +51,49 @@ export interface FamilyAccessDialogData {
     MatProgressSpinnerModule,
   ],
   template: `
-    <h2 mat-dialog-title>Ouvrir l'accès mobile</h2>
+    <h2 mat-dialog-title>
+      @if (data.mode === 'open') {
+        Ouvrir l'accès mobile
+      } @else {
+        Réinitialiser le mot de passe
+      }
+    </h2>
     <form [formGroup]="form" (ngSubmit)="submit()">
       <mat-dialog-content>
         <p class="access-context">
-          <strong>{{ data.personName }}</strong> pourra consulter
-          @if (data.target === 'student') {
-            ses notes, ses absences, son emploi du temps et ses frais de scolarité
+          @if (data.mode === 'open') {
+            <strong>{{ data.personName }}</strong> pourra consulter
+            @if (data.target === 'student') {
+              ses notes, ses absences, son emploi du temps et ses frais de scolarité
+            } @else {
+              les notes, absences, emploi du temps et frais de ses enfants
+            }
+            depuis l'application mobile.
           } @else {
-            les notes, absences, emploi du temps et frais de ses enfants
+            Nouveau mot de passe de <strong>{{ data.personName }}</strong
+            >@if (data.suggestedEmail) {
+              , qui se connecte avec <strong>{{ data.suggestedEmail }}</strong>
+            }. L'identifiant de connexion ne change pas.
           }
-          depuis l'application mobile.
         </p>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Adresse e-mail</mat-label>
-          <input matInput type="email" formControlName="email" autocomplete="off" />
-          <mat-hint>Sert d'identifiant de connexion, avec le sous-domaine de l'établissement.</mat-hint>
-          <mat-error>{{ fieldError(form.controls.email) }}</mat-error>
-        </mat-form-field>
+        @if (data.mode === 'open') {
+          <mat-form-field appearance="outline">
+            <mat-label>Adresse e-mail</mat-label>
+            <input matInput type="email" formControlName="email" autocomplete="off" />
+            <mat-hint>Sert d'identifiant de connexion, avec le sous-domaine de l'établissement.</mat-hint>
+            <mat-error>{{ fieldError(form.controls.email) }}</mat-error>
+          </mat-form-field>
+        }
 
         <mat-form-field appearance="outline">
-          <mat-label>Mot de passe provisoire</mat-label>
+          <mat-label>
+            @if (data.mode === 'open') {
+              Mot de passe provisoire
+            } @else {
+              Nouveau mot de passe
+            }
+          </mat-label>
           <input matInput type="text" formControlName="password" autocomplete="new-password" />
           <mat-hint>8 caractères minimum. À remettre à la famille.</mat-hint>
           <mat-error>{{ fieldError(form.controls.password) }}</mat-error>
@@ -83,8 +114,10 @@ export interface FamilyAccessDialogData {
         <button mat-flat-button type="submit" [disabled]="submitting()">
           @if (submitting()) {
             <mat-spinner diameter="20" />
-          } @else {
+          } @else if (data.mode === 'open') {
             Ouvrir l'accès
+          } @else {
+            Réinitialiser
           }
         </button>
       </mat-dialog-actions>
@@ -128,9 +161,13 @@ export class FamilyAccessDialog {
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly form = this.formBuilder.nonNullable.group({
+    // L'e-mail n'est validé qu'à l'ouverture : en réinitialisation il n'est ni saisi ni
+    // modifiable, un champ obligatoire vide bloquerait la validation du formulaire.
     email: [
       this.data.suggestedEmail ?? '',
-      [Validators.required, Validators.email, Validators.maxLength(255)],
+      this.data.mode === 'open'
+        ? [Validators.required, Validators.email, Validators.maxLength(255)]
+        : [],
     ],
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
   });
@@ -144,12 +181,20 @@ export class FamilyAccessDialog {
     this.errorMessage.set(null);
     try {
       const value = this.form.getRawValue();
-      await this.familyAccessService.openAccess(
-        this.data.target,
-        this.data.recordId,
-        value.email,
-        value.password,
-      );
+      if (this.data.mode === 'open') {
+        await this.familyAccessService.openAccess(
+          this.data.target,
+          this.data.recordId,
+          value.email,
+          value.password,
+        );
+      } else {
+        await this.familyAccessService.resetPassword(
+          this.data.target,
+          this.data.recordId,
+          value.password,
+        );
+      }
       this.dialogRef.close(true);
     } catch (error) {
       this.errorMessage.set(extractErrorMessage(error));

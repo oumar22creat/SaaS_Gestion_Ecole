@@ -2,6 +2,7 @@ package com.schoolsaas.portal;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -215,5 +216,68 @@ class PortalAccessTest extends AbstractIntegrationTest {
                                 new FamilyAccountController.OpenAccessRequest(
                                         "autre@ecole.example", "Secret123!"))))
                 .andExpect(status().isConflict());
+    }
+
+    /**
+     * Le secrétariat travaille depuis la fiche de l'élève, pas depuis l'écran Comptes : la
+     * réinitialisation part donc de la fiche. Cela évite aussi d'exposer l'identifiant du
+     * compte dans la liste des élèves, où il ne servirait à rien d'autre.
+     */
+    @Test
+    void resetsTheFamilyPasswordFromTheStudentRecord() throws Exception {
+        account("admin-reset@ecole.example", Role.ADMIN, "Direction");
+        Student child = student("Sira", null);
+        String adminToken = loginAs("admin-reset@ecole.example");
+
+        mockMvc.perform(post("/api/v1/students/" + child.getId() + "/account")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new FamilyAccountController.OpenAccessRequest("sira@ecole.example", "Secret123!"))))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(put("/api/v1/students/" + child.getId() + "/account/password")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new FamilyAccountController.ResetPasswordRequest("NouveauSecret1!"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.email").value("sira@ecole.example"));
+
+        // Le nouveau mot de passe fonctionne, et l'ancien ne fonctionne plus.
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TenantLoginRequest(
+                                tenant().getSubdomain(), "sira@ecole.example", "NouveauSecret1!"))))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TenantLoginRequest(
+                                tenant().getSubdomain(), "sira@ecole.example", "Secret123!"))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    /**
+     * Réinitialiser le mot de passe d'une fiche qui n'a pas d'accès n'a pas de sens : le dire
+     * vaut mieux que de renvoyer « introuvable », qui laisserait croire à une fiche effacée.
+     */
+    @Test
+    void refusesToResetThePasswordOfARecordWithoutAccess() throws Exception {
+        account("admin-noaccess@ecole.example", Role.ADMIN, "Direction");
+        Student child = student("Bakary", null);
+        String adminToken = loginAs("admin-noaccess@ecole.example");
+
+        mockMvc.perform(put("/api/v1/students/" + child.getId() + "/account/password")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new FamilyAccountController.ResetPasswordRequest("NouveauSecret1!"))))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("NO_PORTAL_ACCESS"));
     }
 }

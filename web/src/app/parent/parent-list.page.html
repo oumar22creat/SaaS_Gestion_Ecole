@@ -53,7 +53,16 @@
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let parent">
-        @if (!parent.hasPortalAccess) {
+        @if (parent.hasPortalAccess) {
+          <button
+            mat-icon-button
+            (click)="resetFamilyPassword(parent)"
+            [attr.aria-label]="'Réinitialiser le mot de passe de ' + parent.firstName + ' ' + parent.lastName"
+            matTooltip="Réinitialiser le mot de passe mobile"
+          >
+            <mat-icon>lock_reset</mat-icon>
+          </button>
+        } @else {
           <button
             mat-icon-button
             (click)="openFamilyAccess(parent)"

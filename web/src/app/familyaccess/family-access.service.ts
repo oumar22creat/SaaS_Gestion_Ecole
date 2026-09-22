@@ -25,6 +25,22 @@ export interface FamilyAccount {
 export class FamilyAccessService {
   private readonly http = inject(HttpClient);
 
+  /**
+   * Réinitialise le mot de passe de l'accès. L'appel part de la fiche et non du compte : c'est
+   * depuis la fiche que le secrétariat travaille, et la liste des élèves n'a ainsi jamais
+   * besoin de porter l'identifiant du compte.
+   */
+  async resetPassword(
+    target: FamilyAccessTarget,
+    recordId: number,
+    password: string,
+  ): Promise<void> {
+    const path = target === 'student' ? 'students' : 'parents';
+    await firstValueFrom(
+      this.http.put(`${environment.apiUrl}/${path}/${recordId}/account/password`, { password }),
+    );
+  }
+
   async openAccess(
     target: FamilyAccessTarget,
     recordId: number,

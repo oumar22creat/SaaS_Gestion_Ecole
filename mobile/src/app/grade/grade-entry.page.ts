@@ -49,8 +49,8 @@ interface GradeRow {
       @if (exam()) {
         <div class="tally">
           <span class="tally-item">Barème /{{ exam()!.maxScore }}</span>
-          <span class="tally-item">Saisies : {{ filledCount() }}/{{ rows().length }} saisies</span>
-          <span class="tally-item">Absents : {{ absentCount() }} absent(s)</span>
+          <span class="tally-item">Saisies : {{ filledCount() }}/{{ rows().length }}</span>
+          <span class="tally-item">Absents : {{ absentCount() }}</span>
         </div>
       }
 
@@ -75,7 +75,8 @@ interface GradeRow {
                   [max]="exam()?.maxScore ?? 20"
                   [attr.aria-label]="'Note de ' + row.studentLabel"
                   [disabled]="row.absent"
-                  [(ngModel)]="row.score"
+                  [ngModel]="row.score"
+                  (ngModelChange)="setScore(row.studentId, $event)"
                 />
                 <span class="score-scale">/ {{ exam()?.maxScore ?? 20 }}</span>
                 <button
@@ -217,25 +218,51 @@ export class GradeEntryPage {
   }
 
   private async load(): Promise<void> {
-    const [exam, students, grades] = await Promise.all([
-      this.examService.getById(this.examId),
-      this.studentService.list(),
-      this.gradeService.listForExam(this.examId),
-    ]);
-    this.exam.set(exam);
-    const byStudent = new Map(grades.map((grade) => [grade.studentId, grade]));
-    this.rows.set(
-      students
-        .filter((student: Student) => student.schoolClassId === exam.schoolClassId && student.active)
-        .map((student) => {
-          const grade = byStudent.get(student.id);
-          return {
-            studentId: student.id,
-            studentLabel: `${student.firstName} ${student.lastName}`,
-            score: grade?.score ?? null,
-            absent: grade?.absent ?? false,
-          };
-        }),
+    this.errorMessage.set(null);
+    try {
+      const [exam, students, grades] = await Promise.all([
+        this.examService.getById(this.examId),
+        this.studentService.list(),
+        this.gradeService.listForExam(this.examId),
+      ]);
+      this.exam.set(exam);
+      const byStudent = new Map(grades.map((grade) => [grade.studentId, grade]));
+      this.rows.set(
+        students
+          .filter(
+            (student: Student) => student.schoolClassId === exam.schoolClassId && student.active,
+          )
+          .map((student) => {
+            const grade = byStudent.get(student.id);
+            return {
+              studentId: student.id,
+              studentLabel: `${student.firstName} ${student.lastName}`,
+              score: grade?.score ?? null,
+              absent: grade?.absent ?? false,
+            };
+          }),
+      );
+    } catch (error) {
+      // Sans ce catch, un échec de chargement (session expirée, réseau coupé, droits refusés)
+      // donnait une liste d'élèves vide, impossible à distinguer d'une classe sans élève :
+      // l'enseignant repartait chercher l'erreur ailleurs.
+      this.rows.set([]);
+      this.errorMessage.set(extractErrorMessage(error));
+    }
+  }
+
+  /**
+   * La note passe par `rows.update` plutôt que par `[(ngModel)]` : la liaison à deux sens
+   * modifiait l'objet à l'intérieur du tableau sans remplacer le tableau, donc sans notifier
+   * le signal. Les compteurs de progression (« Saisies : 0/45 ») restaient alors figés à zéro
+   * pendant toute la saisie — c'est-à-dire exactement quand l'enseignant s'en sert pour savoir
+   * où il en est dans sa classe.
+   */
+  setScore(studentId: number, score: number | null): void {
+    this.success.set(false);
+    const value = score === null || Number.isNaN(score) ? null : score;
+    this.rows.update((rows) =>
+      rows.map((row) => (row.studentId === studentId ? { ...row, score: value } : row)),
     );
   }
 

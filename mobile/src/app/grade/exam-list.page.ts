@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar } from '@ionic/angular';
@@ -6,7 +7,7 @@ import { ExamService } from './exam.service';
 
 @Component({
   selector: 'app-exam-list-page',
-  imports: [RouterLink, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonIcon],
+  imports: [DatePipe, RouterLink, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonIcon],
   template: `
     <ion-header>
       <ion-toolbar>
@@ -23,14 +24,18 @@ import { ExamService } from './exam.service';
       </div>
 
       @if (exams().length > 0) {
-        <p class="section-label">{{ exams().length }} évaluation(s)</p>
+        <p class="section-label">
+          {{ exams().length }} {{ exams().length > 1 ? 'évaluations' : 'évaluation' }}
+        </p>
         <div class="exam-list">
           @for (exam of exams(); track exam.id) {
             <a class="exam" [routerLink]="['/exams', exam.id, 'grades']">
               <ion-icon class="exam-icon" aria-hidden="true" name="calculator-outline"></ion-icon>
               <span class="exam-text">
                 <span class="exam-label">{{ exam.label }}</span>
-                <span class="exam-meta">{{ exam.examDate }} · barème /{{ exam.maxScore }}</span>
+                <span class="exam-meta"
+                  >{{ exam.examDate | date: 'dd/MM/yyyy' }} · barème /{{ exam.maxScore }}</span
+                >
               </span>
               <span class="exam-chevron" aria-hidden="true">›</span>
             </a>

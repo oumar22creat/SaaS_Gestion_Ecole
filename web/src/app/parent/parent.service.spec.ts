@@ -23,9 +23,10 @@ describe('ParentService', () => {
     const promise = service.create(request);
     const req = httpMock.expectOne(`${environment.apiUrl}/parents`);
     expect(req.request.method).toBe('POST');
-    req.flush({ data: { id: 1, ...request } });
+    // Le serveur renvoie en plus l'état de l'accès au portail, à false pour une fiche neuve.
+    req.flush({ data: { id: 1, ...request, hasPortalAccess: false } });
 
-    expect(await promise).toEqual({ id: 1, ...request });
+    expect(await promise).toEqual({ id: 1, ...request, hasPortalAccess: false });
   });
 
   it('links a parent to a student', async () => {

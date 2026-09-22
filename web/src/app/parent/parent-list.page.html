@@ -39,9 +39,30 @@
       <td mat-cell *matCellDef="let parent">{{ parent.phone || '—' }}</td>
     </ng-container>
 
+    <ng-container matColumnDef="portalAccess">
+      <th mat-header-cell *matHeaderCellDef>Accès mobile</th>
+      <td mat-cell *matCellDef="let parent">
+        @if (parent.hasPortalAccess) {
+          <span class="status-badge status-ok">Ouvert</span>
+        } @else {
+          <span class="status-badge status-off">Aucun</span>
+        }
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let parent">
+        @if (!parent.hasPortalAccess) {
+          <button
+            mat-icon-button
+            (click)="openFamilyAccess(parent)"
+            [attr.aria-label]="'Ouvrir l\'accès mobile de ' + parent.firstName + ' ' + parent.lastName"
+            matTooltip="Ouvrir l'accès mobile"
+          >
+            <mat-icon>phone_iphone</mat-icon>
+          </button>
+        }
         <a mat-icon-button [routerLink]="['/parents', parent.id, 'students']" aria-label="Enfants">
           <mat-icon>family_restroom</mat-icon>
         </a>

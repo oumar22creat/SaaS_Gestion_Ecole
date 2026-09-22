@@ -7,6 +7,8 @@ export interface Student {
   gender: string | null;
   schoolClassId: number | null;
   active: boolean;
+  /** Vrai si un compte de connexion au portail mobile est ouvert pour cet élève. */
+  hasPortalAccess: boolean;
 }
 
 export interface StudentRequest {

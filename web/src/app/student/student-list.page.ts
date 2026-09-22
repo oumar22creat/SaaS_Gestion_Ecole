@@ -4,9 +4,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
+import { FamilyAccessDialog } from '../familyaccess/family-access.dialog';
 import { ListSearchComponent } from '../core/list-search.component';
 import { FRENCH_PAGINATOR } from '../core/paginator-intl.provider';
 import { SchoolClass } from '../schoolclass/school-class.model';
@@ -21,6 +23,7 @@ import { StudentService } from './student.service';
     MatTableModule,
     MatButtonModule,
     MatIconModule,
+    MatTooltipModule,
     MatChipsModule,
     MatDialogModule,
     MatPaginatorModule,
@@ -49,6 +52,7 @@ export class StudentListPage {
     'lastName',
     'schoolClassId',
     'active',
+    'portalAccess',
     'actions',
   ];
 
@@ -98,6 +102,26 @@ export class StudentListPage {
       .open(StudentFormDialog, { data: {}, width: '480px' })
       .afterClosed()
       .subscribe((result) => result && void this.refresh());
+  }
+
+  /**
+   * Ouvre l'accès au portail mobile. Le point d'entrée existait côté serveur mais aucun écran
+   * ne l'appelait : toute la partie parent/élève de l'application mobile était donc
+   * inatteignable pour un établissement réel.
+   */
+  openFamilyAccess(student: Student): void {
+    this.dialog
+      .open(FamilyAccessDialog, {
+        width: '460px',
+        data: {
+          target: 'student',
+          recordId: student.id,
+          personName: `${student.firstName} ${student.lastName}`,
+          suggestedEmail: null,
+        },
+      })
+      .afterClosed()
+      .subscribe((opened) => opened && void this.refresh());
   }
 
   openEditDialog(student: Student): void {

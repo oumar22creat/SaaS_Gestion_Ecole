@@ -11,7 +11,12 @@ public record StudentResponse(
         LocalDate birthDate,
         String gender,
         Long schoolClassId,
-        boolean active) {
+        boolean active,
+        /**
+         * Vrai si un compte de connexion au portail est ouvert. Booléen et non l'identifiant
+         * du compte : l'écran a besoin de savoir si l'accès existe, pas de le désigner.
+         */
+        boolean hasPortalAccess) {
 
     public static StudentResponse from(Student student) {
         return new StudentResponse(
@@ -22,6 +27,7 @@ public record StudentResponse(
                 student.getBirthDate(),
                 student.getGender(),
                 student.getSchoolClassId(),
-                student.isActive());
+                student.isActive(),
+                student.getUserId() != null);
     }
 }

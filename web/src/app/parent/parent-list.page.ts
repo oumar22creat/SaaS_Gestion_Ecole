@@ -3,9 +3,11 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
+import { FamilyAccessDialog } from '../familyaccess/family-access.dialog';
 import { ListSearchComponent } from '../core/list-search.component';
 import { FRENCH_PAGINATOR } from '../core/paginator-intl.provider';
 import { ParentFormDialog } from './parent-form.dialog';
@@ -14,7 +16,7 @@ import { ParentService } from './parent.service';
 
 @Component({
   selector: 'app-parent-list-page',
-  imports: [MatTableModule, MatButtonModule, MatIconModule, MatDialogModule, MatPaginatorModule, ListSearchComponent, RouterLink],
+  imports: [MatTableModule, MatButtonModule, MatIconModule, MatTooltipModule, MatDialogModule, MatPaginatorModule, ListSearchComponent, RouterLink],
   providers: [FRENCH_PAGINATOR],
   templateUrl: './parent-list.page.html',
   styleUrl: './parent-list.page.scss',
@@ -29,7 +31,7 @@ export class ParentListPage {
   protected readonly search = signal('');
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = signal(25);
-  protected readonly columns = ['firstName', 'lastName', 'email', 'phone', 'actions'];
+  protected readonly columns = ['firstName', 'lastName', 'email', 'phone', 'portalAccess', 'actions'];
 
   constructor() {
     void this.refresh();
@@ -68,6 +70,26 @@ export class ParentListPage {
       .open(ParentFormDialog, { data: {}, width: '480px' })
       .afterClosed()
       .subscribe((result) => result && void this.refresh());
+  }
+
+  /**
+   * Ouvre l'accès au portail mobile. Le point d'entrée existait côté serveur mais aucun écran
+   * ne l'appelait : toute la partie parent/élève de l'application mobile était donc
+   * inatteignable pour un établissement réel.
+   */
+  openFamilyAccess(parent: Parent): void {
+    this.dialog
+      .open(FamilyAccessDialog, {
+        width: '460px',
+        data: {
+          target: 'parent',
+          recordId: parent.id,
+          personName: `${parent.firstName} ${parent.lastName}`,
+          suggestedEmail: parent.email,
+        },
+      })
+      .afterClosed()
+      .subscribe((opened) => opened && void this.refresh());
   }
 
   openEditDialog(parent: Parent): void {

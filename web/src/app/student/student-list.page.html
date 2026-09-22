@@ -12,6 +12,15 @@
   </div>
 </div>
 
+<div class="filters-row">
+  <app-list-search
+    label="Rechercher un élève"
+    hint="Nom, prénom ou matricule"
+    (termChange)="onSearch($event)"
+  />
+  <span class="filters-summary">{{ total() }} élève(s)</span>
+</div>
+
 <div class="table-scroll">
   <table mat-table [dataSource]="students()" class="data-table">
     <ng-container matColumnDef="studentNumber">
@@ -82,3 +91,12 @@
     </span>
   </div>
 }
+
+<mat-paginator
+  [length]="total()"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[25, 50, 100]"
+  (page)="onPage($event)"
+  aria-label="Pages d'élèves"
+/>

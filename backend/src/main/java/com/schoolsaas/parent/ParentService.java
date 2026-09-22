@@ -26,6 +26,17 @@ public class ParentService {
                 .orElseThrow(() -> ApiException.notFound("PARENT_NOT_FOUND", "Parent introuvable"));
     }
 
+    /**
+     * Liste paginée, filtrée par un terme de recherche libre quand il est fourni. Un terme
+     * vide est traité comme absent : « rechercher rien » doit tout renvoyer, pas rien.
+     */
+    public Page<Parent> list(Pageable pageable, String search) {
+        if (search == null || search.isBlank()) {
+            return list(pageable);
+        }
+        return parentRepository.search(search.trim(), pageable);
+    }
+
     public Page<Parent> list(Pageable pageable) {
         return parentRepository.findAll(pageable);
     }

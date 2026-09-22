@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -45,8 +46,8 @@ public class ParentController {
     }
 
     @GetMapping
-    public ApiResponse<List<ParentResponse>> list(Pageable pageable) {
-        Page<Parent> page = parentService.list(pageable);
+    public ApiResponse<List<ParentResponse>> list(Pageable pageable, @RequestParam(required = false) String search) {
+        Page<Parent> page = parentService.list(pageable, search);
         List<ParentResponse> data = page.map(ParentResponse::from).getContent();
         return ApiResponse.of(data, new ApiResponse.PageMeta(page.getNumber() + 1, page.getSize(), page.getTotalElements()));
     }

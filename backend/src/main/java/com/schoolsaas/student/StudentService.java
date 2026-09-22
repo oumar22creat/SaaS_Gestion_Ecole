@@ -54,6 +54,17 @@ public class StudentService {
                 .orElseThrow(() -> ApiException.notFound("STUDENT_NOT_FOUND", "Élève introuvable"));
     }
 
+    /**
+     * Liste paginée, filtrée par un terme de recherche libre quand il est fourni. Un terme
+     * vide est traité comme absent : « rechercher rien » doit tout renvoyer, pas rien.
+     */
+    public Page<Student> list(Pageable pageable, String search) {
+        if (search == null || search.isBlank()) {
+            return list(pageable);
+        }
+        return studentRepository.search(search.trim(), pageable);
+    }
+
     public Page<Student> list(Pageable pageable) {
         return studentRepository.findAll(pageable);
     }

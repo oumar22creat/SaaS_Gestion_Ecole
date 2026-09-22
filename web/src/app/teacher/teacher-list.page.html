@@ -6,6 +6,15 @@
   </button>
 </div>
 
+<div class="filters-row">
+  <app-list-search
+    label="Rechercher un enseignant"
+    hint="Nom, prénom ou e-mail"
+    (termChange)="onSearch($event)"
+  />
+  <span class="filters-summary">{{ total() }} enseignant(s)</span>
+</div>
+
 <div class="table-scroll">
   <table mat-table [dataSource]="teachers()" class="data-table">
     <ng-container matColumnDef="firstName">
@@ -73,3 +82,12 @@
     </span>
   </div>
 }
+
+<mat-paginator
+  [length]="total()"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[25, 50, 100]"
+  (page)="onPage($event)"
+  aria-label="Pages d'enseignants"
+/>

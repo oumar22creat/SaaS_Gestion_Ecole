@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,8 +44,8 @@ public class TeacherController {
     }
 
     @GetMapping
-    public ApiResponse<List<TeacherResponse>> list(Pageable pageable) {
-        Page<Teacher> page = teacherService.list(pageable);
+    public ApiResponse<List<TeacherResponse>> list(Pageable pageable, @RequestParam(required = false) String search) {
+        Page<Teacher> page = teacherService.list(pageable, search);
         List<TeacherResponse> data = page.map(TeacherResponse::from).getContent();
         return ApiResponse.of(data, new ApiResponse.PageMeta(page.getNumber() + 1, page.getSize(), page.getTotalElements()));
     }

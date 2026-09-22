@@ -26,6 +26,17 @@ public class TeacherService {
                 .orElseThrow(() -> ApiException.notFound("TEACHER_NOT_FOUND", "Enseignant introuvable"));
     }
 
+    /**
+     * Liste paginée, filtrée par un terme de recherche libre quand il est fourni. Un terme
+     * vide est traité comme absent : « rechercher rien » doit tout renvoyer, pas rien.
+     */
+    public Page<Teacher> list(Pageable pageable, String search) {
+        if (search == null || search.isBlank()) {
+            return list(pageable);
+        }
+        return teacherRepository.search(search.trim(), pageable);
+    }
+
     public Page<Teacher> list(Pageable pageable) {
         return teacherRepository.findAll(pageable);
     }

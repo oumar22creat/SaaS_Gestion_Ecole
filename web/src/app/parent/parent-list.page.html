@@ -8,6 +8,15 @@
   </button>
 </div>
 
+<div class="filters-row">
+  <app-list-search
+    label="Rechercher un parent"
+    hint="Nom, e-mail ou téléphone"
+    (termChange)="onSearch($event)"
+  />
+  <span class="filters-summary">{{ total() }} parent(s)</span>
+</div>
+
 <div class="table-scroll">
   <table mat-table [dataSource]="parents()" class="data-table">
     <ng-container matColumnDef="firstName">
@@ -63,3 +72,12 @@
     </span>
   </div>
 }
+
+<mat-paginator
+  [length]="total()"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[25, 50, 100]"
+  (page)="onPage($event)"
+  aria-label="Pages de parents"
+/>

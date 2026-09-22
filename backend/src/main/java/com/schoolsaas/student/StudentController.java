@@ -58,8 +58,8 @@ public class StudentController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
-    public ApiResponse<List<StudentResponse>> list(Pageable pageable) {
-        Page<Student> page = studentService.list(pageable);
+    public ApiResponse<List<StudentResponse>> list(Pageable pageable, @RequestParam(required = false) String search) {
+        Page<Student> page = studentService.list(pageable, search);
         List<StudentResponse> data = page.map(StudentResponse::from).getContent();
         return ApiResponse.of(data, new ApiResponse.PageMeta(page.getNumber() + 1, page.getSize(), page.getTotalElements()));
     }

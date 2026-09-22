@@ -4,8 +4,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
+import { ListSearchComponent } from '../core/list-search.component';
 import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
 import { StudentFormDialog } from './student-form.dialog';
@@ -20,6 +22,8 @@ import { StudentService } from './student.service';
     MatIconModule,
     MatChipsModule,
     MatDialogModule,
+    MatPaginatorModule,
+    ListSearchComponent,
     RouterLink,
   ],
   templateUrl: './student-list.page.html',
@@ -33,6 +37,10 @@ export class StudentListPage {
   protected readonly students = signal<Student[]>([]);
   protected readonly classes = signal<SchoolClass[]>([]);
   protected readonly loading = signal(false);
+  protected readonly total = signal(0);
+  protected readonly search = signal('');
+  protected readonly pageIndex = signal(0);
+  protected readonly pageSize = signal(25);
   protected readonly columns = [
     'studentNumber',
     'firstName',
@@ -47,6 +55,19 @@ export class StudentListPage {
     void this.schoolClassService.list().then((classes) => this.classes.set(classes));
   }
 
+  /** Une nouvelle recherche repart de la première page : rester en page 4 n'aurait aucun sens. */
+  protected onSearch(term: string): void {
+    this.search.set(term);
+    this.pageIndex.set(0);
+    void this.refresh();
+  }
+
+  protected onPage(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    void this.refresh();
+  }
+
   /** La colonne affichait l'identifiant technique de la classe (« 6 ») au lieu de son nom. */
   protected className(schoolClassId: number | null): string {
     if (schoolClassId === null) {
@@ -58,7 +79,13 @@ export class StudentListPage {
   async refresh(): Promise<void> {
     this.loading.set(true);
     try {
-      this.students.set(await this.studentService.list());
+      const page = await this.studentService.page({
+        page: this.pageIndex(),
+        pageSize: this.pageSize(),
+        search: this.search(),
+      });
+      this.students.set(page.items);
+      this.total.set(page.total);
     } finally {
       this.loading.set(false);
     }

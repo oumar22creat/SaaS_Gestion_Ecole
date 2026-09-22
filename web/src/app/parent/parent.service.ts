@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/api-response.model';
+import { PageQuery, Paged, pageParams } from '../core/paged.model';
 import { Parent, ParentRequest, StudentParentLink, StudentParentLinkRequest } from './parent.model';
 
 const BASE_URL = `${environment.apiUrl}/parents`;
@@ -11,6 +12,18 @@ const STUDENTS_URL = `${environment.apiUrl}/students`;
 @Injectable({ providedIn: 'root' })
 export class ParentService {
   private readonly http = inject(HttpClient);
+
+  /**
+   * Liste paginée et filtrable, pour l'écran de gestion. `list()` reste utilisé par les
+   * écrans qui ont besoin de tout le référentiel d'un coup (feuille d'appel, saisie de
+   * notes) et n'affichent pas de tableau paginé.
+   */
+  async page(query: PageQuery): Promise<Paged<Parent>> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<Parent[]>>(BASE_URL, { params: pageParams(query) }),
+    );
+    return { items: response.data, total: response.meta?.total ?? response.data.length };
+  }
 
   async list(): Promise<Parent[]> {
     const response = await firstValueFrom(

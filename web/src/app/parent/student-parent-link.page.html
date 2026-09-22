@@ -3,7 +3,7 @@
   <a mat-button routerLink="/parents">Retour aux parents</a>
 </div>
 
-<form [formGroup]="form" (ngSubmit)="link()" class="assign-form">
+<form #assignForm="ngForm" [formGroup]="form" (ngSubmit)="link()" class="assign-form">
   <mat-form-field appearance="outline">
     <mat-label>Élève</mat-label>
     <mat-select formControlName="studentId">
@@ -18,7 +18,11 @@
 
   <mat-form-field appearance="outline">
     <mat-label>Lien de parenté</mat-label>
-    <input matInput formControlName="relationship" placeholder="MERE / PERE / TUTEUR" />
+    <mat-select formControlName="relationship">
+      @for (relationship of relationships; track relationship.value) {
+        <mat-option [value]="relationship.value">{{ relationship.label }}</mat-option>
+      }
+    </mat-select>
     <mat-error>{{ fieldError(form.controls.relationship) }}</mat-error>
   </mat-form-field>
 

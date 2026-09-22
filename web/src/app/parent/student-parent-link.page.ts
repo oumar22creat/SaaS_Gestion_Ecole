@@ -1,18 +1,18 @@
-import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject, signal, viewChild } from '@angular/core';
+import { FormBuilder, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
 import { extractErrorMessage } from '../core/http-error.util';
 import { Student } from '../student/student.model';
 import { StudentService } from '../student/student.service';
+import { PARENT_RELATIONSHIPS } from './parent.model';
 import { ParentService } from './parent.service';
 import { fieldError } from '../core/form-error.util';
 
@@ -26,7 +26,6 @@ import { fieldError } from '../core/form-error.util';
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
-    MatInputModule,
     MatSelectModule,
     MatCheckboxModule,
     MatDialogModule,
@@ -47,6 +46,8 @@ export class StudentParentLinkPage {
   protected readonly students = signal<Student[]>([]);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly columns = ['student', 'actions'];
+  protected readonly relationships = PARENT_RELATIONSHIPS;
+  private readonly assignForm = viewChild.required<FormGroupDirective>('assignForm');
 
   protected readonly form = this.formBuilder.nonNullable.group({
     studentId: [null as number | null, [Validators.required]],
@@ -83,7 +84,10 @@ export class StudentParentLinkPage {
         relationship: value.relationship,
         primaryContact: value.primaryContact,
       });
-      this.form.reset({ primaryContact: false });
+      // resetForm() et non form.reset() : ce dernier laisse le formulaire marqué « soumis »,
+      // et Material réaffiche aussitôt « Ce champ est obligatoire. » sur les deux champs
+      // vidés — une association réussie se terminait donc sur deux erreurs rouges.
+      this.assignForm().resetForm({ primaryContact: false });
       await this.refresh();
     } catch (error) {
       this.errorMessage.set(extractErrorMessage(error));

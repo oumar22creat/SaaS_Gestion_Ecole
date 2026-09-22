@@ -13,4 +13,6 @@ public interface StudentFeeInvoiceRepository extends JpaRepository<StudentFeeInv
     Optional<StudentFeeInvoice> findByFeeScheduleIdAndStudentId(Long feeScheduleId, Long studentId);
 
     List<StudentFeeInvoice> findAllByStatusNot(FeeInvoiceStatus status);
+
+    List<StudentFeeInvoice> findAllByFeeScheduleIdIn(List<Long> feeScheduleIds);
 }

@@ -2,9 +2,12 @@ package com.schoolsaas.schoolfees;
 
 import com.schoolsaas.auth.AuthenticatedPrincipal;
 import com.schoolsaas.common.ApiResponse;
+import com.schoolsaas.schoolfees.dto.FeeOutstandingEntry;
 import com.schoolsaas.schoolfees.dto.FeePaymentCreateRequest;
+import com.schoolsaas.schoolfees.dto.FeePaymentJournalEntry;
 import com.schoolsaas.schoolfees.dto.FeePaymentResponse;
 import com.schoolsaas.schoolfees.dto.FeeReportingResponse;
+import com.schoolsaas.schoolfees.dto.FeeSummaryResponse;
 import com.schoolsaas.schoolfees.dto.FeeScheduleCreateRequest;
 import com.schoolsaas.schoolfees.dto.FeeScheduleResponse;
 import com.schoolsaas.schoolfees.dto.StudentFeeInvoiceResponse;
@@ -85,6 +88,32 @@ public class SchoolFeesController {
     public ApiResponse<List<FeePaymentResponse>> paymentsForInvoice(@PathVariable Long id) {
         List<FeePaymentResponse> data = schoolFeesService.paymentsForInvoice(id).stream().map(FeePaymentResponse::from).toList();
         return ApiResponse.of(data);
+    }
+
+    /**
+     * Factures non soldées de l'établissement, ou d'une classe si {@code schoolClassId} est
+     * fourni. {@code onlyOverdue=true} ne renvoie que les échéances dépassées : c'est la liste
+     * de relance du comptable.
+     */
+    @GetMapping("/outstanding")
+    public ApiResponse<List<FeeOutstandingEntry>> outstanding(
+            @RequestParam(required = false) Long schoolClassId,
+            @RequestParam(defaultValue = "false") boolean onlyOverdue) {
+        return ApiResponse.of(schoolFeesService.outstanding(schoolClassId, onlyOverdue));
+    }
+
+    /** Indicateurs de recouvrement, tout l'établissement par défaut. */
+    @GetMapping("/summary")
+    public ApiResponse<FeeSummaryResponse> summary(@RequestParam(required = false) Long schoolClassId) {
+        return ApiResponse.of(schoolFeesService.summary(schoolClassId));
+    }
+
+    /** Journal des encaissements d'une période, pour le rapprochement de caisse. */
+    @GetMapping("/payments")
+    public ApiResponse<List<FeePaymentJournalEntry>> paymentJournal(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ApiResponse.of(schoolFeesService.paymentJournal(from, to));
     }
 
     @GetMapping("/reporting")

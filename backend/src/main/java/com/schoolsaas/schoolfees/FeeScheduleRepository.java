@@ -9,4 +9,6 @@ public interface FeeScheduleRepository extends JpaRepository<FeeSchedule, Long> 
     List<FeeSchedule> findAllBySchoolClassId(Long schoolClassId);
 
     List<FeeSchedule> findAllBySchoolClassIdAndDueDateBetween(Long schoolClassId, LocalDate from, LocalDate to);
+
+    List<FeeSchedule> findAllByDueDateBetween(LocalDate from, LocalDate to);
 }

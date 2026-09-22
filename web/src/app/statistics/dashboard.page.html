@@ -38,6 +38,46 @@
     </mat-card>
   </div>
 
+  @if (data.finance; as finance) {
+    <p class="section-label">Comptabilité</p>
+    <div class="stat-grid">
+      <mat-card class="stat-card">
+        <mat-icon class="stat-icon" aria-hidden="true">payments</mat-icon>
+        <p class="stat-label">Encaissé</p>
+        <p class="stat-value">{{ money(finance.collectedCents) }}</p>
+        @if (finance.collectionRate !== null) {
+          <mat-progress-bar mode="determinate" [value]="finance.collectionRate" />
+        }
+        <p class="stat-detail">
+          {{ finance.collectionRate }} % des {{ money(finance.invoicedCents) }} facturés
+        </p>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-icon class="stat-icon" aria-hidden="true">account_balance_wallet</mat-icon>
+        <p class="stat-label">Reste à recouvrer</p>
+        <p class="stat-value">{{ money(finance.outstandingCents) }}</p>
+        <p class="stat-detail">
+          {{ finance.invoiceCount - finance.settledInvoiceCount }} facture(s) non soldée(s)
+        </p>
+      </mat-card>
+
+      <mat-card class="stat-card" [class.stat-alert]="finance.overdueCents > 0">
+        <mat-icon class="stat-icon" aria-hidden="true">running_with_errors</mat-icon>
+        <p class="stat-label">Retards de paiement</p>
+        <p class="stat-value">{{ money(finance.overdueCents) }}</p>
+        <p class="stat-detail">
+          @if (finance.lateStudentCount > 0) {
+            {{ finance.lateStudentCount }} élève(s) en retard —
+            <a routerLink="/school-fees">voir la liste</a>
+          } @else {
+            Aucune échéance dépassée
+          }
+        </p>
+      </mat-card>
+    </div>
+  }
+
   <p class="section-label">Accès rapides</p>
   <div class="quick-grid">
     <a class="quick-tile" routerLink="/attendance">

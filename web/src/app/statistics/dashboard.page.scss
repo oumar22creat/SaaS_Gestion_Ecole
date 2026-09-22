@@ -122,3 +122,13 @@ mat-progress-bar {
     font-size: var(--font-size-caption);
   }
 }
+
+/* Un retard de paiement est la seule alerte du tableau de bord : il doit se distinguer des
+ * autres indicateurs sans pour autant les faire paraître anodins. */
+.stat-card.stat-alert {
+  border-color: var(--color-danger, #b3261e);
+}
+
+.stat-card.stat-alert .stat-value {
+  color: var(--color-danger, #b3261e);
+}

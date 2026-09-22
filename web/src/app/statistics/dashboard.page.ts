@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { SetupGuideComponent } from '../onboarding/setup-guide.component';
+import { formatMoney } from '../core/money.util';
 import { DashboardSummary } from './dashboard.model';
 import { DashboardService } from './dashboard.service';
 
@@ -15,6 +16,7 @@ import { DashboardService } from './dashboard.service';
   styleUrl: './dashboard.page.scss',
 })
 export class DashboardPage {
+  protected readonly money = formatMoney;
   private readonly dashboardService = inject(DashboardService);
 
   protected readonly summary = signal<DashboardSummary | null>(null);

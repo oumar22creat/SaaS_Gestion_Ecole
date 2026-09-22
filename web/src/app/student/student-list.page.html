@@ -31,7 +31,7 @@
 
     <ng-container matColumnDef="schoolClassId">
       <th mat-header-cell *matHeaderCellDef>Classe</th>
-      <td mat-cell *matCellDef="let student">{{ student.schoolClassId ?? '—' }}</td>
+      <td mat-cell *matCellDef="let student">{{ className(student.schoolClassId) }}</td>
     </ng-container>
 
     <ng-container matColumnDef="active">

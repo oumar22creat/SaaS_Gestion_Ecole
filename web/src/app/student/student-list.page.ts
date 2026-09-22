@@ -6,6 +6,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
+import { SchoolClass } from '../schoolclass/school-class.model';
+import { SchoolClassService } from '../schoolclass/school-class.service';
 import { StudentFormDialog } from './student-form.dialog';
 import { Student } from './student.model';
 import { StudentService } from './student.service';
@@ -25,9 +27,11 @@ import { StudentService } from './student.service';
 })
 export class StudentListPage {
   private readonly studentService = inject(StudentService);
+  private readonly schoolClassService = inject(SchoolClassService);
   private readonly dialog = inject(MatDialog);
 
   protected readonly students = signal<Student[]>([]);
+  protected readonly classes = signal<SchoolClass[]>([]);
   protected readonly loading = signal(false);
   protected readonly columns = [
     'studentNumber',
@@ -40,6 +44,15 @@ export class StudentListPage {
 
   constructor() {
     void this.refresh();
+    void this.schoolClassService.list().then((classes) => this.classes.set(classes));
+  }
+
+  /** La colonne affichait l'identifiant technique de la classe (« 6 ») au lieu de son nom. */
+  protected className(schoolClassId: number | null): string {
+    if (schoolClassId === null) {
+      return '—';
+    }
+    return this.classes().find((schoolClass) => schoolClass.id === schoolClassId)?.name ?? '—';
   }
 
   async refresh(): Promise<void> {

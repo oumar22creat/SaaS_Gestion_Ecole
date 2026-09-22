@@ -7,6 +7,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
 import { ListSearchComponent } from '../core/list-search.component';
+import { FRENCH_PAGINATOR } from '../core/paginator-intl.provider';
 import { ParentFormDialog } from './parent-form.dialog';
 import { Parent } from './parent.model';
 import { ParentService } from './parent.service';
@@ -14,6 +15,7 @@ import { ParentService } from './parent.service';
 @Component({
   selector: 'app-parent-list-page',
   imports: [MatTableModule, MatButtonModule, MatIconModule, MatDialogModule, MatPaginatorModule, ListSearchComponent, RouterLink],
+  providers: [FRENCH_PAGINATOR],
   templateUrl: './parent-list.page.html',
   styleUrl: './parent-list.page.scss',
 })

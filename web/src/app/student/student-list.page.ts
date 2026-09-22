@@ -8,6 +8,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
 import { ListSearchComponent } from '../core/list-search.component';
+import { FRENCH_PAGINATOR } from '../core/paginator-intl.provider';
 import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
 import { StudentFormDialog } from './student-form.dialog';
@@ -26,6 +27,7 @@ import { StudentService } from './student.service';
     ListSearchComponent,
     RouterLink,
   ],
+  providers: [FRENCH_PAGINATOR],
   templateUrl: './student-list.page.html',
   styleUrl: './student-list.page.scss',
 })

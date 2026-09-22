@@ -7,6 +7,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
 import { ListSearchComponent } from '../core/list-search.component';
+import { FRENCH_PAGINATOR } from '../core/paginator-intl.provider';
 import { TeacherFormDialog } from './teacher-form.dialog';
 import { Teacher } from './teacher.model';
 import { TeacherService } from './teacher.service';
@@ -22,6 +23,7 @@ import { TeacherService } from './teacher.service';
     MatPaginatorModule,
     ListSearchComponent,
   ],
+  providers: [FRENCH_PAGINATOR],
   templateUrl: './teacher-list.page.html',
   styleUrl: './teacher-list.page.scss',
 })

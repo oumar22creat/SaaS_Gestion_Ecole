@@ -22,6 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 /** CRUD classes — cahier-des-charges.md §8, ROADMAP.md 1.5. */
 @RestController
 @RequestMapping("/api/v1/classes")
+// Les écritures restent réservées à la direction ; la LECTURE est ouverte à tout le
+// personnel : la liste des classes est le point d'entrée de la feuille d'appel, de la saisie
+// des notes, des frais de scolarité, de la cantine et de la discipline. Sans elle, l'écran
+// correspondant n'a plus rien à proposer — c'est ce qui rendait la feuille d'appel Mobile
+// inutilisable pour un enseignant. Le périmètre reste borné à l'établissement par RLS
+// (docs/ARCHITECTURE.md ADR-001).
 @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
 public class SchoolClassController {
 
@@ -38,11 +44,13 @@ public class SchoolClassController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ApiResponse<SchoolClassResponse> getById(@PathVariable Long id) {
         return ApiResponse.of(SchoolClassResponse.from(schoolClassService.getById(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ApiResponse<List<SchoolClassResponse>> list(Pageable pageable) {
         Page<SchoolClass> page = schoolClassService.list(pageable);
         List<SchoolClassResponse> data = page.map(SchoolClassResponse::from).getContent();

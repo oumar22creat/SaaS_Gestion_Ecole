@@ -22,6 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 /** CRUD matières — cahier-des-charges.md §8, ROADMAP.md 1.5. */
 @RestController
 @RequestMapping("/api/v1/subjects")
+// Écritures réservées à la direction ; lecture ouverte aux enseignants, qui ont besoin de la
+// matière et de son coefficient pour créer une évaluation, saisir des notes et remplir le
+// cahier de textes.
 @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
 public class SubjectController {
 
@@ -38,11 +41,13 @@ public class SubjectController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER')")
     public ApiResponse<SubjectResponse> getById(@PathVariable Long id) {
         return ApiResponse.of(SubjectResponse.from(subjectService.getById(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER')")
     public ApiResponse<List<SubjectResponse>> list(Pageable pageable) {
         Page<Subject> page = subjectService.list(pageable);
         List<SubjectResponse> data = page.map(SubjectResponse::from).getContent();

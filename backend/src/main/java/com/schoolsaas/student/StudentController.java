@@ -25,6 +25,11 @@ import org.springframework.web.multipart.MultipartFile;
 /** CRUD élèves + import CSV — cahier-des-charges.md §7, ROADMAP.md 1.5. */
 @RestController
 @RequestMapping("/api/v1/students")
+// Créer, modifier, supprimer ou importer un élève reste au secrétariat et à la direction ;
+// la LECTURE est ouverte à tout le personnel, car la liste des élèves est ce sur quoi
+// travaillent la feuille d'appel, la saisie des notes, la discipline, la cantine, la
+// bibliothèque et le transport. Le périmètre reste borné à l'établissement par RLS
+// (docs/ARCHITECTURE.md ADR-001).
 @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'SECRETARY')")
 public class StudentController {
 
@@ -46,11 +51,13 @@ public class StudentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ApiResponse<StudentResponse> getById(@PathVariable Long id) {
         return ApiResponse.of(StudentResponse.from(studentService.getById(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ApiResponse<List<StudentResponse>> list(Pageable pageable) {
         Page<Student> page = studentService.list(pageable);
         List<StudentResponse> data = page.map(StudentResponse::from).getContent();

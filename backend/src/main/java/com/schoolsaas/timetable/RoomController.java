@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 /** CRUD salles — cahier-des-charges.md §9, ROADMAP.md 1.6. */
 @RestController
 @RequestMapping("/api/v1/rooms")
+// Gérer les salles reste à la direction ; les LIRE est nécessaire à l'enseignant, dont
+// l'emploi du temps afficherait sinon un identifiant technique à la place du nom de la salle.
 @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
 public class RoomController {
 
@@ -38,11 +40,13 @@ public class RoomController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER')")
     public ApiResponse<RoomResponse> getById(@PathVariable Long id) {
         return ApiResponse.of(RoomResponse.from(roomService.getById(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER')")
     public ApiResponse<List<RoomResponse>> list(Pageable pageable) {
         Page<Room> page = roomService.list(pageable);
         List<RoomResponse> data = page.map(RoomResponse::from).getContent();

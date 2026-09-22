@@ -61,5 +61,17 @@
 </div>
 
 @if (!loading() && entries().length === 0) {
-  <p class="empty-state">Aucun créneau pour l'instant.</p>
+  <div class="empty-state">
+    <span class="empty-title">Aucun créneau placé</span>
+    <span class="empty-hint"
+      >Un créneau réunit une classe, une matière, un enseignant, une salle et un horaire.
+      L'emploi du temps alimente la feuille d'appel et l'application mobile des
+      enseignants.</span
+    >
+    <span class="empty-actions">
+      <button mat-flat-button (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon> Ajouter un créneau
+      </button>
+    </span>
+  </div>
 }

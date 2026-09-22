@@ -53,5 +53,11 @@
 </div>
 
 @if (childrenIds().length === 0) {
-  <p class="empty-state">Aucun enfant associé pour l'instant.</p>
+  <div class="empty-state">
+    <span class="empty-title">Aucun enfant associé</span>
+    <span class="empty-hint"
+      >Tant qu'aucun élève n'est associé, ce parent ne verra ni notes ni absences depuis
+      l'application mobile. Utilisez le formulaire ci-dessus.</span
+    >
+  </div>
 }

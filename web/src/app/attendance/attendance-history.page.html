@@ -31,5 +31,11 @@
 </div>
 
 @if (changes().length === 0) {
-  <p class="empty-state">Aucune modification enregistrée pour cet enregistrement.</p>
+  <div class="empty-state">
+    <span class="empty-title">Aucune modification</span>
+    <span class="empty-hint"
+      >Cet appel n'a jamais été corrigé depuis sa saisie. Toute correction ultérieure sera
+      tracée ici, avec la valeur précédente.</span
+    >
+  </div>
 }

@@ -60,5 +60,14 @@
     }
   </button>
 } @else if (!loading() && selectedClassId() !== null) {
-  <p class="empty-state">Aucun élève actif dans cette classe.</p>
+  <div class="empty-state">
+    <span class="empty-title">Aucun élève actif dans cette classe</span>
+    <span class="empty-hint"
+      >L'appel porte sur les élèves inscrits et actifs. Inscrivez-les, ou vérifiez leur classe
+      depuis l'écran Élèves.</span
+    >
+    <span class="empty-actions">
+      <a mat-flat-button routerLink="/students"><mat-icon>group</mat-icon> Voir les élèves</a>
+    </span>
+  </div>
 }

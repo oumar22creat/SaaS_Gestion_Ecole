@@ -39,5 +39,16 @@
 </div>
 
 @if (!loading() && rooms().length === 0) {
-  <p class="empty-state">Aucune salle pour l'instant.</p>
+  <div class="empty-state">
+    <span class="empty-title">Aucune salle enregistrée</span>
+    <span class="empty-hint"
+      >Déclarez vos salles pour pouvoir les affecter aux créneaux : c'est ce qui permet de
+      détecter deux cours placés au même endroit à la même heure.</span
+    >
+    <span class="empty-actions">
+      <button mat-flat-button (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon> Ajouter une salle
+      </button>
+    </span>
+  </div>
 }

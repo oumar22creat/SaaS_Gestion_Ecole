@@ -55,5 +55,16 @@
 </div>
 
 @if (!loading() && exams().length === 0) {
-  <p class="empty-state">Aucune évaluation pour l'instant.</p>
+  <div class="empty-state">
+    <span class="empty-title">Aucune évaluation créée</span>
+    <span class="empty-hint"
+      >Créez une évaluation avant de saisir des notes : son coefficient détermine son poids dans
+      la moyenne de la matière, puis dans le bulletin.</span
+    >
+    <span class="empty-actions">
+      <button mat-flat-button (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon> Ajouter une évaluation
+      </button>
+    </span>
+  </div>
 }

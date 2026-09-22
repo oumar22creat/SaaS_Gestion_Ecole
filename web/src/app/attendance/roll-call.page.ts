@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../core/http-error.util';
 import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
@@ -44,6 +45,7 @@ interface RollCallRow {
     MatButtonModule,
     MatInputModule,
     MatIconModule,
+    RouterLink,
   ],
   templateUrl: './roll-call.page.html',
   styleUrl: './roll-call.page.scss',

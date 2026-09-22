@@ -2,10 +2,13 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular';
+import { extractErrorMessage } from '../core/http-error.util';
 import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
 import { Subject } from '../subject/subject.model';
 import { SubjectService } from '../subject/subject.service';
+import { Room } from './room.model';
+import { RoomService } from './room.service';
 import { DAYS_OF_WEEK, DayOfWeek, TimetableEntry } from './timetable-entry.model';
 import { TimetableEntryService } from './timetable-entry.service';
 
@@ -50,6 +53,10 @@ import { TimetableEntryService } from './timetable-entry.service';
         </ion-select>
       </ion-item>
 
+      @if (errorMessage()) {
+        <p class="flash-error">{{ errorMessage() }}</p>
+      }
+
       @if (totalShown() > 0) {
         @for (day of days; track day.value) {
           @if (entriesFor(day.value).length > 0) {
@@ -58,15 +65,15 @@ import { TimetableEntryService } from './timetable-entry.service';
               @for (entry of entriesFor(day.value); track entry.id) {
                 <div class="slot">
                   <span class="slot-time">
-                    <span class="slot-start">{{ entry.startTime }}</span>
-                    <span class="slot-end">{{ entry.endTime }}</span>
+                    <span class="slot-start">{{ hourMinute(entry.startTime) }}</span>
+                    <span class="slot-end">{{ hourMinute(entry.endTime) }}</span>
                   </span>
                   <span class="slot-body">
                     <span class="slot-subject">
-                      <ion-icon aria-hidden="true" name="calendar-outline"></ion-icon>
+                      <ion-icon aria-hidden="true" name="book-outline"></ion-icon>
                       {{ subjectName(entry.subjectId) }}
                     </span>
-                    <span class="slot-meta"><ion-icon aria-hidden="true" name="log-out-outline"></ion-icon> Salle #{{ entry.roomId }}</span>
+                    <span class="slot-meta"><ion-icon aria-hidden="true" name="business-outline"></ion-icon> {{ roomName(entry.roomId) }}</span>
                   </span>
                 </div>
               }
@@ -141,18 +148,30 @@ export class TimetablePage {
   private readonly timetableService = inject(TimetableEntryService);
   private readonly schoolClassService = inject(SchoolClassService);
   private readonly subjectService = inject(SubjectService);
+  private readonly roomService = inject(RoomService);
 
   protected readonly classes = signal<SchoolClass[]>([]);
   protected readonly entries = signal<TimetableEntry[]>([]);
   protected readonly subjects = signal<Subject[]>([]);
+  protected readonly rooms = signal<Room[]>([]);
+  protected readonly errorMessage = signal<string | null>(null);
   protected readonly days = DAYS_OF_WEEK;
   protected schoolClassId: number | null = null;
-  private readonly byId = computed(() => new Map(this.subjects().map((subject) => [subject.id, subject.name])));
+  private readonly subjectsById = computed(
+    () => new Map(this.subjects().map((subject) => [subject.id, subject.name])),
+  );
+  private readonly roomsById = computed(() => new Map(this.rooms().map((room) => [room.id, room.name])));
 
   constructor() {
-    void this.schoolClassService.list().then((classes) => this.classes.set(classes));
-    void this.timetableService.list().then((entries) => this.entries.set(entries));
-    void this.subjectService.list().then((subjects) => this.subjects.set(subjects));
+    // Un seul catch pour les quatre chargements : sans lui, un échec (session expirée, réseau
+    // coupé, droits refusés) affichait « Aucun créneau planifié », ce qui se lit comme une
+    // semaine vide alors que rien n'a pu être chargé.
+    void Promise.all([
+      this.schoolClassService.list().then((classes) => this.classes.set(classes)),
+      this.timetableService.list().then((entries) => this.entries.set(entries)),
+      this.subjectService.list().then((subjects) => this.subjects.set(subjects)),
+      this.roomService.list().then((rooms) => this.rooms.set(rooms)),
+    ]).catch((error) => this.errorMessage.set(extractErrorMessage(error)));
   }
 
   protected entriesFor(day: DayOfWeek): TimetableEntry[] {
@@ -168,6 +187,18 @@ export class TimetablePage {
   }
 
   protected subjectName(subjectId: number): string {
-    return this.byId().get(subjectId) ?? `Matière #${subjectId}`;
+    return this.subjectsById().get(subjectId) ?? `Matière #${subjectId}`;
+  }
+
+  protected roomName(roomId: number): string {
+    return this.roomsById().get(roomId) ?? `Salle #${roomId}`;
+  }
+
+  /**
+   * L'API renvoie l'heure en HH:mm:ss. Les secondes n'apportent rien sur un emploi du temps et
+   * faisaient déborder la colonne horaire, large de 56 px, sur deux lignes.
+   */
+  protected hourMinute(time: string): string {
+    return time.slice(0, 5);
   }
 }

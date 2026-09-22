@@ -9,6 +9,8 @@ import { provideRouter } from '@angular/router';
 import { provideIonicAngular } from '@ionic/angular/provide';
 import { addIcons } from 'ionicons';
 import {
+  bookOutline,
+  businessOutline,
   calculatorOutline,
   calendarOutline,
   checkmarkCircleOutline,
@@ -34,6 +36,8 @@ import { routes } from './app.routes';
  * Enregistré une seule fois ici ; aucun composant ne réimporte d'icône.
  */
 const APP_ICONS = {
+  'book-outline': bookOutline,
+  'business-outline': businessOutline,
   'calculator-outline': calculatorOutline,
   'calendar-outline': calendarOutline,
   'checkmark-circle-outline': checkmarkCircleOutline,

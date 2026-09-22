@@ -6,3 +6,7 @@
 *.pem
 *.key
 credentials.json
+
+# Outillage local de skills — jamais versionné
+.agents/
+skills-lock.json

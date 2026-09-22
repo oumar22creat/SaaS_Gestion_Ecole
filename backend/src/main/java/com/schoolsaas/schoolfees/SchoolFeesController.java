@@ -116,6 +116,16 @@ public class SchoolFeesController {
         return ApiResponse.of(schoolFeesService.paymentJournal(from, to));
     }
 
+    /**
+     * Relance par SMS les familles en retard de paiement. Réservée à qui encaisse : une
+     * relance engage l'établissement auprès des familles.
+     */
+    @PostMapping("/reminders")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCOUNTANT')")
+    public ApiResponse<Integer> remindOverdueFamilies(@RequestParam(required = false) Long schoolClassId) {
+        return ApiResponse.of(schoolFeesService.remindOverdueFamilies(schoolClassId));
+    }
+
     @GetMapping("/reporting")
     public ApiResponse<FeeReportingResponse> reporting(
             @RequestParam Long schoolClassId,

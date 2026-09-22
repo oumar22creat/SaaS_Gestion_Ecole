@@ -3,6 +3,7 @@ package com.schoolsaas.schoolfees;
 import com.schoolsaas.common.ApiException;
 import com.schoolsaas.common.NumberUtils;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
+import com.schoolsaas.notification.NotificationType;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.schoolfees.dto.FeeOutstandingEntry;
 import com.schoolsaas.schoolfees.dto.FeePaymentCreateRequest;
@@ -11,13 +12,16 @@ import com.schoolsaas.schoolfees.dto.FeeReportingResponse;
 import com.schoolsaas.schoolfees.dto.FeeScheduleCreateRequest;
 import com.schoolsaas.schoolfees.dto.FeeSummaryResponse;
 import com.schoolsaas.schoolfees.dto.StudentFeeInvoiceResponse;
+import com.schoolsaas.sms.SmsService;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -36,18 +40,21 @@ public class SchoolFeesService {
     private final FeePaymentRepository paymentRepository;
     private final SchoolClassRepository schoolClassRepository;
     private final StudentRepository studentRepository;
+    private final SmsService smsService;
 
     public SchoolFeesService(
             FeeScheduleRepository feeScheduleRepository,
             StudentFeeInvoiceRepository invoiceRepository,
             FeePaymentRepository paymentRepository,
             SchoolClassRepository schoolClassRepository,
-            StudentRepository studentRepository) {
+            StudentRepository studentRepository,
+            SmsService smsService) {
         this.feeScheduleRepository = feeScheduleRepository;
         this.invoiceRepository = invoiceRepository;
         this.paymentRepository = paymentRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.studentRepository = studentRepository;
+        this.smsService = smsService;
     }
 
     @Transactional
@@ -344,5 +351,30 @@ public class SchoolFeesService {
     /** Une facture peut survivre à la suppression d'une fiche élève ; l'impayé reste à recouvrer. */
     private static String studentName(Student student) {
         return student == null ? "Élève supprimé" : student.getFirstName() + " " + student.getLastName();
+    }
+
+    /**
+     * Relance par SMS les familles dont une échéance est dépassée. Déclenchée par le
+     * comptable depuis l'écran Frais scolaires, jamais automatiquement : une relance engage
+     * l'établissement auprès des familles, c'est une décision, pas un effet de bord.
+     *
+     * <p>Un seul message par élève, même s'il cumule plusieurs échéances en retard : recevoir
+     * trois SMS le même jour se lit comme du harcèlement, pas comme un rappel.
+     */
+    @Transactional
+    public int remindOverdueFamilies(Long schoolClassId) {
+        List<FeeOutstandingEntry> overdue = outstanding(schoolClassId, true);
+        Map<Long, List<FeeOutstandingEntry>> byStudent = overdue.stream()
+                .collect(Collectors.groupingBy(FeeOutstandingEntry::studentId));
+
+        byStudent.forEach((studentId, entries) -> {
+            long total = entries.stream().mapToLong(FeeOutstandingEntry::amountRemainingCents).sum();
+            String label = entries.size() == 1 ? entries.getFirst().scheduleLabel() : entries.size() + " échéances";
+            String message = entries.getFirst().studentName() + " : " + label + " — reste "
+                    + NumberFormat.getIntegerInstance(Locale.FRANCE).format(total).replace('\u202f', ' ')
+                    + " XOF à régler. Merci de vous rapprocher de l'établissement.";
+            smsService.notifyGuardians(studentId, NotificationType.ANNOUNCEMENT, message);
+        });
+        return byStudent.size();
     }
 }

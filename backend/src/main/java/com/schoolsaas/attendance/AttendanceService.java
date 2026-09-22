@@ -6,6 +6,7 @@ import com.schoolsaas.common.ApiException;
 import com.schoolsaas.notification.NotificationDispatcher;
 import com.schoolsaas.notification.NotificationType;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
+import com.schoolsaas.sms.SmsService;
 import com.schoolsaas.student.StudentRepository;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,17 +22,20 @@ public class AttendanceService {
     private final SchoolClassRepository schoolClassRepository;
     private final StudentRepository studentRepository;
     private final NotificationDispatcher notificationDispatcher;
+    private final SmsService smsService;
 
     public AttendanceService(
             AttendanceRecordRepository attendanceRecordRepository,
             AttendanceRecordChangeRepository attendanceRecordChangeRepository,
             SchoolClassRepository schoolClassRepository,
             StudentRepository studentRepository,
+            SmsService smsService,
             NotificationDispatcher notificationDispatcher) {
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.attendanceRecordChangeRepository = attendanceRecordChangeRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.studentRepository = studentRepository;
+        this.smsService = smsService;
         this.notificationDispatcher = notificationDispatcher;
     }
 
@@ -98,18 +102,38 @@ public class AttendanceService {
     }
 
     /**
-     * Notification au parent (cahier-des-charges.md §10). Aucun compte utilisateur destinataire
-     * réel (parents sans portail, voir ADR-010) : {@link NotificationDispatcher} loggue
-     * simplement l'intention, voir ROADMAP.md 2.5.
+     * Prévient les responsables (cahier-des-charges.md §10), par SMS : c'est le canal qui les
+     * atteint réellement, tous n'ayant pas de smartphone. La notification interne est
+     * conservée pour les comptes famille qui consultent le portail.
+     *
+     * <p>Le message nomme l'élève et sa classe. Il portait jusqu'ici son identifiant interne
+     * (« Élève 7 — ABSENT ») : illisible pour un parent, et inutilisable pour une famille de
+     * plusieurs enfants dans l'établissement.
      */
     private void notifyIfNeeded(AttendanceRecord record) {
-        if (record.getStatus() != AttendanceStatus.PRESENT && !record.isParentNotified()) {
-            notificationDispatcher.dispatch(
-                    NotificationType.ABSENCE,
-                    List.of(),
-                    "Absence signalée",
-                    "Élève " + record.getStudentId() + " — " + record.getStatus() + " le " + record.getDate());
-            record.setParentNotified(true);
+        if (record.getStatus() == AttendanceStatus.PRESENT || record.isParentNotified()) {
+            return;
         }
+        String message = guardianMessage(record);
+        notificationDispatcher.dispatch(NotificationType.ABSENCE, List.of(), "Absence signalée", message);
+        smsService.notifyGuardians(record.getStudentId(), NotificationType.ABSENCE, message);
+        record.setParentNotified(true);
+    }
+
+    private String guardianMessage(AttendanceRecord record) {
+        String name = studentRepository.findById(record.getStudentId())
+                .map(student -> student.getFirstName() + " " + student.getLastName())
+                .orElse("Votre enfant");
+        return name + " : " + statusLabel(record.getStatus()) + " le "
+                + record.getDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ".";
+    }
+
+    private static String statusLabel(AttendanceStatus status) {
+        return switch (status) {
+            case ABSENT -> "absence signalée";
+            case LATE -> "retard signalé";
+            case EARLY_DEPARTURE -> "départ anticipé signalé";
+            case PRESENT -> "présence";
+        };
     }
 }

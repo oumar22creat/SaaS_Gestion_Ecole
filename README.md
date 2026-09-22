@@ -111,6 +111,13 @@ Copier `backend/.env.example` vers `backend/.env` et ajuster :
 | `BILLING_PAST_DUE_GRACE_DAYS` / `BILLING_READ_ONLY_GRACE_DAYS` | Délais de grâce avant lecture seule puis suspension | `3` / `7` |
 | `STORAGE_LOCAL_PATH` | Répertoire de stockage local des documents uploadés (S3 réel non câblé) | `./storage` |
 | `FCM_CREDENTIALS_PATH` | Chemin du fichier de credentials Firebase | voir la console Firebase du projet |
+| `SMS_ENABLED` | Envoi réel des SMS aux familles | `false` : les envois sont journalisés, jamais facturés |
+| `SMS_PROVIDER` | Nom de l'opérateur, tracé sur chaque envoi pour le rapprochement de facture | `orange-mali`, `twilio`… |
+| `SMS_URL` | Point d'entrée de l'API de l'opérateur | fourni par l'opérateur |
+| `SMS_AUTH_HEADER` / `SMS_AUTH_VALUE` | En-tête d'authentification et sa valeur | `Authorization` / `Bearer …` — **ne jamais committer** |
+| `SMS_BODY_TEMPLATE` | Corps JSON envoyé, où `{to}`, `{text}` et `{from}` sont remplacés | `{"to":"{to}","message":"{text}"}` |
+| `SMS_SENDER_NAME` | Expéditeur affiché sur le téléphone, si l'opérateur l'autorise | `MonEcole` |
+| `SMS_DEFAULT_COUNTRY_CODE` | Indicatif ajouté aux numéros saisis en national | `+223` (Mali) |
 
 **Ne jamais committer de fichier `.env` réel.** Seul `.env.example` (sans valeurs sensibles)
 doit être versionné.
@@ -162,6 +169,33 @@ cd web && npm test
 # Mobile
 cd mobile && npm test
 ```
+
+## Envoi de SMS aux familles
+
+Au Mali, le SMS est le canal qui atteint réellement les parents : tous n'ont pas de
+smartphone, et l'application mobile suppose une connexion. C'est lui qui porte les alertes
+d'absence et les relances de paiement.
+
+**Aucun opérateur n'est branché par défaut** (`SMS_ENABLED=false`) : les envois sont
+journalisés en base avec le fournisseur `log`, sans rien facturer. L'écran ne prétend jamais
+qu'un message est parti alors qu'il ne l'est pas.
+
+Pour brancher un opérateur, il n'y a pas de code à écrire — la requête HTTP est décrite en
+configuration, ce qui couvre les opérateurs maliens comme les agrégateurs régionaux :
+
+```bash
+SMS_ENABLED=true
+SMS_PROVIDER=orange-mali
+SMS_URL=https://api.exemple-operateur.ml/v1/messages
+SMS_AUTH_HEADER=Authorization
+SMS_AUTH_VALUE="Bearer <jeton fourni par l'opérateur>"
+SMS_BODY_TEMPLATE='{"to":"{to}","from":"{from}","message":"{text}"}'
+SMS_SENDER_NAME=MonEcole
+```
+
+Chaque envoi est tracé dans la table `sms_messages`, réussi comme échoué : un SMS se facture
+à l'unité, et quand un parent affirme n'avoir rien reçu il faut pouvoir répondre autrement
+que « c'est parti, normalement ».
 
 ## Multi-tenant en local
 

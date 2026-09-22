@@ -41,6 +41,23 @@ app:
     login-per-account: ${RATE_LIMIT_LOGIN_PER_ACCOUNT:10}
     registration-per-ip: ${RATE_LIMIT_REGISTRATION_PER_IP:5}
     window: ${RATE_LIMIT_WINDOW:15m}
+  sms:
+    # Canal principal vers les familles au Mali : tous les parents n'ont pas de smartphone.
+    # Désactivé tant qu'aucun opérateur n'est branché — les envois sont alors seulement
+    # journalisés, jamais facturés à l'établissement.
+    enabled: ${SMS_ENABLED:false}
+    provider: ${SMS_PROVIDER:log}
+    url: ${SMS_URL:}
+    auth-header: ${SMS_AUTH_HEADER:Authorization}
+    auth-value: ${SMS_AUTH_VALUE:}
+    # Corps JSON envoyé au fournisseur : {to}, {text} et {from} y sont remplacés. Décrire la
+    # requête ici plutôt qu'en code évite d'écrire un adaptateur par opérateur avant de savoir
+    # lequel sera retenu.
+    body-template: ${SMS_BODY_TEMPLATE:{"to":"{to}","from":"{from}","message":"{text}"}}
+    sender-name: ${SMS_SENDER_NAME:}
+    # Mali. Les numéros sont saisis au guichet en national, les opérateurs les attendent en
+    # international.
+    default-country-code: ${SMS_DEFAULT_COUNTRY_CODE:+223}
   mobile-money:
     # Vide par défaut : le callback échoue fermé tant que l'opérateur n'est pas branché.
     callback-secret: ${MOBILE_MONEY_CALLBACK_SECRET:}

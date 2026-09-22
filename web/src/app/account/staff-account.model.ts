@@ -17,8 +17,9 @@ export interface StaffAccountRequest {
 }
 
 /**
- * Rôles attribuables depuis un établissement. Élève et Parent en sont absents : aucun
- * portail ne leur est construit (ADR-010), le backend refuse d'ailleurs ces rôles.
+ * Rôles attribuables depuis cet écran. Élève et Parent en sont absents : ces comptes se
+ * créent depuis la fiche de l'élève ou du parent, pour rester rattachés à elle (le backend
+ * refuse d'ailleurs ces rôles ici, et refuse aussi d'y convertir un compte existant).
  */
 export const ASSIGNABLE_ROLES: { value: string; label: string; hint: string }[] = [
   {
@@ -33,6 +34,22 @@ export const ASSIGNABLE_ROLES: { value: string; label: string; hint: string }[] 
   { value: 'ADMIN', label: 'Administration', hint: 'Accès complet, y compris les comptes' },
 ];
 
+/**
+ * Rôles non attribuables ici mais bien présents dans la liste des comptes : sans eux, la
+ * colonne Rôle afficherait la valeur brute de l'API pour les comptes de famille.
+ */
+const FAMILY_ROLE_LABELS: Record<string, string> = {
+  PARENT: 'Parent',
+  STUDENT: 'Élève',
+};
+
 export function roleLabelFor(role: string): string {
-  return ASSIGNABLE_ROLES.find((entry) => entry.value === role)?.label ?? role;
+  return (
+    ASSIGNABLE_ROLES.find((entry) => entry.value === role)?.label ?? FAMILY_ROLE_LABELS[role] ?? role
+  );
+}
+
+/** Un compte de famille se gère depuis la fiche de l'élève ou du parent, pas d'ici. */
+export function isFamilyAccount(account: { role: string }): boolean {
+  return account.role in FAMILY_ROLE_LABELS;
 }

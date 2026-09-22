@@ -1,5 +1,5 @@
 <div class="page-header">
-  <h1><mat-icon class="page-icon" aria-hidden="true">badge</mat-icon>Comptes du personnel</h1>
+  <h1><mat-icon class="page-icon" aria-hidden="true">badge</mat-icon>Comptes</h1>
   <button mat-flat-button (click)="openCreateDialog()">
     <mat-icon>person_add</mat-icon>
     Créer un compte
@@ -7,8 +7,9 @@
 </div>
 
 <p class="page-subtitle">
-  Chaque membre du personnel se connecte avec son e-mail et le sous-domaine de l'établissement. Le
-  rôle choisi détermine les écrans auxquels il accède.
+  Chaque compte se connecte avec son e-mail et le sous-domaine de l'établissement. Le rôle
+  détermine les écrans auxquels il accède. Les comptes élève et parent apparaissent ici mais se
+  créent depuis la fiche de l'élève ou du parent.
 </p>
 
 @if (errorMessage()) {
@@ -61,10 +62,12 @@
             <mat-icon>more_vert</mat-icon>
           </button>
           <mat-menu #menu="matMenu">
-            <button mat-menu-item [matMenuTriggerFor]="roleMenu">
-              <mat-icon>badge</mat-icon>
-              Changer le rôle
-            </button>
+            @if (!isFamilyAccount(account)) {
+              <button mat-menu-item [matMenuTriggerFor]="roleMenu">
+                <mat-icon>badge</mat-icon>
+                Changer le rôle
+              </button>
+            }
             <button mat-menu-item (click)="openResetPassword(account)">
               <mat-icon>lock_reset</mat-icon>
               Réinitialiser le mot de passe

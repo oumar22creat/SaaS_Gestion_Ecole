@@ -8,7 +8,7 @@ import { confirmAction } from '../core/confirm-dialog.component';
 import { extractErrorMessage } from '../core/http-error.util';
 import { ResetPasswordDialog } from './reset-password.dialog';
 import { StaffAccountFormDialog } from './staff-account-form.dialog';
-import { ASSIGNABLE_ROLES, StaffAccount, roleLabelFor } from './staff-account.model';
+import { ASSIGNABLE_ROLES, StaffAccount, isFamilyAccount, roleLabelFor } from './staff-account.model';
 import { StaffAccountService } from './staff-account.service';
 
 @Component({
@@ -26,6 +26,7 @@ export class StaffAccountListPage {
   protected readonly columns = ['name', 'email', 'role', 'status', 'actions'];
   protected readonly roles = ASSIGNABLE_ROLES;
   protected readonly roleLabelFor = roleLabelFor;
+  protected readonly isFamilyAccount = isFamilyAccount;
 
   constructor() {
     void this.refresh();

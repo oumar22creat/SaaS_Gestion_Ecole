@@ -2,6 +2,7 @@ package com.schoolsaas.student;
 
 import com.schoolsaas.common.ApiException;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
+import com.schoolsaas.schoolyear.SchoolYearService;
 import com.schoolsaas.student.dto.StudentImportResult;
 import com.schoolsaas.student.dto.StudentRequest;
 import java.io.BufferedReader;
@@ -24,10 +25,15 @@ public class StudentService {
 
     private final StudentRepository studentRepository;
     private final SchoolClassRepository schoolClassRepository;
+    private final SchoolYearService schoolYearService;
 
-    public StudentService(StudentRepository studentRepository, SchoolClassRepository schoolClassRepository) {
+    public StudentService(
+            StudentRepository studentRepository,
+            SchoolClassRepository schoolClassRepository,
+            SchoolYearService schoolYearService) {
         this.studentRepository = studentRepository;
         this.schoolClassRepository = schoolClassRepository;
+        this.schoolYearService = schoolYearService;
     }
 
     @Transactional
@@ -36,9 +42,11 @@ public class StudentService {
         if (studentRepository.existsByStudentNumber(request.studentNumber())) {
             throw ApiException.conflict("STUDENT_NUMBER_ALREADY_USED", "Ce matricule est déjà utilisé");
         }
-        return studentRepository.save(new Student(
+        Student student = studentRepository.save(new Student(
                 request.studentNumber(), request.firstName(), request.lastName(),
                 request.birthDate(), request.gender(), request.schoolClassId()));
+        recordEnrollment(student);
+        return student;
     }
 
     public Student getById(Long id) {
@@ -64,7 +72,21 @@ public class StudentService {
         student.setBirthDate(request.birthDate());
         student.setGender(request.gender());
         student.setSchoolClassId(request.schoolClassId());
+        recordEnrollment(student);
         return student;
+    }
+
+    /**
+     * Trace l'inscription sur l'année active, pour que la classe d'un élève ne soit plus une
+     * donnée sans passé. Silencieux si aucune année n'est active : créer un élève ne doit pas
+     * échouer parce que la direction n'a pas encore ouvert son année scolaire.
+     */
+    private void recordEnrollment(Student student) {
+        if (student.getSchoolClassId() == null) {
+            return;
+        }
+        schoolYearService.active().ifPresent(year ->
+                schoolYearService.enrollInto(year, student.getId(), student.getSchoolClassId()));
     }
 
     @Transactional

@@ -246,6 +246,25 @@ class UserCreationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.data.role").value("ACCOUNTANT"));
     }
 
+    /**
+     * Le rôle d'un compte de famille vient de son rattachement à une fiche élève ou parent.
+     * Le promouvoir enseignant laisserait la fiche rattachée à un compte sans portail, et la
+     * famille sans accès à l'application mobile.
+     */
+    @Test
+    void familyAccountRoleCannotBeChanged() throws Exception {
+        Tenant tenant = createTenant();
+        createUser(tenant, "admin-f@ecole.example", "Sup3rSecret!", Role.ADMIN);
+        String adminToken = loginAs(tenant, "admin-f@ecole.example", "Sup3rSecret!");
+        User parent = createUser(tenant, "parent-f@ecole.example", "Secret123!", Role.PARENT);
+
+        put(tenant, adminToken, "/api/v1/users/" + parent.getId() + "/role",
+                new com.schoolsaas.auth.dto.UpdateUserRequest.RoleChange(Role.TEACHER), 422);
+
+        assertThat(userRepository.findById(parent.getId()).orElseThrow().getRole())
+                .isEqualTo(Role.PARENT);
+    }
+
     /** Sans ce garde-fou, un administrateur peut se couper l'accès sans aucun recours. */
     @Test
     void administratorCannotLockThemselvesOut() throws Exception {

@@ -32,15 +32,17 @@ public class UserService {
      * pas un paramètre : il est posé par le contexte de requête sur l'entité tenant-scopée,
      * donc un Administrateur ne peut pas créer de compte chez un autre établissement.
      *
-     * <p>Seuls les rôles du personnel sont attribuables : aucun portail élève/parent n'est
-     * construit (ADR-010), un compte ÉLÈVE ou PARENT n'aurait donc aucun écran où aller.
+     * <p>Seuls les rôles du personnel sont attribuables ici. Un compte ÉLÈVE ou PARENT ne
+     * s'obtient que via {@link #createFamilyAccount}, c'est-à-dire adossé à une fiche
+     * `students` ou `parents` : sans ce rattachement, le portail mobile n'aurait aucun élève
+     * à afficher.
      */
     @Transactional
     public User create(CreateUserRequest request) {
         if (!STAFF_ROLES.contains(request.role())) {
             throw ApiException.unprocessable(
                     "ROLE_NOT_ASSIGNABLE",
-                    "Ce rôle ne dispose pas d'accès à l'application (voir ADR-010)");
+                    "Un compte élève ou parent se crée depuis la fiche de l'élève ou du parent");
         }
         // L'unicité de l'e-mail est par établissement (cahier-des-charges.md §21) : la requête
         // ci-dessous est déjà restreinte au tenant courant par le filtre Hibernate global.
@@ -98,15 +100,27 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    /**
+     * Change le rôle d'un membre du personnel. Un compte de famille (ÉLÈVE, PARENT) est refusé
+     * dans les deux sens : son rôle n'est pas une décision d'administration mais la
+     * conséquence de son rattachement à une fiche `students` ou `parents` (voir
+     * {@link #createFamilyAccount}). Le promouvoir enseignant laisserait la fiche pointer vers
+     * un compte qui n'a plus de portail, et la famille sans accès.
+     */
     @Transactional
     public User changeRole(Long id, Role role) {
         if (!STAFF_ROLES.contains(role)) {
             throw ApiException.unprocessable(
                     "ROLE_NOT_ASSIGNABLE",
-                    "Ce rôle ne dispose pas d'accès à l'application (voir ADR-010)");
+                    "Un compte élève ou parent se crée depuis la fiche de l'élève ou du parent");
         }
         User user = getById(id);
         refuseActingOnSelf(user, "Vous ne pouvez pas changer votre propre rôle");
+        if (!STAFF_ROLES.contains(user.getRole())) {
+            throw ApiException.unprocessable(
+                    "FAMILY_ACCOUNT_ROLE_FIXED",
+                    "Le rôle d'un compte élève ou parent ne peut pas être modifié");
+        }
         user.setRole(role);
         return userRepository.save(user);
     }

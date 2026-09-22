@@ -1,0 +1,310 @@
+<div class="page-header">
+  <h1><mat-icon class="page-icon" aria-hidden="true">payments</mat-icon>Frais scolaires</h1>
+  <div class="header-actions">
+    <mat-form-field appearance="outline" class="class-filter">
+      <mat-label>Classe</mat-label>
+      <mat-select [(ngModel)]="schoolClassId" (ngModelChange)="load()">
+        <mat-option value="ALL">Tout l'établissement</mat-option>
+        @for (schoolClass of classes(); track schoolClass.id) {
+          <mat-option [value]="schoolClass.id">{{ schoolClass.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+</div>
+
+@if (errorMessage()) {
+  <p class="flash-error">{{ errorMessage() }}</p>
+}
+
+@if (summary(); as stats) {
+  <div class="stat-grid">
+    <article class="stat-card">
+      <span class="stat-label">Facturé</span>
+      <span class="stat-value">{{ money(stats.invoicedCents) }}</span>
+      <span class="stat-hint">{{ stats.invoiceCount }} facture(s) émise(s)</span>
+    </article>
+    <article class="stat-card">
+      <span class="stat-label">Encaissé</span>
+      <span class="stat-value">{{ money(stats.collectedCents) }}</span>
+      <span class="stat-hint">
+        @if (stats.collectionRate !== null) {
+          {{ stats.collectionRate }} % recouvré
+        } @else {
+          Aucune facture émise
+        }
+      </span>
+    </article>
+    <article class="stat-card">
+      <span class="stat-label">Reste à recouvrer</span>
+      <span class="stat-value">{{ money(stats.outstandingCents) }}</span>
+      <span class="stat-hint">{{ stats.invoiceCount - stats.settledInvoiceCount }} facture(s) non soldée(s)</span>
+    </article>
+    <article class="stat-card" [class.stat-alert]="stats.overdueCents > 0">
+      <span class="stat-label">En retard</span>
+      <span class="stat-value">{{ money(stats.overdueCents) }}</span>
+      <span class="stat-hint">
+        {{ stats.lateStudentCount }} élève(s) concerné(s) · échéance dépassée
+      </span>
+    </article>
+  </div>
+
+  @if (stats.collectionByMethod.length > 0) {
+    <p class="method-breakdown">
+      <span class="method-title">Encaissements par moyen de paiement</span>
+      @for (line of stats.collectionByMethod; track line.method) {
+        <span class="method-chip">
+          {{ methodLabel(line.method) }} : <strong>{{ money(line.amountCents) }}</strong>
+          ({{ line.paymentCount }})
+        </span>
+      }
+    </p>
+  }
+}
+
+<mat-tab-group>
+  <!-- ------------------------------------------------------------------ Recouvrement -->
+  <mat-tab label="Recouvrement">
+    <div class="tab-body">
+      <div class="filters-row">
+        <mat-checkbox [(ngModel)]="onlyOverdue" (ngModelChange)="loadOutstanding()">
+          N'afficher que les retards
+        </mat-checkbox>
+        <span class="filters-summary">
+          {{ outstanding().length }} ligne(s) · {{ money(outstandingTotal()) }} à recouvrer
+        </span>
+      </div>
+
+      @if (loading()) {
+        <p class="loading-state" role="status" aria-label="Chargement du recouvrement"></p>
+      } @else if (outstanding().length === 0) {
+        <div class="empty-state">
+          <span class="empty-title">
+            @if (onlyOverdue) {
+              Aucun retard de paiement
+            } @else {
+              Aucun impayé
+            }
+          </span>
+          <span class="empty-hint">
+            @if (onlyOverdue) {
+              Toutes les échéances arrivées à terme sont réglées. Décochez le filtre pour voir
+              aussi les factures dont l'échéance n'est pas encore passée.
+            } @else {
+              Émettez une échéance depuis l'onglet « Échéances », puis facturez-la : chaque élève
+              actif de la classe reçoit alors sa facture.
+            }
+          </span>
+        </div>
+      } @else {
+        <div class="table-scroll">
+          <table mat-table [dataSource]="outstanding()" class="data-table">
+            <ng-container matColumnDef="student">
+              <th mat-header-cell *matHeaderCellDef>Élève</th>
+              <td mat-cell *matCellDef="let entry">
+                <span class="cell-strong">{{ entry.studentName }}</span>
+                <span class="cell-muted">{{ entry.studentNumber }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="className">
+              <th mat-header-cell *matHeaderCellDef>Classe</th>
+              <td mat-cell *matCellDef="let entry">{{ entry.className }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="schedule">
+              <th mat-header-cell *matHeaderCellDef>Échéance</th>
+              <td mat-cell *matCellDef="let entry">
+                <span class="cell-strong">{{ entry.scheduleLabel }}</span>
+                <span class="cell-muted">{{ entry.dueDate | date: 'dd/MM/yyyy' }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Reste à payer</th>
+              <td mat-cell *matCellDef="let entry">
+                <span class="cell-strong">{{ money(entry.amountRemainingCents) }}</span>
+                @if (entry.amountPaidCents > 0) {
+                  <span class="cell-muted">déjà versé {{ money(entry.amountPaidCents) }}</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="late">
+              <th mat-header-cell *matHeaderCellDef>Retard</th>
+              <td mat-cell *matCellDef="let entry">
+                @if (entry.overdue) {
+                  <span class="status-badge status-off">{{ lateLabel(entry.daysLate) }}</span>
+                } @else {
+                  <span class="status-badge status-ok">Dans les délais</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let entry">
+                <button mat-button (click)="openPayment(entry)">
+                  <mat-icon>payments</mat-icon> Encaisser
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="outstandingColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: outstandingColumns"></tr>
+          </table>
+        </div>
+      }
+    </div>
+  </mat-tab>
+
+  <!-- ---------------------------------------------------------------------- Échéances -->
+  <mat-tab label="Échéances">
+    <div class="tab-body">
+      @if (schoolClassId === 'ALL') {
+        <div class="empty-state">
+          <span class="empty-title">Choisissez une classe</span>
+          <span class="empty-hint">
+            Une échéance porte sur une classe : son montant et sa date de règlement peuvent
+            différer d'un niveau à l'autre. Sélectionnez une classe en haut de l'écran.
+          </span>
+        </div>
+      } @else {
+        <form class="stack-form" [formGroup]="scheduleForm" (ngSubmit)="createSchedule()">
+          <mat-form-field appearance="outline">
+            <mat-label>Intitulé</mat-label>
+            <input matInput formControlName="label" />
+            <mat-hint>Ce que les familles liront : « Scolarité 1er trimestre », « Inscription ».</mat-hint>
+            <mat-error>{{ fieldError(scheduleForm.controls.label) }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Montant par élève (XOF)</mat-label>
+            <input matInput type="number" formControlName="amountCents" />
+            <mat-error>{{ fieldError(scheduleForm.controls.amountCents) }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Date limite de règlement</mat-label>
+            <input matInput [matDatepicker]="duePicker" formControlName="dueDate" />
+            <mat-datepicker-toggle matIconSuffix [for]="duePicker" />
+            <mat-datepicker #duePicker />
+            <mat-hint>Passé cette date, les factures non soldées apparaissent en retard.</mat-hint>
+            <mat-error>{{ fieldError(scheduleForm.controls.dueDate) }}</mat-error>
+          </mat-form-field>
+
+          <button mat-flat-button type="submit" [disabled]="creating()">
+            <mat-icon>add</mat-icon> Ajouter l'échéance
+          </button>
+        </form>
+
+        @if (schedules().length === 0) {
+          <div class="empty-state">
+            <span class="empty-title">Aucune échéance pour cette classe</span>
+            <span class="empty-hint">
+              Déclarez d'abord ce que la classe doit payer et quand. Vous pourrez ensuite
+              facturer, ce qui crée une facture par élève actif.
+            </span>
+          </div>
+        } @else {
+          <div class="table-scroll">
+            <table mat-table [dataSource]="schedules()" class="data-table">
+              <ng-container matColumnDef="label">
+                <th mat-header-cell *matHeaderCellDef>Intitulé</th>
+                <td mat-cell *matCellDef="let schedule">{{ schedule.label }}</td>
+              </ng-container>
+              <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef>Montant</th>
+                <td mat-cell *matCellDef="let schedule">{{ money(schedule.amountCents) }}</td>
+              </ng-container>
+              <ng-container matColumnDef="due">
+                <th mat-header-cell *matHeaderCellDef>Échéance</th>
+                <td mat-cell *matCellDef="let schedule">
+                  {{ schedule.dueDate | date: 'dd/MM/yyyy' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let schedule">
+                  <button mat-button (click)="generate(schedule)">
+                    <mat-icon>receipt_long</mat-icon> Facturer les élèves
+                  </button>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="scheduleColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: scheduleColumns"></tr>
+            </table>
+          </div>
+        }
+      }
+    </div>
+  </mat-tab>
+
+  <!-- ----------------------------------------------------------------- Journal de caisse -->
+  <mat-tab label="Journal de caisse">
+    <div class="tab-body">
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="date-filter">
+          <mat-label>Du</mat-label>
+          <input matInput [matDatepicker]="fromPicker" [(ngModel)]="journalFrom" (ngModelChange)="loadJournal()" />
+          <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+          <mat-datepicker #fromPicker />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="date-filter">
+          <mat-label>Au</mat-label>
+          <input matInput [matDatepicker]="toPicker" [(ngModel)]="journalTo" (ngModelChange)="loadJournal()" />
+          <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+          <mat-datepicker #toPicker />
+        </mat-form-field>
+        <span class="filters-summary">
+          {{ journal().length }} règlement(s) · {{ money(journalTotal()) }} encaissé(s)
+        </span>
+      </div>
+
+      @if (journal().length === 0) {
+        <div class="empty-state">
+          <span class="empty-title">Aucun règlement sur cette période</span>
+          <span class="empty-hint">
+            Ce journal liste les encaissements dans l'ordre où ils ont été reçus : c'est lui
+            qu'on relit pour rapprocher la caisse en fin de journée.
+          </span>
+        </div>
+      } @else {
+        <div class="table-scroll">
+          <table mat-table [dataSource]="journal()" class="data-table">
+            <ng-container matColumnDef="paidAt">
+              <th mat-header-cell *matHeaderCellDef>Date</th>
+              <td mat-cell *matCellDef="let line">{{ line.paidAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="student">
+              <th mat-header-cell *matHeaderCellDef>Élève</th>
+              <td mat-cell *matCellDef="let line">
+                <span class="cell-strong">{{ line.studentName }}</span>
+                <span class="cell-muted">{{ line.className }} · {{ line.scheduleLabel }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Montant</th>
+              <td mat-cell *matCellDef="let line">{{ money(line.amountCents) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="method">
+              <th mat-header-cell *matHeaderCellDef>Moyen</th>
+              <td mat-cell *matCellDef="let line">
+                <span class="pill">{{ methodLabel(line.method) }}</span>
+                @if (line.recordedByUserId === null) {
+                  <span class="cell-muted">encaissement automatique</span>
+                }
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="reference">
+              <th mat-header-cell *matHeaderCellDef>Référence</th>
+              <td mat-cell *matCellDef="let line">{{ line.reference || '—' }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="journalColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: journalColumns"></tr>
+          </table>
+        </div>
+      }
+    </div>
+  </mat-tab>
+</mat-tab-group>

@@ -1,0 +1,96 @@
+.class-filter {
+  min-width: 220px;
+}
+
+/* Les champs Material occupent 100 % de leur conteneur par défaut : dans une barre de
+ * filtres, deux dates se retrouvaient empilées au lieu d'encadrer une période. */
+.date-filter {
+  width: 180px;
+  flex: 0 0 auto;
+}
+
+.tab-body {
+  padding-top: var(--space-4);
+}
+
+/* Les cartes d'indicateurs du tableau de bord sont des <mat-card> stylées dans son propre
+ * composant. Ici ce sont de simples <article> : la mise en forme est reprise à l'identique
+ * pour que les mêmes chiffres se lisent de la même façon d'un écran à l'autre. */
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+.stat-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-display);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.stat-hint {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+}
+
+/* Le montant en retard est la seule alerte de l'écran : il doit se distinguer des trois
+ * autres indicateurs sans les faire paraître anodins. */
+.stat-card.stat-alert {
+  border-color: var(--color-danger, #b3261e);
+}
+
+.stat-card.stat-alert .stat-value {
+  color: var(--color-danger, #b3261e);
+}
+
+.method-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-4);
+}
+
+.method-title {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+
+.method-chip {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-size: var(--font-size-small);
+}
+
+.filters-summary {
+  margin-inline-start: auto;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+
+/* Deux informations par cellule : l'identifiant lisible, puis le détail qui le qualifie. */
+.cell-strong {
+  display: block;
+}
+
+.cell-muted {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+}

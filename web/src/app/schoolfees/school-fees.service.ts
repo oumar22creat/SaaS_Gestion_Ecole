@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/api-response.model';
 
+const BASE_URL = `${environment.apiUrl}/school-fees`;
+
 export interface FeeSchedule {
   id: number;
   schoolClassId: number;
@@ -22,11 +24,68 @@ export interface FeeInvoice {
   status: string;
 }
 
-export interface FeeReporting {
-  totalDueCents: number;
-  totalPaidCents: number;
-  totalOutstandingCents: number;
-  unpaidInvoices: FeeInvoice[];
+/** Une facture non soldée, telle que l'écran la présente : un élève nommé, une dette datée. */
+export interface FeeOutstanding {
+  invoiceId: number;
+  studentId: number;
+  studentName: string;
+  studentNumber: string;
+  schoolClassId: number | null;
+  className: string;
+  scheduleLabel: string;
+  dueDate: string | null;
+  amountDueCents: number;
+  amountPaidCents: number;
+  amountRemainingCents: number;
+  status: string;
+  overdue: boolean;
+  daysLate: number;
+}
+
+export interface FeeCollectionByMethod {
+  method: string;
+  amountCents: number;
+  paymentCount: number;
+}
+
+export interface FeeSummary {
+  invoicedCents: number;
+  collectedCents: number;
+  outstandingCents: number;
+  overdueCents: number;
+  collectionRate: number | null;
+  invoiceCount: number;
+  settledInvoiceCount: number;
+  overdueInvoiceCount: number;
+  lateStudentCount: number;
+  currency: string;
+  collectionByMethod: FeeCollectionByMethod[];
+}
+
+export interface FeePaymentJournalEntry {
+  paymentId: number;
+  invoiceId: number;
+  studentId: number | null;
+  studentName: string;
+  className: string;
+  scheduleLabel: string;
+  amountCents: number;
+  method: string;
+  reference: string | null;
+  recordedByUserId: number | null;
+  paidAt: string;
+}
+
+/** Moyens de paiement acceptés à la saisie — miroir de l'énumération FeePaymentMethod. */
+export const PAYMENT_METHODS: { value: string; label: string }[] = [
+  { value: 'CASH', label: 'Espèces' },
+  { value: 'MOBILE_MONEY', label: 'Mobile Money' },
+  { value: 'BANK_TRANSFER', label: 'Virement bancaire' },
+  { value: 'OTHER', label: 'Autre' },
+];
+
+export function paymentMethodLabel(method: string): string {
+  return PAYMENT_METHODS.find((entry) => entry.value === method)?.label ?? method;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,7 +94,7 @@ export class SchoolFeesService {
 
   async listSchedules(schoolClassId: number): Promise<FeeSchedule[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<FeeSchedule[]>>(`${environment.apiUrl}/school-fees/schedules`, {
+      this.http.get<ApiResponse<FeeSchedule[]>>(`${BASE_URL}/schedules`, {
         params: { schoolClassId },
       }),
     );
@@ -49,7 +108,7 @@ export class SchoolFeesService {
     dueDate: string,
   ): Promise<FeeSchedule> {
     const response = await firstValueFrom(
-      this.http.post<ApiResponse<FeeSchedule>>(`${environment.apiUrl}/school-fees/schedules`, {
+      this.http.post<ApiResponse<FeeSchedule>>(`${BASE_URL}/schedules`, {
         schoolClassId,
         label,
         amountCents,
@@ -62,27 +121,53 @@ export class SchoolFeesService {
   async generateInvoices(scheduleId: number): Promise<FeeInvoice[]> {
     const response = await firstValueFrom(
       this.http.post<ApiResponse<FeeInvoice[]>>(
-        `${environment.apiUrl}/school-fees/schedules/${scheduleId}/generate-invoices`,
+        `${BASE_URL}/schedules/${scheduleId}/generate-invoices`,
         {},
       ),
     );
     return response.data;
   }
 
-  async recordPayment(invoiceId: number, amountCents: number, method: string): Promise<void> {
+  async recordPayment(
+    invoiceId: number,
+    amountCents: number,
+    method: string,
+    reference: string | null,
+  ): Promise<void> {
     await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/school-fees/invoices/${invoiceId}/payments`, {
+      this.http.post(`${BASE_URL}/invoices/${invoiceId}/payments`, {
         amountCents,
         method,
-        reference: null,
+        reference,
       }),
     );
   }
 
-  async reporting(schoolClassId: number, from: string, to: string): Promise<FeeReporting> {
+  /** Sans `schoolClassId`, la vue porte sur tout l'établissement. */
+  async outstanding(schoolClassId: number | null, onlyOverdue: boolean): Promise<FeeOutstanding[]> {
+    const params: Record<string, string> = { onlyOverdue: String(onlyOverdue) };
+    if (schoolClassId !== null) {
+      params['schoolClassId'] = String(schoolClassId);
+    }
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<FeeReporting>>(`${environment.apiUrl}/school-fees/reporting`, {
-        params: { schoolClassId, from, to },
+      this.http.get<ApiResponse<FeeOutstanding[]>>(`${BASE_URL}/outstanding`, { params }),
+    );
+    return response.data;
+  }
+
+  async summary(schoolClassId: number | null): Promise<FeeSummary> {
+    const params: Record<string, string> =
+      schoolClassId === null ? {} : { schoolClassId: String(schoolClassId) };
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<FeeSummary>>(`${BASE_URL}/summary`, { params }),
+    );
+    return response.data;
+  }
+
+  async paymentJournal(from: string, to: string): Promise<FeePaymentJournalEntry[]> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<FeePaymentJournalEntry[]>>(`${BASE_URL}/payments`, {
+        params: { from, to },
       }),
     );
     return response.data;

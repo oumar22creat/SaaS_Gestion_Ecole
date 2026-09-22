@@ -143,13 +143,6 @@ a {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
-
-  /* Material réserve ~20px sous chaque champ pour les messages d'erreur : on absorbe
-   * cet espace dans le padding de la barre au lieu de le masquer (l'erreur reste
-   * affichée si le champ est invalide). */
-  .mat-mdc-form-field {
-    margin-bottom: calc(-1 * var(--space-5));
-  }
 }
 
 .stack-form {
@@ -472,6 +465,35 @@ body .mat-mdc-tab-header {
 body .mat-mdc-dialog-surface {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-3);
+}
+
+/* Material réserve sous chaque champ la hauteur d'UNE ligne de message et positionne le
+ * bloc d'erreur en absolu par-dessus. Nos libellés sont en français et passent souvent sur
+ * deux lignes (surtout en boîte de dialogue, plus étroite) : la deuxième ligne recouvrait
+ * alors le champ suivant. On laisse la zone de message grandir avec son contenu, tout en
+ * gardant la hauteur d'une ligne réservée pour qu'aucune erreur n'écarte la page en
+ * apparaissant (docs/DESIGN.md §6).
+ *
+ * Fait en CSS plutôt qu'avec MAT_FORM_FIELD_DEFAULT_OPTIONS : importer ce jeton dans
+ * app.config.ts tire @angular/material/form-field dans le bundle initial (+92 ko brut,
+ * +18 ko transférés), alors qu'il n'est sinon chargé qu'avec les routes qui l'utilisent. */
+body .mat-mdc-form-field-subscript-wrapper {
+  min-height: 16px;
+}
+
+body .mat-mdc-form-field-hint-wrapper,
+body .mat-mdc-form-field-error-wrapper {
+  position: static;
+}
+
+body .mat-mdc-form-field-bottom-align::before {
+  content: unset;
+}
+
+/* Sans cela, le libellé flottant d'un champ se pose exactement sur la ligne de message du
+ * champ précédent et les deux se confondent. */
+body .mat-mdc-dialog-content .mat-mdc-form-field {
+  margin-bottom: var(--space-2);
 }
 
 body .mat-mdc-menu-panel,

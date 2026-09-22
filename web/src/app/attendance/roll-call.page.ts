@@ -1,3 +1,4 @@
+import { FRENCH_DATE_LOCALE } from '../core/date-locale.provider';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -5,7 +6,6 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
@@ -40,13 +40,13 @@ interface RollCallRow {
     MatFormFieldModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatNativeDateModule,
     MatButtonToggleModule,
     MatButtonModule,
     MatInputModule,
     MatIconModule,
     RouterLink,
   ],
+  providers: [FRENCH_DATE_LOCALE],
   templateUrl: './roll-call.page.html',
   styleUrl: './roll-call.page.scss',
 })

@@ -1,3 +1,4 @@
+import { FRENCH_DATE_LOCALE } from '../core/date-locale.provider';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -5,7 +6,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { extractErrorMessage } from '../core/http-error.util';
@@ -26,10 +26,10 @@ import { fieldError } from '../core/form-error.util';
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatNativeDateModule,
     MatButtonModule,
     MatProgressSpinnerModule,
   ],
+  providers: [FRENCH_DATE_LOCALE],
   templateUrl: './exam-form.dialog.html',
   styleUrl: './exam-form.dialog.scss',
 })

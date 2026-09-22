@@ -9,6 +9,8 @@ import com.schoolsaas.grade.ExamRepository;
 import com.schoolsaas.grade.Grade;
 import com.schoolsaas.grade.GradeRepository;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
+import com.schoolsaas.schoolfees.SchoolFeesService;
+import com.schoolsaas.schoolfees.dto.FeeSummaryResponse;
 import com.schoolsaas.statistics.dto.DashboardSummaryResponse;
 import com.schoolsaas.student.StudentRepository;
 import com.schoolsaas.teacher.TeacherRepository;
@@ -20,7 +22,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Tableau de bord établissement — cahier-des-charges.md §18, ROADMAP.md 1.9. Statistiques
- * "de base" seulement (effectifs, taux de présence, moyennes) : pas de ventilation par
+ * "de base" seulement (effectifs, taux de présence, moyennes, recouvrement des frais) : pas
+ * de ventilation par
  * classe/matière (déjà couverte par les endpoints du module grade, voir ADR-013), pas
  * d'évolution temporelle ni de rapports exportables (hors périmètre 1.9, voir ADR-014).
  */
@@ -33,6 +36,7 @@ public class DashboardService {
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final GradeRepository gradeRepository;
     private final ExamRepository examRepository;
+    private final SchoolFeesService schoolFeesService;
 
     public DashboardService(
             StudentRepository studentRepository,
@@ -40,13 +44,15 @@ public class DashboardService {
             SchoolClassRepository schoolClassRepository,
             AttendanceRecordRepository attendanceRecordRepository,
             GradeRepository gradeRepository,
-            ExamRepository examRepository) {
+            ExamRepository examRepository,
+            SchoolFeesService schoolFeesService) {
         this.studentRepository = studentRepository;
         this.teacherRepository = teacherRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.gradeRepository = gradeRepository;
         this.examRepository = examRepository;
+        this.schoolFeesService = schoolFeesService;
     }
 
     public DashboardSummaryResponse summary(LocalDate from, LocalDate to) {
@@ -55,7 +61,17 @@ public class DashboardService {
         long classCount = schoolClassRepository.count();
 
         return new DashboardSummaryResponse(
-                studentCount, teacherCount, classCount, from, to, attendanceRate(from, to), averageGrade());
+                studentCount, teacherCount, classCount, from, to, attendanceRate(from, to), averageGrade(), finance());
+    }
+
+    /**
+     * Recouvrement des frais de scolarité, sur tout l'établissement. Renvoie null tant
+     * qu'aucune facture n'a été émise : afficher « 0 % recouvré » à un établissement qui n'a
+     * simplement rien facturé serait une fausse alerte.
+     */
+    private FeeSummaryResponse finance() {
+        FeeSummaryResponse summary = schoolFeesService.summary(null);
+        return summary.invoiceCount() == 0 ? null : summary;
     }
 
     private Double attendanceRate(LocalDate from, LocalDate to) {

@@ -101,7 +101,7 @@ Copier `backend/.env.example` vers `backend/.env` et ajuster :
 | `RATE_LIMIT_LOGIN_PER_IP` / `RATE_LIMIT_LOGIN_PER_ACCOUNT` | Tentatives de connexion tolérées par fenêtre | `20` / `10` |
 | `RATE_LIMIT_REGISTRATION_PER_IP` | Inscriptions d'établissement tolérées par fenêtre | `5` |
 | `RATE_LIMIT_WINDOW` | Durée de la fenêtre | `15m` |
-| `CORS_ALLOWED_ORIGINS` | Origine(s) Web autorisées à appeler l'API (dev/staging uniquement) | `http://localhost:4200` |
+| `CORS_ALLOWED_ORIGINS` | Origine(s) autorisées à appeler l'API depuis un navigateur (dev/staging uniquement) | `http://localhost:4200,http://localhost:8100` (Web et Mobile en `ionic serve`) |
 | `STRIPE_SECRET_KEY` | Clé API Stripe (mode test en local) | à récupérer sur le dashboard Stripe |
 | `STRIPE_WEBHOOK_SECRET` | Secret de vérification de signature du webhook Stripe | dashboard Stripe > Webhooks |
 | `STRIPE_CHECKOUT_SUCCESS_URL` / `STRIPE_CHECKOUT_CANCEL_URL` | Redirections après paiement Stripe Checkout | `http://localhost:4200/billing/success` |

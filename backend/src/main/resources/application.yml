@@ -50,9 +50,11 @@ app:
     refresh-token-ttl-days: 30
   cors:
     # Origines autorisées à appeler l'API depuis un navigateur. Utile seulement en dev/
-    # staging (Web sur une origine différente du backend, ex. `ng serve` sur :4200) — en
-    # production, Nginx sert Web+API sur le même domaine, voir README.md "Environnements".
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+    # staging (Web et Mobile servis sur une origine différente du backend : `ng serve` sur
+    # :4200, `ionic serve` sur :8100) — en production, Nginx sert Web+API sur le même
+    # domaine et l'app Mobile compilée n'est pas soumise au CORS, voir README.md
+    # "Environnements".
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8100}
   billing:
     # Cycle de vie de l'abonnement (cahier-des-charges.md §4.2) — valeurs par défaut à
     # confirmer avec le porteur de projet, voir docs/ARCHITECTURE.md ADR-009.

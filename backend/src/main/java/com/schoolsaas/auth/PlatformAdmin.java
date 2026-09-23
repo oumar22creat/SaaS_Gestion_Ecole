@@ -47,6 +47,10 @@ public class PlatformAdmin {
         this.createdAt = Instant.now();
     }
 
+    public java.time.Instant getCreatedAt() {
+        return createdAt;
+    }
+
     public Long getId() {
         return id;
     }

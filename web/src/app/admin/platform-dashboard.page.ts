@@ -1,21 +1,20 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { formatMoney } from '../core/money.util';
-import { AuthTokenService } from '../auth/auth-token.service';
 import { PlatformDashboardService, PlatformSummary } from './platform-dashboard.service';
 
 @Component({
   selector: 'app-platform-dashboard-page',
-  imports: [MatCardModule, MatButtonModule, MatIconModule],
+  imports: [MatCardModule, MatIconModule],
   template: `
     <div class="page-header">
-      <h1><mat-icon class="page-icon" aria-hidden="true">shield</mat-icon>Console plateforme</h1>
-      <button mat-stroked-button (click)="logout()"><mat-icon>logout</mat-icon> Déconnexion</button>
+      <h1><mat-icon class="page-icon" aria-hidden="true">monitoring</mat-icon>Vue d'ensemble</h1>
     </div>
-    <p class="page-subtitle">Vue consolidée des établissements abonnés (hors données élèves).</p>
+    <p class="page-subtitle">
+      Situation consolidée des établissements abonnés. Aucune donnée scolaire n'y figure :
+      élèves, parents et notes restent invisibles depuis cette console.
+    </p>
 
     @if (summary(); as data) {
       <div class="stat-grid">
@@ -35,9 +34,34 @@ import { PlatformDashboardService, PlatformSummary } from './platform-dashboard.
           <p class="metric-value">{{ money(data.mrrCents, data.currency) }}</p>
         </mat-card>
         <mat-card class="metric">
+          <mat-icon class="metric-icon" aria-hidden="true">savings</mat-icon>
+          <p class="metric-label">Revenu annualisé</p>
+          <p class="metric-value">{{ money(data.arrCents, data.currency) }}</p>
+        </mat-card>
+        <mat-card class="metric">
           <mat-icon class="metric-icon" aria-hidden="true">trending_down</mat-icon>
           <p class="metric-label">Taux d'attrition</p>
           <p class="metric-value">{{ data.churnRate !== null ? data.churnRate + ' %' : '—' }}</p>
+        </mat-card>
+        <mat-card class="metric">
+          <mat-icon class="metric-icon" aria-hidden="true">trending_up</mat-icon>
+          <p class="metric-label">Taux de conversion</p>
+          <p class="metric-value">
+            {{ data.conversionRate !== null ? data.conversionRate + ' %' : '—' }}
+          </p>
+        </mat-card>
+        <mat-card class="metric" [class.metric-alert]="data.suspendedCount > 0">
+          <mat-icon class="metric-icon" aria-hidden="true">pause_circle</mat-icon>
+          <p class="metric-label">Accès restreints</p>
+          <p class="metric-value">{{ data.readOnlyCount + data.suspendedCount }}</p>
+          <p class="metric-detail">
+            {{ data.readOnlyCount }} en lecture seule · {{ data.suspendedCount }} suspendus
+          </p>
+        </mat-card>
+        <mat-card class="metric">
+          <mat-icon class="metric-icon" aria-hidden="true">cancel</mat-icon>
+          <p class="metric-label">Résiliés</p>
+          <p class="metric-value">{{ data.cancelledCount }}</p>
         </mat-card>
         <mat-card class="metric">
           <mat-icon class="metric-icon" aria-hidden="true">notifications</mat-icon>
@@ -72,6 +96,18 @@ import { PlatformDashboardService, PlatformSummary } from './platform-dashboard.
       letter-spacing: var(--letter-spacing-caps);
       text-transform: uppercase;
     }
+    /* Un accès restreint est la seule alerte de l'écran : il doit se distinguer sans faire
+     * paraître les autres indicateurs anodins. */
+    .metric.metric-alert {
+      border: 1px solid var(--color-danger, #b3261e);
+    }
+
+    .metric-detail {
+      margin: var(--space-1) 0 0;
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-caption);
+    }
+
     .metric-value {
       margin: var(--space-1) 0 0;
       font-family: var(--font-family-display);
@@ -83,8 +119,6 @@ import { PlatformDashboardService, PlatformSummary } from './platform-dashboard.
 })
 export class PlatformDashboardPage {
   private readonly dashboardService = inject(PlatformDashboardService);
-  private readonly authTokenService = inject(AuthTokenService);
-  private readonly router = inject(Router);
   protected readonly summary = signal<PlatformSummary | null>(null);
   protected readonly money = formatMoney;
 
@@ -92,8 +126,4 @@ export class PlatformDashboardPage {
     void this.dashboardService.summary().then((summary) => this.summary.set(summary));
   }
 
-  async logout(): Promise<void> {
-    this.authTokenService.clear();
-    await this.router.navigateByUrl('/admin/login');
-  }
 }

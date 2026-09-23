@@ -135,7 +135,29 @@ export const routes: Routes = [
   {
     path: 'admin',
     loadComponent: () =>
-      import('./admin/platform-dashboard.page').then((m) => m.PlatformDashboardPage),
+      import('./admin/platform-shell.component').then((m) => m.PlatformShellComponent),
     canActivate: [superAdminGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./admin/platform-dashboard.page').then((m) => m.PlatformDashboardPage),
+      },
+      {
+        path: 'tenants',
+        loadComponent: () =>
+          import('./admin/platform-tenants.page').then((m) => m.PlatformTenantsPage),
+      },
+      {
+        path: 'accounts',
+        loadComponent: () =>
+          import('./admin/platform-accounts.page').then((m) => m.PlatformAccountsPage),
+      },
+      {
+        path: 'journal',
+        loadComponent: () =>
+          import('./admin/platform-journal.page').then((m) => m.PlatformJournalPage),
+      },
+    ],
   },
 ];

@@ -94,6 +94,16 @@ public class Subscription {
         touch();
     }
 
+    /**
+     * Prolongation d'essai décidée depuis la console plateforme (geste commercial). Le cycle
+     * automatique ne repousse jamais cette date de lui-même : seule une décision humaine le
+     * fait.
+     */
+    public void setTrialEndsAt(Instant trialEndsAt) {
+        this.trialEndsAt = trialEndsAt;
+        touch();
+    }
+
     public Instant getTrialEndsAt() {
         return trialEndsAt;
     }

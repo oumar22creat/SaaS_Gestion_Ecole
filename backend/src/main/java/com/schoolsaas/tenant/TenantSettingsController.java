@@ -8,9 +8,17 @@ import com.schoolsaas.tenant.dto.ReportCardTemplateUpdateRequest;
 import com.schoolsaas.tenant.dto.TenantBrandingResponse;
 import com.schoolsaas.tenant.dto.TenantBrandingUpdateRequest;
 import jakarta.validation.Valid;
+import java.time.Duration;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,9 +35,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class TenantSettingsController {
 
     private final TenantSettingsService tenantSettingsService;
+    private final TenantLogoService tenantLogoService;
 
-    public TenantSettingsController(TenantSettingsService tenantSettingsService) {
+    public TenantSettingsController(
+            TenantSettingsService tenantSettingsService, TenantLogoService tenantLogoService) {
         this.tenantSettingsService = tenantSettingsService;
+        this.tenantLogoService = tenantLogoService;
     }
 
     @GetMapping("/branding")
@@ -65,5 +76,45 @@ public class TenantSettingsController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
     public ApiResponse<CustomDomainResponse> updateCustomDomain(@Valid @RequestBody CustomDomainUpdateRequest request) {
         return ApiResponse.of(CustomDomainResponse.from(tenantSettingsService.updateCustomDomain(request)));
+    }
+
+    /**
+     * Logo de l'établissement, utilisé sur les documents officiels (bulletin, certificat,
+     * reçu). Téléversé et non repris de {@code logoUrl} : les PDF sont fabriqués par le
+     * serveur, et suivre une adresse saisie par un administrateur en ferait un relais vers
+     * n'importe quelle machine du réseau interne.
+     */
+    @PostMapping(value = "/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
+    public ApiResponse<TenantBrandingResponse> uploadLogo(@RequestParam("file") MultipartFile file) {
+        return ApiResponse.of(TenantBrandingResponse.from(tenantLogoService.upload(file)));
+    }
+
+    @DeleteMapping("/logo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
+    public ApiResponse<TenantBrandingResponse> removeLogo() {
+        return ApiResponse.of(TenantBrandingResponse.from(tenantLogoService.remove()));
+    }
+
+    /**
+     * Sert le logo téléversé. Public comme {@code GET /branding} : Web et Mobile l'affichent
+     * avant toute connexion, sur l'écran d'accueil du sous-domaine.
+     */
+    @GetMapping("/logo")
+    public ResponseEntity<byte[]> logo() {
+        Tenant tenant = tenantSettingsService.currentTenant();
+        return tenantLogoService.content(tenant)
+                .map(content -> ResponseEntity.ok()
+                        .contentType(contentTypeOf(content))
+                        // Un logo change rarement ; sans cache, chaque écran le retélécharge.
+                        .cacheControl(CacheControl.maxAge(Duration.ofHours(1)).cachePublic())
+                        .body(content))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /** Le type est déduit de la signature du fichier, la seule source fiable à la relecture. */
+    private static MediaType contentTypeOf(byte[] content) {
+        boolean png = content.length > 4 && (content[0] & 0xFF) == 0x89 && content[1] == 'P';
+        return png ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
     }
 }

@@ -81,7 +81,12 @@ public class SecurityConfig {
                         // Appelé par Web/Mobile au démarrage, avant toute connexion, pour
                         // appliquer le branding du tenant résolu par sous-domaine/en-tête (voir
                         // TenantResolver/TenantSettingsController, ROADMAP.md 3.7/ADR-028).
-                        .requestMatchers(HttpMethod.GET, "/api/v1/tenants/current/branding")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/tenants/current/branding",
+                                // Le logo accompagne le branding : il s'affiche sur l'écran de
+                                // connexion, donc avant toute authentification.
+                                "/api/v1/tenants/current/logo")
                         .permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling

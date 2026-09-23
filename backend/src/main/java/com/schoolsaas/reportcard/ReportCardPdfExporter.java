@@ -1,6 +1,7 @@
 package com.schoolsaas.reportcard;
 
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.paperwork.SchoolBrandedPdf;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.subject.Subject;
@@ -32,7 +33,7 @@ public class ReportCardPdfExporter {
 
     public byte[] export(
             ReportCard reportCard, List<ReportCardEntry> entries, Student student, SchoolClass schoolClass,
-            Map<Long, Subject> subjectsById, Tenant tenant) {
+            Map<Long, Subject> subjectsById, Tenant tenant, byte[] logo) {
         try (PDDocument document = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
             document.addPage(page);
@@ -41,12 +42,14 @@ public class ReportCardPdfExporter {
             PDType1Font bold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
 
             try (PDPageContentStream content = new PDPageContentStream(document, page)) {
-                float y = page.getMediaBox().getHeight() - MARGIN;
-
-                String header = tenant.getReportCardHeader() != null ? tenant.getReportCardHeader() : tenant.getName();
-                y = writeLine(content, bold, 16, MARGIN, y, header);
-                y = writeLine(content, bold, 13, MARGIN, y, "Bulletin scolaire — " + reportCard.getPeriodLabel());
-                y -= LINE_HEIGHT / 2;
+                // En-tête commun aux trois documents officiels : un bulletin, un certificat et
+                // un reçu du même établissement doivent se ressembler.
+                float y = SchoolBrandedPdf.drawHeader(
+                        document, content, tenant,
+                        logo,
+                        "BULLETIN SCOLAIRE — " + reportCard.getPeriodLabel().toUpperCase(java.util.Locale.FRENCH),
+                        page.getMediaBox().getWidth(),
+                        page.getMediaBox().getHeight());
                 y = writeLine(content, regular, 11, MARGIN, y,
                         "Élève : " + student.getFirstName() + " " + student.getLastName() + " (" + student.getStudentNumber() + ")");
                 y = writeLine(content, regular, 11, MARGIN, y, "Classe : " + schoolClass.getName());
@@ -77,20 +80,19 @@ public class ReportCardPdfExporter {
                 y = writeLine(content, regular, 11, MARGIN, y,
                         "Absences : " + reportCard.getAbsenceCount() + " · Retards : " + reportCard.getLateCount());
 
-                if (reportCard.getGeneralComment() != null) {
+                // Un libellé suivi de rien fait paraître le document inachevé : une
+                // appréciation vide vaut mieux absente qu'annoncée.
+                if (isFilled(reportCard.getGeneralComment())) {
                     y -= LINE_HEIGHT / 2;
                     y = writeLine(content, bold, 11, MARGIN, y, "Appréciation générale :");
                     y = writeLine(content, regular, 11, MARGIN, y, reportCard.getGeneralComment());
                 }
-                if (reportCard.getCouncilDecision() != null) {
+                if (isFilled(reportCard.getCouncilDecision())) {
                     y -= LINE_HEIGHT / 2;
                     y = writeLine(content, bold, 11, MARGIN, y, "Décision du conseil de classe :");
                     y = writeLine(content, regular, 11, MARGIN, y, reportCard.getCouncilDecision());
                 }
-                if (tenant.getReportCardLegalMentions() != null) {
-                    y -= LINE_HEIGHT;
-                    writeLine(content, regular, 8, MARGIN, y, tenant.getReportCardLegalMentions());
-                }
+                SchoolBrandedPdf.drawLegalMentions(content, tenant);
             }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -105,6 +107,10 @@ public class ReportCardPdfExporter {
      * « 3e sur 42 ». Un élève sans moyenne n'est pas classé : le dire explicitement évite de
      * laisser croire à une erreur de calcul.
      */
+    private static boolean isFilled(String value) {
+        return value != null && !value.isBlank();
+    }
+
     private static String formatRank(ReportCard reportCard) {
         if (reportCard.getRankInClass() == null || reportCard.getClassSize() == null) {
             return "non classé";

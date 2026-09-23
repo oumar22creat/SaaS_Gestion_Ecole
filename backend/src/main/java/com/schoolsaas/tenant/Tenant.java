@@ -35,6 +35,14 @@ public class Tenant {
     @Column(name = "logo_url")
     private String logoUrl;
 
+    /**
+     * Clé du logo téléversé, lu localement pour fabriquer les PDF. Distinct de
+     * {@code logoUrl}, que le navigateur va chercher lui-même : le serveur ne suit jamais une
+     * adresse saisie par un administrateur.
+     */
+    @Column(name = "logo_storage_key")
+    private String logoStorageKey;
+
     // Couleurs par défaut = design tokens du produit (docs/DESIGN.md §2), identiques au
     // DEFAULT de la colonne côté base (V53__align_tenant_default_branding_with_design_tokens.sql).
     @Column(name = "primary_color", nullable = false)
@@ -91,6 +99,14 @@ public class Tenant {
 
     public void setLogoUrl(String logoUrl) {
         this.logoUrl = logoUrl;
+    }
+
+    public String getLogoStorageKey() {
+        return logoStorageKey;
+    }
+
+    public void setLogoStorageKey(String logoStorageKey) {
+        this.logoStorageKey = logoStorageKey;
     }
 
     public String getPrimaryColor() {

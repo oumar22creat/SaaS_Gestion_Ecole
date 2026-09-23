@@ -13,6 +13,7 @@ import com.schoolsaas.subject.Subject;
 import com.schoolsaas.subject.SubjectRepository;
 import com.schoolsaas.tenant.Tenant;
 import com.schoolsaas.tenant.TenantContext;
+import com.schoolsaas.tenant.TenantLogoService;
 import com.schoolsaas.tenant.TenantRepository;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -42,6 +43,7 @@ public class ReportCardController {
 
     private final ReportCardService reportCardService;
     private final ReportCardPdfExporter pdfExporter;
+    private final TenantLogoService tenantLogoService;
     private final StudentService studentService;
     private final SchoolClassService schoolClassService;
     private final SubjectRepository subjectRepository;
@@ -50,12 +52,14 @@ public class ReportCardController {
     public ReportCardController(
             ReportCardService reportCardService,
             ReportCardPdfExporter pdfExporter,
+            TenantLogoService tenantLogoService,
             StudentService studentService,
             SchoolClassService schoolClassService,
             SubjectRepository subjectRepository,
             TenantRepository tenantRepository) {
         this.reportCardService = reportCardService;
         this.pdfExporter = pdfExporter;
+        this.tenantLogoService = tenantLogoService;
         this.studentService = studentService;
         this.schoolClassService = schoolClassService;
         this.subjectRepository = subjectRepository;
@@ -119,7 +123,8 @@ public class ReportCardController {
                 studentService.getById(reportCard.getStudentId()),
                 schoolClassService.getById(reportCard.getSchoolClassId()),
                 subjectsById,
-                tenant);
+                tenant,
+                tenantLogoService.content(tenant).orElse(null));
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)

@@ -15,6 +15,7 @@ import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
 import com.schoolsaas.tenant.Tenant;
 import com.schoolsaas.tenant.TenantContext;
+import com.schoolsaas.tenant.TenantLogoService;
 import com.schoolsaas.tenant.TenantRepository;
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -46,6 +47,7 @@ public class PaperworkService {
     private final FeePaymentRepository feePaymentRepository;
     private final TenantRepository tenantRepository;
     private final SchoolDocumentPdfWriter pdfWriter;
+    private final TenantLogoService tenantLogoService;
 
     public PaperworkService(
             StudentRepository studentRepository,
@@ -55,7 +57,8 @@ public class PaperworkService {
             FeeScheduleRepository feeScheduleRepository,
             FeePaymentRepository feePaymentRepository,
             TenantRepository tenantRepository,
-            SchoolDocumentPdfWriter pdfWriter) {
+            SchoolDocumentPdfWriter pdfWriter,
+            TenantLogoService tenantLogoService) {
         this.studentRepository = studentRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.schoolYearService = schoolYearService;
@@ -64,6 +67,7 @@ public class PaperworkService {
         this.feePaymentRepository = feePaymentRepository;
         this.tenantRepository = tenantRepository;
         this.pdfWriter = pdfWriter;
+        this.tenantLogoService = tenantLogoService;
     }
 
     /**
@@ -104,6 +108,7 @@ public class PaperworkService {
 
         return pdfWriter.write(
                 tenant,
+                tenantLogoService.content(tenant).orElse(null),
                 "CERTIFICAT DE SCOLARITÉ",
                 body,
                 SchoolDocumentPdfWriter.issuedAt(DEFAULT_PLACE, LocalDate.now()));
@@ -148,6 +153,7 @@ public class PaperworkService {
 
         return pdfWriter.write(
                 tenant,
+                tenantLogoService.content(tenant).orElse(null),
                 "REÇU DE RÈGLEMENT",
                 body,
                 SchoolDocumentPdfWriter.issuedAt(DEFAULT_PLACE, LocalDate.now()));

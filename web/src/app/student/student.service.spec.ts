@@ -30,10 +30,10 @@ describe('StudentService', () => {
     const promise = service.create(request);
     const req = httpMock.expectOne(`${environment.apiUrl}/students`);
     expect(req.request.method).toBe('POST');
-    // Le serveur renvoie en plus l'état de l'accès au portail, à false pour une fiche neuve.
-    req.flush({ data: { id: 1, ...request, active: true, hasPortalAccess: false } });
+    // Le serveur renvoie en plus l'adresse de connexion au portail, nulle pour une fiche neuve.
+    req.flush({ data: { id: 1, ...request, active: true, portalEmail: null } });
 
-    expect(await promise).toEqual({ id: 1, ...request, active: true, hasPortalAccess: false });
+    expect(await promise).toEqual({ id: 1, ...request, active: true, portalEmail: null });
   });
 
   it('imports a CSV file', async () => {

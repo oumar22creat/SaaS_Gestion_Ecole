@@ -42,8 +42,9 @@
     <ng-container matColumnDef="portalAccess">
       <th mat-header-cell *matHeaderCellDef>Accès mobile</th>
       <td mat-cell *matCellDef="let parent">
-        @if (parent.hasPortalAccess) {
+        @if (parent.portalEmail) {
           <span class="status-badge status-ok">Ouvert</span>
+          <span class="cell-muted">{{ parent.portalEmail }}</span>
         } @else {
           <span class="status-badge status-off">Aucun</span>
         }
@@ -53,7 +54,7 @@
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let parent">
-        @if (parent.hasPortalAccess) {
+        @if (parent.portalEmail) {
           <button
             mat-icon-button
             (click)="resetFamilyPassword(parent)"

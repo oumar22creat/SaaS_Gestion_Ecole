@@ -1,11 +1,13 @@
 package com.schoolsaas.student;
 
 import com.schoolsaas.common.ApiResponse;
+import com.schoolsaas.portal.FamilyAccountLookup;
 import com.schoolsaas.student.dto.StudentImportResult;
 import com.schoolsaas.student.dto.StudentRequest;
 import com.schoolsaas.student.dto.StudentResponse;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -34,15 +36,17 @@ import org.springframework.web.multipart.MultipartFile;
 public class StudentController {
 
     private final StudentService studentService;
+    private final FamilyAccountLookup familyAccountLookup;
 
-    public StudentController(StudentService studentService) {
+    public StudentController(StudentService studentService, FamilyAccountLookup familyAccountLookup) {
         this.studentService = studentService;
+        this.familyAccountLookup = familyAccountLookup;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<StudentResponse> create(@Valid @RequestBody StudentRequest request) {
-        return ApiResponse.of(StudentResponse.from(studentService.create(request)));
+        return ApiResponse.of(withPortalEmail(studentService.create(request)));
     }
 
     @PostMapping("/import")
@@ -53,25 +57,32 @@ public class StudentController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ApiResponse<StudentResponse> getById(@PathVariable Long id) {
-        return ApiResponse.of(StudentResponse.from(studentService.getById(id)));
+        return ApiResponse.of(withPortalEmail(studentService.getById(id)));
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ApiResponse<List<StudentResponse>> list(Pageable pageable, @RequestParam(required = false) String search) {
         Page<Student> page = studentService.list(pageable, search);
-        List<StudentResponse> data = page.map(StudentResponse::from).getContent();
+        Map<Long, String> portalEmails = familyAccountLookup.emailsOf(
+                page.getContent().stream().map(Student::getUserId).toList());
+        List<StudentResponse> data = page.map(record -> StudentResponse.from(record, portalEmails.get(record.getUserId()))).getContent();
         return ApiResponse.of(data, new ApiResponse.PageMeta(page.getNumber() + 1, page.getSize(), page.getTotalElements()));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<StudentResponse> update(@PathVariable Long id, @Valid @RequestBody StudentRequest request) {
-        return ApiResponse.of(StudentResponse.from(studentService.update(id, request)));
+        return ApiResponse.of(withPortalEmail(studentService.update(id, request)));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deactivate(@PathVariable Long id) {
         studentService.deactivate(id);
+    }
+
+    /** Complète la réponse avec l'adresse de connexion du compte famille, s'il en existe un. */
+    private StudentResponse withPortalEmail(Student record) {
+        return StudentResponse.from(record, familyAccountLookup.emailOf(record.getUserId()));
     }
 }

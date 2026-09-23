@@ -69,11 +69,16 @@ export interface FamilyAccessDialogData {
               les notes, absences, emploi du temps et frais de ses enfants
             }
             depuis l'application mobile.
+          } @else if (data.suggestedEmail) {
+            <!-- Deux phrases entières plutôt qu'un fragment conditionnel : coller une
+                 ponctuation à un bloc @if fait dépendre le rendu des retours à la ligne du
+                 gabarit, et un espace parasite apparaissait avant la virgule. -->
+            Nouveau mot de passe de <strong>{{ data.personName }}</strong
+            >, qui se connecte avec <strong>{{ data.suggestedEmail }}</strong
+            >. L'identifiant de connexion ne change pas.
           } @else {
             Nouveau mot de passe de <strong>{{ data.personName }}</strong
-            >@if (data.suggestedEmail) {
-              , qui se connecte avec <strong>{{ data.suggestedEmail }}</strong>
-            }. L'identifiant de connexion ne change pas.
+            >. L'identifiant de connexion ne change pas.
           }
         </p>
 

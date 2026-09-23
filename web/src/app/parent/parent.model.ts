@@ -4,8 +4,12 @@ export interface Parent {
   lastName: string;
   email: string | null;
   phone: string | null;
-  /** Vrai si un compte de connexion au portail mobile est ouvert pour ce parent. */
-  hasPortalAccess: boolean;
+  /**
+   * Adresse de connexion au portail mobile, ou null si aucun accès n'est ouvert. Distincte de
+   * `email`, qui est le contact saisi sur la fiche : rien n'oblige à avoir ouvert l'accès avec
+   * la même adresse.
+   */
+  portalEmail: string | null;
 }
 
 export interface ParentRequest {

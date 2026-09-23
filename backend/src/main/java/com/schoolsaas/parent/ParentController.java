@@ -1,10 +1,12 @@
 package com.schoolsaas.parent;
 
 import com.schoolsaas.common.ApiResponse;
+import com.schoolsaas.portal.FamilyAccountLookup;
 import com.schoolsaas.parent.dto.ParentRequest;
 import com.schoolsaas.parent.dto.ParentResponse;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -27,34 +29,41 @@ import org.springframework.web.bind.annotation.RestController;
 public class ParentController {
 
     private final ParentService parentService;
+    private final FamilyAccountLookup familyAccountLookup;
     private final StudentParentLinkService studentParentLinkService;
 
-    public ParentController(ParentService parentService, StudentParentLinkService studentParentLinkService) {
+    public ParentController(
+            ParentService parentService,
+            StudentParentLinkService studentParentLinkService,
+            FamilyAccountLookup familyAccountLookup) {
         this.parentService = parentService;
         this.studentParentLinkService = studentParentLinkService;
+        this.familyAccountLookup = familyAccountLookup;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ParentResponse> create(@Valid @RequestBody ParentRequest request) {
-        return ApiResponse.of(ParentResponse.from(parentService.create(request)));
+        return ApiResponse.of(withPortalEmail(parentService.create(request)));
     }
 
     @GetMapping("/{id}")
     public ApiResponse<ParentResponse> getById(@PathVariable Long id) {
-        return ApiResponse.of(ParentResponse.from(parentService.getById(id)));
+        return ApiResponse.of(withPortalEmail(parentService.getById(id)));
     }
 
     @GetMapping
     public ApiResponse<List<ParentResponse>> list(Pageable pageable, @RequestParam(required = false) String search) {
         Page<Parent> page = parentService.list(pageable, search);
-        List<ParentResponse> data = page.map(ParentResponse::from).getContent();
+        Map<Long, String> portalEmails = familyAccountLookup.emailsOf(
+                page.getContent().stream().map(Parent::getUserId).toList());
+        List<ParentResponse> data = page.map(record -> ParentResponse.from(record, portalEmails.get(record.getUserId()))).getContent();
         return ApiResponse.of(data, new ApiResponse.PageMeta(page.getNumber() + 1, page.getSize(), page.getTotalElements()));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<ParentResponse> update(@PathVariable Long id, @Valid @RequestBody ParentRequest request) {
-        return ApiResponse.of(ParentResponse.from(parentService.update(id, request)));
+        return ApiResponse.of(withPortalEmail(parentService.update(id, request)));
     }
 
     @DeleteMapping("/{id}")
@@ -66,5 +75,10 @@ public class ParentController {
     @GetMapping("/{parentId}/students")
     public ApiResponse<List<Long>> studentsOf(@PathVariable Long parentId) {
         return ApiResponse.of(studentParentLinkService.listStudentIdsForParent(parentId));
+    }
+
+    /** Complète la réponse avec l'adresse de connexion du compte famille, s'il en existe un. */
+    private ParentResponse withPortalEmail(Parent record) {
+        return ParentResponse.from(record, familyAccountLookup.emailOf(record.getUserId()));
     }
 }

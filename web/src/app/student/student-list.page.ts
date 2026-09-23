@@ -135,7 +135,7 @@ export class StudentListPage {
           target: 'student',
           recordId: student.id,
           personName: `${student.firstName} ${student.lastName}`,
-          suggestedEmail: null,
+          suggestedEmail: student.portalEmail,
         },
       })
       .afterClosed()

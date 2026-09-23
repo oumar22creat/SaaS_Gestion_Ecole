@@ -7,8 +7,12 @@ export interface Student {
   gender: string | null;
   schoolClassId: number | null;
   active: boolean;
-  /** Vrai si un compte de connexion au portail mobile est ouvert pour cet élève. */
-  hasPortalAccess: boolean;
+  /**
+   * Adresse de connexion au portail mobile, ou null si aucun accès n'est ouvert. Sa présence
+   * tient lieu d'indicateur d'accès et porte l'information que le secrétariat dicte à une
+   * famille qui a perdu son mot de passe.
+   */
+  portalEmail: string | null;
 }
 
 export interface StudentRequest {

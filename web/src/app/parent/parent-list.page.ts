@@ -103,7 +103,9 @@ export class ParentListPage {
           target: 'parent',
           recordId: parent.id,
           personName: `${parent.firstName} ${parent.lastName}`,
-          suggestedEmail: parent.email,
+          // L'adresse du COMPTE, pas celle de la fiche : rien n'oblige à avoir ouvert
+          // l'accès avec l'e-mail de contact du parent.
+          suggestedEmail: parent.portalEmail,
         },
       })
       .afterClosed()

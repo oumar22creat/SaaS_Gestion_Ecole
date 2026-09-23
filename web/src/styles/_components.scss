@@ -145,6 +145,19 @@ a {
   box-shadow: var(--shadow-1);
 }
 
+/* Deux informations dans une même cellule de tableau : l'identifiant lisible, puis le détail
+ * qui le qualifie — un matricule sous un nom, une adresse de connexion sous un statut.
+ * Partagé par les écrans Frais scolaires, Élèves et Parents. */
+.cell-strong {
+  display: block;
+}
+
+.cell-muted {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+}
+
 .stack-form {
   display: flex;
   flex-direction: column;

@@ -11,7 +11,7 @@ banque d'images.
 
 | Fichier | Source Wikimedia Commons | Licence |
 |---|---|---|
-| `hero-classe.jpg` | A student asking a question in a classroom 04 | CC0 |
+| `hero-classe.jpg` | Students reading in a classroom (Amanya, région d'Oti, Ghana) | CC0 |
 | `scolarite.jpg` | Pupils studying a book | CC0 |
 | `ecriture.jpg` | Writing-110764 1280 | CC0 |
 | `mobile-classe.jpg` | Tabletunterricht 03 | CC0 |

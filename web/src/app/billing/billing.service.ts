@@ -7,9 +7,16 @@ import { ApiResponse } from '../core/api-response.model';
 export interface BillingPlan {
   code: string;
   name: string;
+  /** Tarif mensuel. L'offre publique annonce l'annuel, qui en vaut exactement douze fois. */
   priceCents: number;
+  annualPriceCents: number;
   currency: string;
+  /** null = effectif illimité (plan Premium). */
   maxStudents: number | null;
+  canteenIncluded: boolean;
+  transportIncluded: boolean;
+  libraryIncluded: boolean;
+  customDomainIncluded: boolean;
   purchasable: boolean;
 }
 

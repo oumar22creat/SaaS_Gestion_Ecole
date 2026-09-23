@@ -7,13 +7,21 @@
     <span class="current-label">Votre plan</span>
     <span class="current-name">{{ current.planName }}</span>
     <span class="current-detail">
-      {{ statusLabel(current.status) }}@if (current.trialEndsAt) {
+      {{ statusLabel(current.status) }}
+      @if (current.status === 'TRIALING' && current.trialEndsAt) {
         · essai jusqu'au {{ current.trialEndsAt | date: 'dd/MM/yyyy' }}
       } @else if (current.currentPeriodEnd) {
-        · renouvellement le {{ current.currentPeriodEnd | date: 'dd/MM/yyyy' }}
+        · couvert jusqu'au {{ current.currentPeriodEnd | date: 'dd/MM/yyyy' }}
       }
     </span>
   </div>
+}
+
+@if (expiryNotice(); as notice) {
+  <p class="expiry-notice">
+    <mat-icon aria-hidden="true">schedule</mat-icon>
+    <span>{{ notice }}</span>
+  </p>
 }
 
 @if (errorMessage()) {
@@ -60,23 +68,33 @@
           Cantine, transport, bibliothèque
         </li>
         <li [class.off]="!plan.customDomainIncluded">
-          <mat-icon aria-hidden="true">{{ plan.customDomainIncluded ? 'check' : 'remove' }}</mat-icon>
+          <mat-icon aria-hidden="true">{{
+            plan.customDomainIncluded ? 'check' : 'remove'
+          }}</mat-icon>
           Domaine personnalisé à votre nom
         </li>
       </ul>
 
       @if (isCurrent(plan)) {
-        <button mat-stroked-button disabled>Plan actuel</button>
+        <a mat-stroked-button [href]="renewUrl(plan)" target="_blank" rel="noopener">
+          <mat-icon aria-hidden="true">chat</mat-icon>
+          Renouveler
+        </a>
       } @else if (plan.purchasable) {
         <button mat-flat-button (click)="checkout(plan)">Choisir ce plan</button>
       } @else {
-        <button mat-stroked-button disabled>Nous contacter</button>
+        <a mat-flat-button [href]="contactUrl(plan)" target="_blank" rel="noopener">
+          <mat-icon aria-hidden="true">chat</mat-icon>
+          Nous contacter
+        </a>
       }
     </article>
   }
 </div>
 
 <p class="plans-note">
-  Tarifs annuels payables à la rentrée. Un effectif qui dépasse de peu un palier peut être
-  facturé à l'élève. Le changement de plan prend effet au prochain renouvellement.
+  Le règlement se fait en espèces auprès de l'éditeur, puis l'abonnement est activé pour la durée
+  réglée. Écrivez-nous sur WhatsApp au {{ supportNumber }} pour souscrire, renouveler ou changer de
+  plan. Tarifs annuels payables à la rentrée ; un effectif qui dépasse de peu un palier peut être
+  facturé à l'élève.
 </p>

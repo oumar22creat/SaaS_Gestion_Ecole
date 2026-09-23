@@ -4,6 +4,12 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthTokenService } from '../auth/auth-token.service';
+import { ApiErrorBody } from './api-response.model';
+
+/** Le code métier, pas le seul statut : un 403 ordinaire reste un défaut de droits. */
+function isTenantSuspended(error: HttpErrorResponse): boolean {
+  return error.status === 403 && (error.error as ApiErrorBody)?.error?.code === 'TENANT_SUSPENDED';
+}
 
 /**
  * Pose l'en-tête Authorization sur les appels vers notre API, et déconnecte au premier 401
@@ -34,6 +40,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         const role = authTokenService.role();
         authTokenService.clear();
         router.navigateByUrl(role === 'SUPER_ADMIN' ? '/admin/login' : '/login');
+      }
+      // Abonnement échu : le serveur refuse tout appel métier. Sans cette redirection,
+      // l'utilisateur enchaîne les messages d'erreur écran par écran sans jamais apprendre
+      // que c'est son abonnement qu'il faut renouveler. La session n'est pas effacée — il
+      // reste connecté, c'est l'établissement qui est fermé, pas le compte.
+      if (isApiRequest && error instanceof HttpErrorResponse && isTenantSuspended(error)) {
+        router.navigateByUrl('/abonnement-echu');
       }
       return throwError(() => error);
     }),

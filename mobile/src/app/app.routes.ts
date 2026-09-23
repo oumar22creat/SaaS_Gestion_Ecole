@@ -8,6 +8,13 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/login.page').then((m) => m.LoginPage),
   },
   {
+    // Hors du parcours normal : l'application est fermée, proposer le menu n'aurait pas de sens.
+    path: 'abonnement-echu',
+    loadComponent: () =>
+      import('./billing/subscription-blocked.page').then((m) => m.SubscriptionBlockedPage),
+    canActivate: [authGuard],
+  },
+  {
     path: 'home',
     loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
     canActivate: [authGuard],

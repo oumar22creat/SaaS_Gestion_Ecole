@@ -5,4 +5,6 @@ export const environment = {
   // (point ouvert dans docs/ARCHITECTURE.md). Contrairement au Web, une appli mobile
   // compilée ne peut pas utiliser une URL relative : il faut une URL absolue.
   apiUrl: 'https://api.schoolsaas.example/api/v1',
+  /** Numéro WhatsApp de l'éditeur, au format international sans « + » ni espaces (wa.me). */
+  supportWhatsApp: '22379827979',
 };

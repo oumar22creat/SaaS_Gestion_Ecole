@@ -76,4 +76,40 @@ describe('authInterceptor', () => {
 
     expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/login');
   });
+
+  /**
+   * Abonnement échu : le serveur ferme l'accès. Sans cette redirection, l'établissement
+   * enchaîne les messages d'erreur écran par écran sans apprendre que c'est son abonnement
+   * qu'il faut renouveler.
+   */
+  it('sends a suspended establishment to the blocked screen without losing its session', () => {
+    authTokenService.store({ accessToken: 'abc', refreshToken: 'def', expiresIn: 900 });
+
+    httpClient.get(`${environment.apiUrl}/students`).subscribe({ error: () => undefined });
+    httpMock
+      .expectOne(`${environment.apiUrl}/students`)
+      .flush(
+        { error: { code: 'TENANT_SUSPENDED', message: 'Abonnement échu', details: [] } },
+        { status: 403, statusText: 'Forbidden' },
+      );
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/abonnement-echu');
+    // La session reste ouverte : c'est l'établissement qui est fermé, pas le compte.
+    expect(authTokenService.read()).not.toBeNull();
+  });
+
+  /** Un 403 ordinaire reste un défaut de droits, pas une histoire d'abonnement. */
+  it('leaves an ordinary 403 alone', () => {
+    authTokenService.store({ accessToken: 'abc', refreshToken: 'def', expiresIn: 900 });
+
+    httpClient.get(`${environment.apiUrl}/students`).subscribe({ error: () => undefined });
+    httpMock
+      .expectOne(`${environment.apiUrl}/students`)
+      .flush(
+        { error: { code: 'ACCESS_DENIED', message: 'Accès refusé', details: [] } },
+        { status: 403, statusText: 'Forbidden' },
+      );
+
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
 });

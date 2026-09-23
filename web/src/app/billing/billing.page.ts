@@ -4,7 +4,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { extractErrorMessage } from '../core/http-error.util';
 import { formatMoney } from '../core/money.util';
+import { supportPhoneNumber, whatsAppUrl } from '../core/support.util';
 import { BillingPlan, BillingService, Subscription } from './billing.service';
+
+/** Deux semaines : le temps de réunir la somme et de se déplacer pour la remettre. */
+const EXPIRY_WARNING_DAYS = 14;
 
 @Component({
   selector: 'app-billing-page',
@@ -140,6 +144,18 @@ import { BillingPlan, BillingService, Subscription } from './billing.service';
       color: var(--color-text-secondary);
     }
 
+    .expiry-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-2);
+      margin-bottom: var(--space-5);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius);
+      border: 1px solid var(--color-warning-border, #c9a227);
+      background: var(--color-warning-soft, rgba(201, 162, 39, 0.12));
+      font-size: var(--font-size-small);
+    }
+
     .plans-note {
       margin-top: var(--space-5);
       color: var(--color-text-secondary);
@@ -153,6 +169,8 @@ export class BillingPage {
   protected readonly subscription = signal<Subscription | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly money = formatMoney;
+  /** Numéro affiché en clair : tout le monde n'a pas WhatsApp installé. */
+  protected readonly supportNumber = supportPhoneNumber();
 
   constructor() {
     void this.billingService.plans().then((plans) => this.plans.set(plans));
@@ -171,7 +189,9 @@ export class BillingPage {
     if (!plan.maxStudents) {
       return '';
     }
-    return new Intl.NumberFormat('fr-FR').format(Math.round(plan.annualPriceCents / plan.maxStudents));
+    return new Intl.NumberFormat('fr-FR').format(
+      Math.round(plan.annualPriceCents / plan.maxStudents),
+    );
   }
 
   protected statusLabel(status: string): string {
@@ -180,8 +200,43 @@ export class BillingPage {
         TRIALING: "À l'essai",
         ACTIVE: 'Actif',
         PAST_DUE: 'Paiement en retard',
+        EXPIRED: 'Échu',
         CANCELED: 'Résilié',
       }[status] ?? status
+    );
+  }
+
+  /**
+   * Prévient avant la coupure plutôt qu'après. Un abonnement réglé en espèces ne se
+   * renouvelle pas tout seul : sans ce rappel, l'établissement découvre l'échéance le jour
+   * où l'application se ferme.
+   */
+  protected expiryNotice(): string | null {
+    const current = this.subscription();
+    if (!current?.currentPeriodEnd || current.status === 'TRIALING') {
+      return null;
+    }
+    const end = new Date(current.currentPeriodEnd);
+    const days = Math.ceil((end.getTime() - Date.now()) / 86_400_000);
+    if (days < 0) {
+      return `Votre abonnement est arrivé à échéance. Contactez-nous au ${this.supportNumber} pour le renouveler et rouvrir l'accès.`;
+    }
+    if (days <= EXPIRY_WARNING_DAYS) {
+      const when = days === 0 ? "aujourd'hui" : days === 1 ? 'demain' : `dans ${days} jours`;
+      return `Votre abonnement prend fin ${when}. Passé cette date, l'accès à l'application est fermé jusqu'au renouvellement.`;
+    }
+    return null;
+  }
+
+  protected contactUrl(plan: BillingPlan): string {
+    return whatsAppUrl(
+      `Bonjour, je souhaite souscrire l'abonnement ${plan.name} pour mon établissement.`,
+    );
+  }
+
+  protected renewUrl(plan: BillingPlan): string {
+    return whatsAppUrl(
+      `Bonjour, je souhaite renouveler l'abonnement ${plan.name} de mon établissement.`,
     );
   }
 

@@ -181,6 +181,35 @@ souscrit via Stripe Checkout est implicitement mensuel, pas de colonne `billing_
 changement de plan avec proratisation, moyens de paiement locaux mobile money (voir ADR-003),
 back-office Super-Admin pour gérer `plans`/`stripe_price_id` (`/api/admin/plans`, Phase 2).
 
+### ADR-009b — Règlement en espèces, activation manuelle et fermeture à l'échéance (décidé)
+**Contexte** : le porteur de projet encaisse les abonnements en espèces. Stripe reste en
+place (le code n'est pas retiré) mais aucun `stripe_price_id` n'est renseigné : tous les
+plans sont donc non achetables en ligne, et l'écran Abonnement renvoie vers WhatsApp
+(`+223 79 82 79 79`, `web|mobile/src/app/core/support.util.ts`) plutôt que vers Checkout.
+
+**Activation** : `POST /api/v1/admin/tenants/{id}/payments`
+(`PlatformAdminService#recordCashPayment`) enregistre un règlement reçu — plan + durée en
+mois — et c'est ce geste, et lui seul, qui ouvre ou rouvre l'accès. La nouvelle échéance
+part de l'échéance en cours quand elle court encore (régler en avance ne fait pas perdre les
+jours payés) et du jour même quand elle est passée. Durée comptée en mois calendaires, pas
+en tranches de 30 jours : douze mois payés ramènent à la même date l'année suivante. Le
+montant attendu (prix du plan × durée) est calculé et journalisé, pas saisi — le journal
+plateforme tient lieu de reçu, faute de facturation client côté plateforme (toujours hors
+périmètre).
+
+**Échéance** : `TenantAccessLifecycleJob#expireCashSubscriptions` passe l'abonnement à
+`EXPIRED` (nouveau statut, distinct de `PAST_DUE` qui suppose un prélèvement refusé, et de
+`CANCELED` qui suppose une résiliation) et le tenant à `SUSPENDED`. Pas d'étape
+`READ_ONLY` intermédiaire ici, contrairement aux deux autres transitions : un règlement en
+espèces n'a pas de relance automatique, et une lecture seule silencieuse ferait découvrir la
+coupure une semaine trop tard. `app.billing.cash-grace-days` (0 par défaut) permet à
+l'exploitant d'accorder une tolérance.
+
+**Côté client** : `TenantAccessInterceptor` renvoie `TENANT_SUSPENDED` avec un message qui
+dit quoi faire ; les intercepteurs HTTP Web et mobile redirigent alors vers
+`/abonnement-echu`, un écran hors du shell qui affiche le plan, l'échéance et le lien
+WhatsApp. La session n'est pas effacée : c'est l'établissement qui est fermé, pas le compte.
+
 ### ADR-010 — Élèves, parents, enseignants, classes, matières (décidé, Phase 1.5)
 **Décision** : packages `student`, `parent`, `teacher`, `schoolclass`, `subject` (le domaine
 `parent` du cahier-des-charges.md §26 n'était pas listé dans la liste initiale de CLAUDE.md —

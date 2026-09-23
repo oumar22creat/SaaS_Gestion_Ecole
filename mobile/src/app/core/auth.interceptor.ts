@@ -4,6 +4,12 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthTokenService } from '../auth/auth-token.service';
+import { ApiErrorBody } from './api-response.model';
+
+/** Le code métier, pas le seul statut : un 403 ordinaire reste un défaut de droits. */
+function isTenantSuspended(error: HttpErrorResponse): boolean {
+  return error.status === 403 && (error.error as ApiErrorBody)?.error?.code === 'TENANT_SUSPENDED';
+}
 
 /**
  * Identique à web/src/app/core/auth.interceptor.ts : pose l'en-tête Authorization sur les
@@ -28,6 +34,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       if (isApiRequest && tokens && error instanceof HttpErrorResponse && error.status === 401) {
         authTokenService.clear();
         router.navigateByUrl('/login');
+      }
+      // Abonnement échu : le serveur ferme tout. Un enseignant verrait sinon une erreur
+      // technique en pleine feuille d'appel et conclurait à une panne de l'application.
+      if (isApiRequest && error instanceof HttpErrorResponse && isTenantSuspended(error)) {
+        router.navigateByUrl('/abonnement-echu');
       }
       return throwError(() => error);
     }),

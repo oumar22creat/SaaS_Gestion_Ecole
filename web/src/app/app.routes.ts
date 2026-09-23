@@ -28,6 +28,13 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/login.page').then((m) => m.LoginPage),
   },
   {
+    // Hors du shell : l'application est fermée, afficher son menu n'aurait pas de sens.
+    path: 'abonnement-echu',
+    loadComponent: () =>
+      import('./billing/subscription-blocked.page').then((m) => m.SubscriptionBlockedPage),
+    canActivate: [authGuard],
+  },
+  {
     path: '',
     loadComponent: () => import('./shell/shell.component').then((m) => m.ShellComponent),
     canActivate: [authGuard, tenantWebGuard],

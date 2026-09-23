@@ -1,6 +1,40 @@
 import { Provider } from '@angular/core';
-import { MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
+import { DateAdapter, MAT_DATE_LOCALE, NativeDateAdapter, provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerIntl } from '@angular/material/datepicker';
+
+/** jj/mm/aaaa, avec / - ou . comme séparateur — les trois se tapent au clavier. */
+const FRENCH_DATE_PATTERN = /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/;
+
+/**
+ * Adaptateur de date français.
+ *
+ * <p>`MAT_DATE_LOCALE` corrige l'AFFICHAGE, mais pas la LECTURE : l'adaptateur natif de
+ * Material analyse la saisie avec `Date.parse`, qui interprète toujours « 01/10/2027 » à
+ * l'américaine — le 10 janvier au lieu du 1er octobre. Le champ réaffiche ensuite une date
+ * française parfaitement plausible, si bien que l'erreur passe inaperçue : une date de
+ * naissance, une échéance de paiement ou une date d'évaluation partait fausse sans que
+ * personne ne le voie.
+ *
+ * <p>Ne concerne que la saisie au clavier — choisir une date dans le calendrier a toujours
+ * fonctionné, ce qui rendait le défaut d'autant plus discret.
+ */
+class FrenchDateAdapter extends NativeDateAdapter {
+  override parse(value: unknown): Date | null {
+    if (typeof value !== 'string') {
+      return super.parse(value);
+    }
+    const match = FRENCH_DATE_PATTERN.exec(value.trim());
+    if (!match) {
+      return super.parse(value);
+    }
+    const [, day, month, year] = match;
+    const parsed = new Date(Number(year), Number(month) - 1, Number(day));
+    // Rejette « 31/02/2027 » : JS le décalerait silencieusement au 3 mars.
+    return parsed.getDate() === Number(day) && parsed.getMonth() === Number(month) - 1
+      ? parsed
+      : null;
+  }
+}
 
 /**
  * Libellés du calendrier, livrés en anglais par Material. Ils ne sont pas décoratifs : ce
@@ -39,4 +73,7 @@ export const FRENCH_DATE_LOCALE: Provider[] = [
   { provide: MAT_DATE_LOCALE, useValue: 'fr-FR' },
   { provide: MatDatepickerIntl, useClass: FrenchDatepickerIntl },
   provideNativeDateAdapter(),
+  // Après provideNativeDateAdapter() : c'est ce qui permet de remplacer l'adaptateur natif
+  // sans perdre les formats de date qu'il fournit.
+  { provide: DateAdapter, useClass: FrenchDateAdapter, deps: [MAT_DATE_LOCALE] },
 ];

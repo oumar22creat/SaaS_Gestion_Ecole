@@ -73,7 +73,19 @@
         <span class="filters-summary">
           {{ outstanding().length }} ligne(s) · {{ money(outstandingTotal()) }} à recouvrer
         </span>
+        @if (summary(); as stats) {
+          @if (stats.lateStudentCount > 0) {
+            <button mat-stroked-button [disabled]="reminding()" (click)="remindLateFamilies()">
+              <mat-icon>sms</mat-icon>
+              Relancer par SMS ({{ stats.lateStudentCount }})
+            </button>
+          }
+        }
       </div>
+
+      @if (reminderMessage(); as message) {
+        <p class="flash-success">{{ message }}</p>
+      }
 
       @if (loading()) {
         <p class="loading-state" role="status" aria-label="Chargement du recouvrement"></p>
@@ -299,6 +311,14 @@
             <ng-container matColumnDef="reference">
               <th mat-header-cell *matHeaderCellDef>Référence</th>
               <td mat-cell *matCellDef="let line">{{ line.reference || '—' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="receipt">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let line">
+                <button mat-button (click)="downloadReceipt(line)">
+                  <mat-icon>receipt</mat-icon> Reçu
+                </button>
+              </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="journalColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: journalColumns"></tr>

@@ -12,6 +12,10 @@
   </div>
 </div>
 
+@if (errorMessage()) {
+  <p class="flash-error">{{ errorMessage() }}</p>
+}
+
 <div class="filters-row">
   <app-list-search
     label="Rechercher un élève"
@@ -86,6 +90,15 @@
             <mat-icon>phone_iphone</mat-icon>
           </button>
         }
+        <button
+          mat-icon-button
+          (click)="downloadCertificate(student)"
+          [attr.aria-label]="'Certificat de scolarité de ' + student.firstName + ' ' + student.lastName"
+          matTooltip="Certificat de scolarité"
+          [disabled]="!student.active"
+        >
+          <mat-icon>description</mat-icon>
+        </button>
         <button mat-icon-button (click)="openEditDialog(student)" aria-label="Modifier">
           <mat-icon>edit</mat-icon>
         </button>

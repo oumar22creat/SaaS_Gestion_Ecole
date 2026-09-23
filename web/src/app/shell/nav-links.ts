@@ -160,6 +160,13 @@ export const NAV_LINKS: NavLink[] = [
     section: 'Administration',
   },
   {
+    icon: 'event_note',
+    label: 'Années scolaires',
+    path: '/school-years',
+    roles: ADMIN_DIR,
+    section: 'Établissement',
+  },
+  {
     icon: 'palette',
     label: 'Établissement',
     path: '/settings',

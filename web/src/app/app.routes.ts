@@ -117,6 +117,9 @@ export const routes: Routes = [
       staffPage('accounts', () =>
         import('./account/staff-account-list.page').then((m) => m.StaffAccountListPage),
       ),
+      staffPage('school-years', () =>
+        import('./schoolyear/school-year-list.page').then((m) => m.SchoolYearListPage),
+      ),
       staffPage('settings', () => import('./settings/settings.page').then((m) => m.SettingsPage)),
       staffPage(
         'espace-mobile',

@@ -12,12 +12,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { FRENCH_DATE_LOCALE } from '../core/date-locale.provider';
+import { confirmAction } from '../core/confirm-dialog.component';
 import { fieldError } from '../core/form-error.util';
 import { extractErrorMessage } from '../core/http-error.util';
 import { toIsoDate } from '../core/iso-date.util';
 import { formatMoney } from '../core/money.util';
 import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
+import { PaperworkService } from '../paperwork/paperwork.service';
 import { PaymentDialog } from './payment.dialog';
 import {
   FeeOutstanding,
@@ -62,6 +64,7 @@ export class SchoolFeesPage {
   private readonly schoolClassService = inject(SchoolClassService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly paperworkService = inject(PaperworkService);
 
   protected readonly fieldError = fieldError;
   protected readonly money = formatMoney;
@@ -74,6 +77,8 @@ export class SchoolFeesPage {
   protected readonly summary = signal<FeeSummary | null>(null);
   protected readonly loading = signal(false);
   protected readonly creating = signal(false);
+  protected readonly reminding = signal(false);
+  protected readonly reminderMessage = signal<string | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly outstandingColumns = [
@@ -85,7 +90,7 @@ export class SchoolFeesPage {
     'actions',
   ];
   protected readonly scheduleColumns = ['label', 'amount', 'due', 'actions'];
-  protected readonly journalColumns = ['paidAt', 'student', 'amount', 'method', 'reference'];
+  protected readonly journalColumns = ['paidAt', 'student', 'amount', 'method', 'reference', 'receipt'];
 
   /**
    * 'ALL' plutôt que null : Material considère une valeur nulle comme « rien de
@@ -203,6 +208,49 @@ export class SchoolFeesPage {
       await this.load();
     } catch (error) {
       this.errorMessage.set(extractErrorMessage(error));
+    }
+  }
+
+  /** Reçu d'un règlement encaissé, à remettre à la famille. */
+  async downloadReceipt(line: FeePaymentJournalEntry): Promise<void> {
+    this.errorMessage.set(null);
+    try {
+      await this.paperworkService.downloadPaymentReceipt(line.paymentId, line.studentName);
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    }
+  }
+
+  /**
+   * Relance par SMS les familles dont une échéance est dépassée. Confirmée d'abord : une
+   * relance part chez de vraies familles et ne se rattrape pas.
+   */
+  async remindLateFamilies(): Promise<void> {
+    const stats = this.summary();
+    if (!stats || stats.lateStudentCount === 0) {
+      return;
+    }
+    const confirmed = await confirmAction(this.dialog, {
+      title: 'Relancer par SMS ?',
+      message: `Un SMS de rappel sera envoyé aux responsables de ${stats.lateStudentCount} élève(s) en retard. Un seul message par élève, même s'il cumule plusieurs échéances.`,
+    });
+    if (!confirmed) {
+      return;
+    }
+    this.reminding.set(true);
+    this.errorMessage.set(null);
+    this.reminderMessage.set(null);
+    try {
+      const count = await this.schoolFeesService.remindOverdueFamilies(this.classFilter);
+      this.reminderMessage.set(
+        count === 0
+          ? 'Aucune famille à relancer.'
+          : `${count} famille(s) relancée(s). Les envois sont tracés dans le journal des SMS.`,
+      );
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    } finally {
+      this.reminding.set(false);
     }
   }
 

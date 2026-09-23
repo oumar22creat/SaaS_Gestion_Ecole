@@ -1,0 +1,119 @@
+<div class="page-header">
+  <h1><mat-icon class="page-icon" aria-hidden="true">event_note</mat-icon>Années scolaires</h1>
+</div>
+
+<p class="page-subtitle">
+  L'année en cours est le cadre de tout le reste : inscriptions, bulletins et frais s'y
+  rattachent. Préparez l'année suivante, puis faites-y passer la promotion.
+</p>
+
+@if (errorMessage()) {
+  <p class="flash-error">{{ errorMessage() }}</p>
+}
+
+<form class="stack-form" [formGroup]="form" (ngSubmit)="create()">
+  <mat-form-field appearance="outline">
+    <mat-label>Libellé</mat-label>
+    <input matInput formControlName="label" placeholder="2027-2028" />
+    <mat-hint>Ce que lisent les bulletins et les certificats.</mat-hint>
+    <mat-error>{{ fieldError(form.controls.label) }}</mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Début</mat-label>
+    <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+    <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
+    <mat-datepicker #startPicker />
+    <mat-error>{{ fieldError(form.controls.startDate) }}</mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Fin</mat-label>
+    <input matInput [matDatepicker]="endPicker" formControlName="endDate" />
+    <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
+    <mat-datepicker #endPicker />
+    <mat-error>{{ fieldError(form.controls.endDate) }}</mat-error>
+  </mat-form-field>
+
+  <button mat-flat-button type="submit" [disabled]="creating()">
+    <mat-icon>add</mat-icon> Préparer cette année
+  </button>
+</form>
+
+@if (loading()) {
+  <p class="loading-state" role="status" aria-label="Chargement des années scolaires"></p>
+} @else if (years().length === 0) {
+  <div class="empty-state">
+    <span class="empty-title">Aucune année scolaire</span>
+    <span class="empty-hint">
+      Créez l'année en cours puis activez-la. Sans année active, les inscriptions ne peuvent
+      pas être rattachées et la rentrée suivante n'aura pas de point de départ.
+    </span>
+  </div>
+} @else {
+  <div class="table-scroll">
+    <table mat-table [dataSource]="years()" class="data-table">
+      <ng-container matColumnDef="label">
+        <th mat-header-cell *matHeaderCellDef>Année</th>
+        <td mat-cell *matCellDef="let year">{{ year.label }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="period">
+        <th mat-header-cell *matHeaderCellDef>Période</th>
+        <td mat-cell *matCellDef="let year">
+          {{ year.startDate | date: 'dd/MM/yyyy' }} → {{ year.endDate | date: 'dd/MM/yyyy' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>État</th>
+        <td mat-cell *matCellDef="let year">
+          @if (year.status === 'ACTIVE') {
+            <span class="status-badge status-ok">{{ statusLabel(year.status) }}</span>
+          } @else {
+            <span class="status-badge status-off">{{ statusLabel(year.status) }}</span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="enrolled">
+        <th mat-header-cell *matHeaderCellDef>Inscrits</th>
+        <td mat-cell *matCellDef="let year">{{ year.enrolledCount }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let year">
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="menu"
+            [attr.aria-label]="'Actions sur ' + year.label"
+          >
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            @if (year.status !== 'ACTIVE' && year.status !== 'CLOSED') {
+              <button mat-menu-item (click)="activate(year)">
+                <mat-icon>play_circle</mat-icon>
+                Basculer sur cette année
+              </button>
+              <button mat-menu-item (click)="openPromotion(year)">
+                <mat-icon>groups</mat-icon>
+                Faire la rentrée vers cette année
+              </button>
+            }
+            @if (year.status !== 'CLOSED') {
+              <button mat-menu-item (click)="close(year)">
+                <mat-icon>lock</mat-icon>
+                Clôturer
+              </button>
+            }
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+    </table>
+  </div>
+}

@@ -155,6 +155,16 @@ export class SchoolFeesService {
     return response.data;
   }
 
+  /** Relance par SMS ; renvoie le nombre de familles réellement notifiées. */
+  async remindOverdueFamilies(schoolClassId: number | null): Promise<number> {
+    const params: Record<string, string> =
+      schoolClassId === null ? {} : { schoolClassId: String(schoolClassId) };
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<number>>(`${BASE_URL}/reminders`, {}, { params }),
+    );
+    return response.data;
+  }
+
   async summary(schoolClassId: number | null): Promise<FeeSummary> {
     const params: Record<string, string> =
       schoolClassId === null ? {} : { schoolClassId: String(schoolClassId) };

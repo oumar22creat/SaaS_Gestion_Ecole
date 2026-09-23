@@ -8,7 +8,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
+import { extractErrorMessage } from '../core/http-error.util';
 import { FamilyAccessDialog } from '../familyaccess/family-access.dialog';
+import { PaperworkService } from '../paperwork/paperwork.service';
 import { ListSearchComponent } from '../core/list-search.component';
 import { FRENCH_PAGINATOR } from '../core/paginator-intl.provider';
 import { SchoolClass } from '../schoolclass/school-class.model';
@@ -38,10 +40,12 @@ export class StudentListPage {
   private readonly studentService = inject(StudentService);
   private readonly schoolClassService = inject(SchoolClassService);
   private readonly dialog = inject(MatDialog);
+  private readonly paperworkService = inject(PaperworkService);
 
   protected readonly students = signal<Student[]>([]);
   protected readonly classes = signal<SchoolClass[]>([]);
   protected readonly loading = signal(false);
+  protected readonly errorMessage = signal<string | null>(null);
   protected readonly total = signal(0);
   protected readonly search = signal('');
   protected readonly pageIndex = signal(0);
@@ -140,6 +144,22 @@ export class StudentListPage {
       })
       .afterClosed()
       .subscribe((done) => done && void this.refresh());
+  }
+
+  /**
+   * Certificat de scolarité. Désactivé pour un élève inactif : le serveur le refuse — un
+   * certificat atteste une situation présente — autant ne pas proposer un geste qui échouera.
+   */
+  async downloadCertificate(student: Student): Promise<void> {
+    this.errorMessage.set(null);
+    try {
+      await this.paperworkService.downloadEnrollmentCertificate(
+        student.id,
+        `${student.firstName} ${student.lastName}`,
+      );
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    }
   }
 
   openEditDialog(student: Student): void {

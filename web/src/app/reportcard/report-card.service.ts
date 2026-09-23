@@ -24,6 +24,9 @@ export interface ReportCard {
   absenceCount: number;
   lateCount: number;
   entries: ReportCardEntry[];
+  /** Rang dans la classe sur la moyenne générale ; null si l'élève n'a aucune note. */
+  rankInClass: number | null;
+  classSize: number | null;
 }
 
 export interface GenerateReportCardsRequest {

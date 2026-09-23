@@ -67,6 +67,17 @@ import { ReportCard, ReportCardService } from './report-card.service';
           <th mat-header-cell *matHeaderCellDef>Élève</th>
           <td mat-cell *matCellDef="let card">{{ studentLabel(card.studentId) }}</td>
         </ng-container>
+        <ng-container matColumnDef="rank">
+          <th mat-header-cell *matHeaderCellDef>Rang</th>
+          <td mat-cell *matCellDef="let card">
+            @if (card.rankInClass) {
+              <span class="cell-strong">{{ rankLabel(card.rankInClass) }}</span>
+              <span class="cell-muted">sur {{ card.classSize }}</span>
+            } @else {
+              <span class="cell-muted">non classé</span>
+            }
+          </td>
+        </ng-container>
         <ng-container matColumnDef="average">
           <th mat-header-cell *matHeaderCellDef>Moyenne</th>
           <td mat-cell *matCellDef="let card">{{ card.generalAverage ?? '—' }}</td>
@@ -107,7 +118,7 @@ export class ReportCardPage {
   protected readonly cards = signal<ReportCard[]>([]);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
-  protected readonly columns = ['student', 'average', 'absences', 'comment', 'actions'];
+  protected readonly columns = ['student', 'average', 'rank', 'absences', 'comment', 'actions'];
   protected schoolClassId: number | null = null;
   protected periodLabel = 'Trimestre 1';
   protected periodFrom = toIsoDate(new Date(new Date().getFullYear(), 8, 1));
@@ -162,6 +173,11 @@ export class ReportCardPage {
       card.councilDecision ?? '',
     );
     this.successMessage.set('Appréciation enregistrée.');
+  }
+
+  /** « 1er » et non « 1e » : c'est la forme attendue sur un bulletin. */
+  protected rankLabel(rank: number): string {
+    return rank === 1 ? '1er' : `${rank}e`;
   }
 
   async pdf(card: ReportCard): Promise<void> {

@@ -22,7 +22,11 @@ import { AuthTokenService } from '../auth/auth-token.service';
           Console plateforme
         </span>
         <nav class="platform-nav">
-          <a routerLink="/admin" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
+          <a
+            routerLink="/admin"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+          >
             Vue d'ensemble
           </a>
           <a routerLink="/admin/tenants" routerLinkActive="is-active">Établissements</a>

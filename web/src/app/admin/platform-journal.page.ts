@@ -42,8 +42,8 @@ const ACTION_LABELS: Record<string, string> = {
       <div class="empty-state">
         <span class="empty-title">Aucune décision enregistrée</span>
         <span class="empty-hint">
-          Les suspensions, prolongations d'essai et changements de plan apparaîtront ici avec
-          leur auteur et leur motif.
+          Les suspensions, prolongations d'essai et changements de plan apparaîtront ici avec leur
+          auteur et leur motif.
         </span>
       </div>
     } @else {

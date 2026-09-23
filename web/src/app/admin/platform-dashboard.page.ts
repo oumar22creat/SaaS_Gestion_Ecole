@@ -12,8 +12,8 @@ import { PlatformDashboardService, PlatformSummary } from './platform-dashboard.
       <h1><mat-icon class="page-icon" aria-hidden="true">monitoring</mat-icon>Vue d'ensemble</h1>
     </div>
     <p class="page-subtitle">
-      Situation consolidée des établissements abonnés. Aucune donnée scolaire n'y figure :
-      élèves, parents et notes restent invisibles depuis cette console.
+      Situation consolidée des établissements abonnés. Aucune donnée scolaire n'y figure : élèves,
+      parents et notes restent invisibles depuis cette console.
     </p>
 
     @if (summary(); as data) {
@@ -125,5 +125,4 @@ export class PlatformDashboardPage {
   constructor() {
     void this.dashboardService.summary().then((summary) => this.summary.set(summary));
   }
-
 }

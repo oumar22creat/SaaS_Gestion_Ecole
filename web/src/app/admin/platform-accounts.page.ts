@@ -30,12 +30,15 @@ import { PlatformAccount, PlatformAdminService } from './platform-admin.service'
   ],
   template: `
     <div class="page-header">
-      <h1><mat-icon class="page-icon" aria-hidden="true">admin_panel_settings</mat-icon>Comptes plateforme</h1>
+      <h1>
+        <mat-icon class="page-icon" aria-hidden="true">admin_panel_settings</mat-icon>Comptes
+        plateforme
+      </h1>
     </div>
 
     <p class="page-subtitle">
-      Ces comptes voient tous les établissements clients. Ils n'ont pas le même profil de
-      risque qu'un compte d'établissement : le mot de passe exigé est plus long.
+      Ces comptes voient tous les établissements clients. Ils n'ont pas le même profil de risque
+      qu'un compte d'établissement : le mot de passe exigé est plus long.
     </p>
 
     @if (errorMessage()) {

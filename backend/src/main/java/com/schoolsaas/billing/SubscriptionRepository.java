@@ -18,6 +18,15 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     /** Abonnements en échec de paiement depuis {@code threshold} (voir docs/ARCHITECTURE.md ADR-009). */
     List<Subscription> findAllByStatusAndPaymentFailedAtBefore(SubscriptionStatus status, Instant threshold);
 
+    /**
+     * Abonnements réglés hors Stripe (espèces) dont la période couverte s'est achevée avant
+     * {@code threshold}. Le filtre sur {@code stripeSubscriptionId IS NULL} est ce qui
+     * distingue les deux mondes : un abonnement Stripe se renouvelle tout seul et son webhook
+     * repousse la fin de période — l'expirer ici couperait un client à jour.
+     */
+    List<Subscription> findAllByStatusAndStripeSubscriptionIdIsNullAndCurrentPeriodEndBefore(
+            SubscriptionStatus status, Instant threshold);
+
     long countByStatus(SubscriptionStatus status);
 
     List<Subscription> findAllByStatus(SubscriptionStatus status);

@@ -102,4 +102,60 @@ class TenantAccessLifecycleJobTest extends AbstractIntegrationTest {
         job.evaluate(farInTheFuture);
         assertThat(tenantRepository.findById(tenant.getId()).orElseThrow().getStatus()).isEqualTo(TenantStatus.SUSPENDED);
     }
+
+    /**
+     * Cas du règlement en espèces : la période payée s'achève, l'accès se ferme le jour dit.
+     * Pas d'étape en lecture seule ici, contrairement aux deux scénarios ci-dessus — voir
+     * {@code TenantAccessLifecycleJob#expireCashSubscriptions}.
+     */
+    @Test
+    void cashSubscriptionPastItsPeriodIsSuspendedAndMarkedExpired() {
+        Tenant tenant = createTenant("Espèces échu", TenantStatus.ACTIVE);
+        Subscription subscription = subscriptionRepository.save(new Subscription(
+                tenant.getId(), essentielPlanId(), SubscriptionStatus.ACTIVE, Instant.now().minus(Duration.ofDays(400))));
+        subscription.setCurrentPeriodEnd(Instant.now().minus(Duration.ofDays(1)));
+        subscriptionRepository.save(subscription);
+
+        job.evaluate(Instant.now());
+
+        assertThat(tenantRepository.findById(tenant.getId()).orElseThrow().getStatus()).isEqualTo(TenantStatus.SUSPENDED);
+        assertThat(subscriptionRepository.findById(subscription.getId()).orElseThrow().getStatus())
+                .isEqualTo(SubscriptionStatus.EXPIRED);
+    }
+
+    @Test
+    void cashSubscriptionStillCoveredIsUntouched() {
+        Tenant tenant = createTenant("Espèces en cours", TenantStatus.ACTIVE);
+        Subscription subscription = subscriptionRepository.save(new Subscription(
+                tenant.getId(), essentielPlanId(), SubscriptionStatus.ACTIVE, Instant.now().minus(Duration.ofDays(40))));
+        subscription.setCurrentPeriodEnd(Instant.now().plus(Duration.ofDays(30)));
+        subscriptionRepository.save(subscription);
+
+        job.evaluate(Instant.now());
+
+        assertThat(tenantRepository.findById(tenant.getId()).orElseThrow().getStatus()).isEqualTo(TenantStatus.ACTIVE);
+        assertThat(subscriptionRepository.findById(subscription.getId()).orElseThrow().getStatus())
+                .isEqualTo(SubscriptionStatus.ACTIVE);
+    }
+
+    /**
+     * Un abonnement Stripe a sa propre fin de période, que le webhook repousse à chaque
+     * prélèvement réussi. L'expirer ici couperait un client parfaitement à jour, le temps que
+     * l'événement de renouvellement arrive.
+     */
+    @Test
+    void stripeSubscriptionPastItsPeriodIsLeftToTheWebhook() {
+        Tenant tenant = createTenant("Stripe en cours", TenantStatus.ACTIVE);
+        Subscription subscription = subscriptionRepository.save(new Subscription(
+                tenant.getId(), essentielPlanId(), SubscriptionStatus.ACTIVE, Instant.now().minus(Duration.ofDays(40))));
+        subscription.setCurrentPeriodEnd(Instant.now().minus(Duration.ofDays(2)));
+        subscription.setStripeSubscriptionId("sub_" + UUID.randomUUID());
+        subscriptionRepository.save(subscription);
+
+        job.evaluate(Instant.now());
+
+        assertThat(tenantRepository.findById(tenant.getId()).orElseThrow().getStatus()).isEqualTo(TenantStatus.ACTIVE);
+        assertThat(subscriptionRepository.findById(subscription.getId()).orElseThrow().getStatus())
+                .isEqualTo(SubscriptionStatus.ACTIVE);
+    }
 }

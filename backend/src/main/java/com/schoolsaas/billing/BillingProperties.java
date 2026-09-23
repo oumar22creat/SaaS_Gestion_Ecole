@@ -12,5 +12,14 @@ public record BillingProperties(
         int trialDays,
         String defaultTrialPlanCode,
         int pastDueGraceDays,
-        int readOnlyGraceDays) {
+        int readOnlyGraceDays,
+
+        /*
+         * Tolérance après la fin d'une période réglée en espèces. Zéro par défaut : un
+         * établissement non renouvelé perd l'accès le jour dit, sans quoi la date de fin
+         * d'abonnement n'engagerait à rien. Le réglage existe parce qu'un règlement en
+         * espèces arrive parfois avec un jour de retard, et qu'une école coupée en pleine
+         * saisie de notes appelle en urgence — cet arbitrage revient à l'exploitant.
+         */
+        int cashGraceDays) {
 }

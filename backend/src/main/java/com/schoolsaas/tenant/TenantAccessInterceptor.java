@@ -40,10 +40,19 @@ public class TenantAccessInterceptor implements HandlerInterceptor {
 
         TenantStatus status = tenantRepository.findById(tenantId).map(Tenant::getStatus).orElse(null);
         if (status == TenantStatus.SUSPENDED || status == TenantStatus.CANCELLED) {
-            throw ApiException.forbidden("TENANT_SUSPENDED", "Accès suspendu : abonnement à régulariser");
+            // Le message est lu tel quel par l'établissement, sur l'écran de blocage : il doit
+            // dire quoi faire, pas seulement constater. La plateforme n'encaisse rien en ligne
+            // aujourd'hui (règlement en espèces), donc la seule issue est de joindre l'éditeur.
+            throw ApiException.forbidden(
+                    "TENANT_SUSPENDED",
+                    "Abonnement échu : l'accès est fermé jusqu'au renouvellement. "
+                            + "Contactez l'administrateur de la plateforme pour le réactiver.");
         }
         if (status == TenantStatus.READ_ONLY && !SAFE_METHODS.contains(request.getMethod())) {
-            throw ApiException.forbidden("TENANT_READ_ONLY", "Accès en lecture seule : abonnement à régulariser");
+            throw ApiException.forbidden(
+                    "TENANT_READ_ONLY",
+                    "Accès en lecture seule : abonnement à régulariser. "
+                            + "Contactez l'administrateur de la plateforme pour rétablir la saisie.");
         }
         return true;
     }

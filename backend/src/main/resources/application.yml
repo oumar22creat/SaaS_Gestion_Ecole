@@ -79,6 +79,10 @@ app:
     default-trial-plan-code: ${BILLING_DEFAULT_TRIAL_PLAN_CODE:ESSENTIEL}
     past-due-grace-days: ${BILLING_PAST_DUE_GRACE_DAYS:3}
     read-only-grace-days: ${BILLING_READ_ONLY_GRACE_DAYS:7}
+    # Abonnements réglés en espèces : aucune tolérance par défaut, l'accès se ferme au
+    # terme de la période payée. À monter si l'exploitant préfère laisser quelques jours
+    # aux établissements qui règlent en retard.
+    cash-grace-days: ${BILLING_CASH_GRACE_DAYS:0}
   stripe:
     secret-key: ${STRIPE_SECRET_KEY:}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:}

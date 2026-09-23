@@ -48,6 +48,37 @@ public class TenantAccessLifecycleJob {
     public void evaluate(Instant now) {
         downgradeExpiredTrials(now);
         downgradePastDueSubscriptions(now);
+        expireCashSubscriptions(now);
+    }
+
+    /**
+     * Ferme l'accès d'un établissement dont la période réglée en espèces est échue.
+     *
+     * <p>Contrairement aux deux étapes précédentes, celle-ci ne passe pas par
+     * {@code READ_ONLY} : un règlement en espèces n'a pas de relance automatique, personne
+     * n'avertit l'établissement pendant la lecture seule, et il découvrirait la coupure une
+     * semaine après l'échéance sans comprendre pourquoi. Bloquer au jour dit avec un message
+     * qui dit quoi faire est plus honnête — c'est le Super-Administrateur qui rouvrira
+     * l'accès en enregistrant le règlement suivant.
+     *
+     * <p>L'abonnement passe à {@code EXPIRED} en même temps que le tenant à
+     * {@code SUSPENDED} : sans cela la console plateforme afficherait un abonnement
+     * « actif » en face d'un établissement coupé.
+     */
+    private void expireCashSubscriptions(Instant now) {
+        Instant threshold = now.minus(Duration.ofDays(billingProperties.cashGraceDays()));
+
+        subscriptionRepository
+                .findAllByStatusAndStripeSubscriptionIdIsNullAndCurrentPeriodEndBefore(SubscriptionStatus.ACTIVE, threshold)
+                .forEach(subscription -> {
+                    subscription.setStatus(SubscriptionStatus.EXPIRED);
+                    subscriptionRepository.save(subscription);
+                    // Un tenant déjà CANCELLED (résiliation décidée depuis la console) n'est pas
+                    // ramené à SUSPENDED : ce serait laisser croire qu'un règlement suffirait à
+                    // le rouvrir.
+                    setTenantStatusIfCurrently(subscription.getTenantId(), TenantStatus.ACTIVE, TenantStatus.SUSPENDED);
+                    setTenantStatusIfCurrently(subscription.getTenantId(), TenantStatus.READ_ONLY, TenantStatus.SUSPENDED);
+                });
     }
 
     private void downgradeExpiredTrials(Instant now) {

@@ -7,7 +7,9 @@ import com.schoolsaas.billing.Plan;
 import com.schoolsaas.billing.PlanRepository;
 import com.schoolsaas.billing.Subscription;
 import com.schoolsaas.billing.SubscriptionRepository;
+import com.schoolsaas.billing.SubscriptionStatus;
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.platformadmin.dto.CashPaymentRequest;
 import com.schoolsaas.platformadmin.dto.PlanAdminResponse;
 import com.schoolsaas.platformadmin.dto.PlanChangeRequest;
 import com.schoolsaas.platformadmin.dto.PlatformAdminCreateRequest;
@@ -18,6 +20,7 @@ import com.schoolsaas.tenant.Tenant;
 import com.schoolsaas.tenant.TenantRepository;
 import com.schoolsaas.tenant.TenantStatus;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +161,50 @@ public class PlatformAdminService {
         }
 
         log(tenantId, "TRIAL_EXTENDED", "+" + request.days() + " j → " + FRENCH_DATE.format(newEnd), request.reason());
+        return getTenant(tenantId);
+    }
+
+    /**
+     * Enregistre un règlement reçu en espèces : l'abonnement couvre à nouveau
+     * l'établissement, et son accès rouvre.
+     *
+     * <p>La nouvelle échéance part de l'échéance en cours quand elle est encore devant —
+     * une école qui règle en avance ne doit pas perdre les jours qu'elle a déjà payés — et
+     * du jour même quand elle est passée : repartir d'une date échue vendrait des mois déjà
+     * écoulés.
+     *
+     * <p>Le montant attendu est calculé ici plutôt que saisi : c'est le prix du plan
+     * multiplié par la durée, et le journal doit pouvoir être relu comme un reçu. Si
+     * l'établissement a payé autre chose (remise, arrangement), le motif est là pour le dire.
+     */
+    @Transactional
+    public TenantAdminResponse recordCashPayment(Long tenantId, CashPaymentRequest request) {
+        Tenant tenant = requireTenant(tenantId);
+        Plan plan = planRepository.findById(request.planId())
+                .orElseThrow(() -> ApiException.notFound("PLAN_NOT_FOUND", "Plan introuvable"));
+        Subscription subscription = subscriptionRepository.findByTenantId(tenantId)
+                .orElseThrow(() -> ApiException.notFound("SUBSCRIPTION_NOT_FOUND", "Aucun abonnement pour cet établissement"));
+
+        Instant now = Instant.now();
+        Instant base = subscription.getCurrentPeriodEnd() != null && subscription.getCurrentPeriodEnd().isAfter(now)
+                ? subscription.getCurrentPeriodEnd()
+                : now;
+        // Mois calendaires, pas des tranches de 30 jours : douze mois payés doivent ramener
+        // à la même date l'année suivante, sinon l'abonnement annuel expire cinq jours trop tôt.
+        Instant newEnd = base.atZone(ZoneOffset.UTC).plusMonths(request.months()).toInstant();
+
+        subscription.setPlanId(plan.getId());
+        subscription.setStatus(SubscriptionStatus.ACTIVE);
+        subscription.setCurrentPeriodEnd(newEnd);
+        subscriptionRepository.save(subscription);
+
+        tenant.setStatus(TenantStatus.ACTIVE);
+        tenantRepository.save(tenant);
+
+        long amount = (long) plan.getPriceCents() * request.months();
+        String detail = plan.getCode() + " · " + request.months() + " mois · " + amount + " " + plan.getCurrency()
+                + " → " + FRENCH_DATE.format(newEnd);
+        log(tenantId, "CASH_PAYMENT_RECORDED", detail, request.reason());
         return getTenant(tenantId);
     }
 

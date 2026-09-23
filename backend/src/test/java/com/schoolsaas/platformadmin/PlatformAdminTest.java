@@ -196,6 +196,67 @@ class PlatformAdminTest extends AbstractIntegrationTest {
                 .isAfter(Instant.now());
     }
 
+    /**
+     * Le règlement arrive en espèces : c'est le Super-Administrateur qui l'enregistre, et cet
+     * enregistrement est ce qui rouvre l'accès d'un établissement expiré. Sans lui, une école
+     * qui a payé resterait coupée.
+     */
+    @Test
+    void recordingACashPaymentReopensAccessAndExtendsThePeriod() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Règlement Espèces");
+        tenant.setStatus(TenantStatus.SUSPENDED);
+        tenantRepository.save(tenant);
+        Plan plan = planRepository.findByCode("ESSENTIEL").orElseThrow();
+        Subscription subscription = subscriptionRepository.save(new Subscription(
+                tenant.getId(), plan.getId(), SubscriptionStatus.EXPIRED,
+                Instant.now().minus(400, java.time.temporal.ChronoUnit.DAYS)));
+        subscription.setCurrentPeriodEnd(Instant.now().minus(10, java.time.temporal.ChronoUnit.DAYS));
+        subscriptionRepository.save(subscription);
+        String token = superAdminToken("console-especes@platform.example");
+
+        mockMvc.perform(post("/api/v1/admin/tenants/" + tenant.getId() + "/payments")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"planId\":" + plan.getId() + ",\"months\":12,\"reason\":\"Reçu n°42\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.data.subscriptionStatus").value("ACTIVE"));
+
+        // L'échéance repart d'aujourd'hui : elle était passée, la faire courir depuis la date
+        // échue aurait vendu dix jours déjà écoulés.
+        assertThat(subscriptionRepository.findByTenantId(tenant.getId()).orElseThrow().getCurrentPeriodEnd())
+                .isAfter(Instant.now().plus(360, java.time.temporal.ChronoUnit.DAYS));
+
+        // Le journal tient lieu de reçu : montant attendu et nouvelle échéance y figurent.
+        assertThat(actionRepository.findAllByTenantIdOrderByCreatedAtDesc(tenant.getId()))
+                .anyMatch(action -> action.getAction().equals("CASH_PAYMENT_RECORDED")
+                        && action.getDetail().contains("12 mois")
+                        && action.getDetail().contains(String.valueOf(plan.getPriceCents() * 12)));
+    }
+
+    /** Régler en avance ne doit pas faire perdre les jours déjà payés. */
+    @Test
+    void anEarlyPaymentStacksOnTopOfTheRunningPeriod() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Règlement Anticipé");
+        Plan plan = planRepository.findByCode("ESSENTIEL").orElseThrow();
+        Subscription subscription = subscriptionRepository.save(new Subscription(
+                tenant.getId(), plan.getId(), SubscriptionStatus.ACTIVE,
+                Instant.now().minus(40, java.time.temporal.ChronoUnit.DAYS)));
+        Instant runningUntil = Instant.now().plus(60, java.time.temporal.ChronoUnit.DAYS);
+        subscription.setCurrentPeriodEnd(runningUntil);
+        subscriptionRepository.save(subscription);
+        String token = superAdminToken("console-anticipe@platform.example");
+
+        mockMvc.perform(post("/api/v1/admin/tenants/" + tenant.getId() + "/payments")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"planId\":" + plan.getId() + ",\"months\":3}"))
+                .andExpect(status().isOk());
+
+        assertThat(subscriptionRepository.findByTenantId(tenant.getId()).orElseThrow().getCurrentPeriodEnd())
+                .isAfter(runningUntil.plus(85, java.time.temporal.ChronoUnit.DAYS));
+    }
+
     /** Un administrateur d'établissement n'a rien à faire dans la console plateforme. */
     @Test
     void aTenantAdminCannotReachThePlatformConsole() throws Exception {

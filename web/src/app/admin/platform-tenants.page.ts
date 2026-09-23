@@ -55,6 +55,14 @@ import {
       width: 220px;
       flex: 0 0 auto;
     }
+
+    /* Une échéance passée n'est pas une information neutre : c'est une école coupée. */
+    .cell-expired {
+      display: block;
+      color: var(--color-danger, #b3261e);
+      font-size: var(--font-size-small);
+      font-weight: var(--font-weight-semibold);
+    }
   `,
 })
 export class PlatformTenantsPage {
@@ -129,6 +137,15 @@ export class PlatformTenantsPage {
     }
     const daysLeft = (new Date(tenant.trialEndsAt).getTime() - Date.now()) / 86_400_000;
     return daysLeft < 7;
+  }
+
+  /**
+   * Échéance dépassée : l'établissement est (ou sera à la prochaine exécution du cycle
+   * horaire) coupé. Signalé dans la liste pour que l'opérateur repère d'un coup d'œil qui
+   * rappeler.
+   */
+  protected expired(tenant: TenantAdmin): boolean {
+    return !!tenant.currentPeriodEnd && new Date(tenant.currentPeriodEnd).getTime() < Date.now();
   }
 
   openAction(tenant: TenantAdmin, kind: TenantActionKind): void {

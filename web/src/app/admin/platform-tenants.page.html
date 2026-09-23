@@ -3,8 +3,8 @@
 </div>
 
 <p class="page-subtitle">
-  Les écoles abonnées à la plateforme. Leurs données scolaires — élèves, parents, notes — ne
-  sont pas accessibles depuis cette console : c'est une garantie faite aux établissements.
+  Les écoles abonnées à la plateforme. Leurs données scolaires — élèves, parents, notes — ne sont
+  pas accessibles depuis cette console : c'est une garantie faite aux établissements.
 </p>
 
 @if (errorMessage()) {
@@ -47,7 +47,10 @@
         <td mat-cell *matCellDef="let tenant">
           <span class="cell-strong">{{ tenant.name }}</span>
           <span class="cell-muted">
-            {{ tenant.subdomain }}@if (tenant.customDomain) { · {{ tenant.customDomain }} }
+            {{ tenant.subdomain }}
+            @if (tenant.customDomain) {
+              · {{ tenant.customDomain }}
+            }
           </span>
         </td>
       </ng-container>
@@ -90,12 +93,18 @@
         <th mat-header-cell *matHeaderCellDef>Échéances</th>
         <td mat-cell *matCellDef="let tenant">
           @if (tenant.trialEndsAt) {
-            <span class="cell-muted">Essai jusqu'au {{ tenant.trialEndsAt | date: 'dd/MM/yyyy' }}</span>
+            <span class="cell-muted"
+              >Essai jusqu'au {{ tenant.trialEndsAt | date: 'dd/MM/yyyy' }}</span
+            >
           }
           @if (tenant.currentPeriodEnd) {
-            <span class="cell-muted">Période jusqu'au {{ tenant.currentPeriodEnd | date: 'dd/MM/yyyy' }}</span>
+            <span [class]="expired(tenant) ? 'cell-expired' : 'cell-muted'">
+              Abonnement jusqu'au {{ tenant.currentPeriodEnd | date: 'dd/MM/yyyy' }}
+            </span>
           }
-          <span class="cell-muted">Client depuis le {{ tenant.createdAt | date: 'dd/MM/yyyy' }}</span>
+          <span class="cell-muted"
+            >Client depuis le {{ tenant.createdAt | date: 'dd/MM/yyyy' }}</span
+          >
         </td>
       </ng-container>
 
@@ -110,6 +119,11 @@
             <mat-icon>more_vert</mat-icon>
           </button>
           <mat-menu #menu="matMenu">
+            <!-- En tête de menu : c'est l'action quotidienne de la console, la plateforme
+                 n'encaissant rien en ligne. -->
+            <button mat-menu-item (click)="openAction(tenant, 'payment')">
+              <mat-icon>payments</mat-icon> Enregistrer un règlement
+            </button>
             <button mat-menu-item (click)="openAction(tenant, 'status')">
               <mat-icon>toggle_on</mat-icon> Changer le statut
             </button>

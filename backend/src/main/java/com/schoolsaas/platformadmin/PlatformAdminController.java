@@ -1,6 +1,7 @@
 package com.schoolsaas.platformadmin;
 
 import com.schoolsaas.common.ApiResponse;
+import com.schoolsaas.platformadmin.dto.CashPaymentRequest;
 import com.schoolsaas.platformadmin.dto.PlanAdminResponse;
 import com.schoolsaas.platformadmin.dto.PlanChangeRequest;
 import com.schoolsaas.platformadmin.dto.PlatformAdminCreateRequest;
@@ -68,6 +69,16 @@ public class PlatformAdminController {
     public ApiResponse<TenantAdminResponse> extendTrial(
             @PathVariable Long id, @Valid @RequestBody TrialExtensionRequest request) {
         return ApiResponse.of(platformAdminService.extendTrial(id, request));
+    }
+
+    /**
+     * Règlement encaissé en espèces : rouvre l'accès et repousse l'échéance. POST et non PUT —
+     * chaque appel encaisse un règlement de plus, le rejouer n'est pas anodin.
+     */
+    @PostMapping("/tenants/{id}/payments")
+    public ApiResponse<TenantAdminResponse> recordCashPayment(
+            @PathVariable Long id, @Valid @RequestBody CashPaymentRequest request) {
+        return ApiResponse.of(platformAdminService.recordCashPayment(id, request));
     }
 
     @PutMapping("/tenants/{id}/plan")

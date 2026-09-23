@@ -87,9 +87,16 @@ export class PlatformAdminService {
     return { items: response.data, total: response.meta?.total ?? response.data.length };
   }
 
-  async updateStatus(id: number, status: TenantStatus, reason: string | null): Promise<TenantAdmin> {
+  async updateStatus(
+    id: number,
+    status: TenantStatus,
+    reason: string | null,
+  ): Promise<TenantAdmin> {
     const response = await firstValueFrom(
-      this.http.put<ApiResponse<TenantAdmin>>(`${BASE_URL}/tenants/${id}/status`, { status, reason }),
+      this.http.put<ApiResponse<TenantAdmin>>(`${BASE_URL}/tenants/${id}/status`, {
+        status,
+        reason,
+      }),
     );
     return response.data;
   }
@@ -97,6 +104,26 @@ export class PlatformAdminService {
   async extendTrial(id: number, days: number, reason: string | null): Promise<TenantAdmin> {
     const response = await firstValueFrom(
       this.http.put<ApiResponse<TenantAdmin>>(`${BASE_URL}/tenants/${id}/trial`, { days, reason }),
+    );
+    return response.data;
+  }
+
+  /**
+   * Enregistre un règlement reçu en espèces : c'est ce geste qui ouvre ou rouvre l'accès
+   * d'un établissement, la plateforme n'encaissant rien en ligne.
+   */
+  async recordPayment(
+    id: number,
+    planId: number,
+    months: number,
+    reason: string | null,
+  ): Promise<TenantAdmin> {
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<TenantAdmin>>(`${BASE_URL}/tenants/${id}/payments`, {
+        planId,
+        months,
+        reason,
+      }),
     );
     return response.data;
   }
@@ -116,7 +143,9 @@ export class PlatformAdminService {
   }
 
   async listPlans(): Promise<PlanAdmin[]> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<PlanAdmin[]>>(`${BASE_URL}/plans`));
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<PlanAdmin[]>>(`${BASE_URL}/plans`),
+    );
     return response.data;
   }
 
@@ -146,7 +175,9 @@ export class PlatformAdminService {
 
   async listActions(query: PageQuery): Promise<Paged<PlatformAction>> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<PlatformAction[]>>(`${BASE_URL}/actions`, { params: pageParams(query) }),
+      this.http.get<ApiResponse<PlatformAction[]>>(`${BASE_URL}/actions`, {
+        params: pageParams(query),
+      }),
     );
     return { items: response.data, total: response.meta?.total ?? response.data.length };
   }

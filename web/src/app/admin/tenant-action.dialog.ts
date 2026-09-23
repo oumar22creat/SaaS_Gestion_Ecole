@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { fieldError } from '../core/form-error.util';
 import { extractErrorMessage } from '../core/http-error.util';
+import { formatMoney } from '../core/money.util';
 import {
   PlanAdmin,
   PlatformAdminService,
@@ -16,7 +17,7 @@ import {
   TenantStatus,
 } from './platform-admin.service';
 
-export type TenantActionKind = 'status' | 'trial' | 'plan';
+export type TenantActionKind = 'status' | 'trial' | 'plan' | 'payment';
 
 export interface TenantActionDialogData {
   kind: TenantActionKind;
@@ -25,10 +26,10 @@ export interface TenantActionDialogData {
 }
 
 /**
- * Décisions prises sur un établissement client : suspension, prolongation d'essai, changement
- * de plan.
+ * Décisions prises sur un établissement client : encaissement d'un règlement, suspension,
+ * prolongation d'essai, changement de plan.
  *
- * <p>Les trois passent par le même écran parce qu'elles partagent l'essentiel : elles engagent
+ * <p>Toutes passent par le même écran parce qu'elles partagent l'essentiel : elles engagent
  * l'éditeur vis-à-vis d'un client, et demandent donc un motif qui sera conservé au journal.
  * Le motif est obligatoire dès que la décision restreint l'accès — le serveur le refuse
  * autrement, autant le dire avant l'aller-retour.
@@ -72,6 +73,34 @@ export interface TenantActionDialogData {
           </mat-form-field>
         }
 
+        @if (data.kind === 'payment') {
+          <mat-form-field appearance="outline">
+            <mat-label>Plan réglé</mat-label>
+            <mat-select formControlName="planId">
+              @for (plan of data.plans; track plan.id) {
+                <mat-option [value]="plan.id">{{ plan.name }} ({{ plan.code }})</mat-option>
+              }
+            </mat-select>
+            <mat-error>{{ fieldError(form.controls.planId) }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Durée réglée (mois)</mat-label>
+            <input matInput type="number" formControlName="months" />
+            <mat-hint>
+              Ajoutés à l'échéance en cours si elle court encore, sinon comptés à partir
+              d'aujourd'hui.
+            </mat-hint>
+            <mat-error>{{ fieldError(form.controls.months) }}</mat-error>
+          </mat-form-field>
+
+          @if (expectedAmount(); as amount) {
+            <p class="payment-amount">
+              Montant attendu : <strong>{{ amount }}</strong>
+            </p>
+          }
+        }
+
         @if (data.kind === 'plan') {
           <mat-form-field appearance="outline">
             <mat-label>Nouveau plan</mat-label>
@@ -109,6 +138,15 @@ export interface TenantActionDialogData {
     </form>
   `,
   styles: `
+    /* Le montant attendu est calculé sous les yeux de l'opérateur : c'est ce qu'il doit avoir
+     * reçu en espèces avant de valider. */
+    .payment-amount {
+      margin: 0 0 var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius);
+      background: var(--tenant-primary-soft, rgba(15, 92, 76, 0.08));
+    }
+
     .action-context {
       margin: 0 0 var(--space-4);
       padding: var(--space-3) var(--space-4);
@@ -133,9 +171,18 @@ export class TenantActionDialog {
   protected readonly form = this.formBuilder.nonNullable.group({
     status: [this.data.tenant.status as TenantStatus],
     days: [15, [Validators.min(1), Validators.max(180)]],
-    planId: [null as number | null],
+    months: [12, [Validators.required, Validators.min(1), Validators.max(36)]],
+    planId: [this.currentPlanId() as number | null],
     reason: [''],
   });
+
+  /**
+   * Plan déjà souscrit par l'établissement. Présélectionné : un renouvellement reconduit
+   * presque toujours le même plan, et repartir d'un champ vide invite à se tromper.
+   */
+  private currentPlanId(): number | null {
+    return this.data.plans.find((plan) => plan.code === this.data.tenant.planCode)?.id ?? null;
+  }
 
   constructor() {
     // Le motif devient obligatoire dès que le statut choisi restreint l'accès. Recalculé à
@@ -149,7 +196,22 @@ export class TenantActionDialog {
       status: "Changer le statut de l'établissement",
       trial: "Prolonger l'essai",
       plan: 'Changer de plan',
+      payment: 'Enregistrer un règlement',
     }[this.data.kind];
+  }
+
+  /**
+   * Ce que l'établissement doit avoir remis : prix du plan × durée. Affiché avant validation
+   * parce qu'une erreur de plan ou de durée ne se voit plus une fois l'abonnement ouvert.
+   */
+  protected expectedAmount(): string | null {
+    const planId = this.form.controls.planId.value;
+    const months = this.form.controls.months.value;
+    const plan = this.data.plans.find((candidate) => candidate.id === planId);
+    if (!plan || !months || months < 1) {
+      return null;
+    }
+    return formatMoney(plan.priceCents * months, plan.currency);
   }
 
   protected reasonRequired(): boolean {
@@ -181,6 +243,12 @@ export class TenantActionDialog {
         await this.platformAdminService.updateStatus(id, value.status, reason);
       } else if (this.data.kind === 'trial') {
         await this.platformAdminService.extendTrial(id, value.days, reason);
+      } else if (this.data.kind === 'payment') {
+        if (value.planId === null) {
+          this.errorMessage.set('Choisissez le plan réglé.');
+          return;
+        }
+        await this.platformAdminService.recordPayment(id, value.planId, value.months, reason);
       } else {
         if (value.planId === null) {
           this.errorMessage.set('Choisissez un plan.');

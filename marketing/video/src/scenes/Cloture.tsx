@@ -4,6 +4,7 @@ import { Stage } from '../components/Stage';
 import { Mark } from '../components/Mark';
 import { COLORS, SMOOTH } from '../theme';
 import { display, body } from '../fonts';
+import { usePortrait } from '../format';
 
 const CHIFFRES = [
   { valeur: '20', libelle: 'modules livrés' },
@@ -19,6 +20,7 @@ const CHIFFRES = [
 export const Cloture: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const portrait = usePortrait();
 
   const markIn = spring({ frame, fps, config: { damping: 16, stiffness: 130 } });
   const titleIn = spring({ frame, fps, delay: 12, config: SMOOTH, durationInFrames: 26 });
@@ -27,15 +29,15 @@ export const Cloture: React.FC = () => {
 
   return (
     <Stage>
-      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', padding: '0 110px' }}>
+      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', padding: portrait ? '0 70px' : '0 110px' }}>
         <div style={{ transform: `scale(${markIn})`, marginBottom: 36 }}>
-          <Mark size={104} />
+          <Mark size={portrait ? 118 : 104} />
         </div>
 
         <div
           style={{
             fontFamily: display,
-            fontSize: 92,
+            fontSize: portrait ? 76 : 92,
             fontWeight: 700,
             letterSpacing: -2,
             textAlign: 'center',
@@ -48,7 +50,7 @@ export const Cloture: React.FC = () => {
         </div>
 
         {/* Les chiffres du site, en bandeau : ce qui reste en mémoire après la vidéo. */}
-        <div style={{ display: 'flex', gap: 72, marginTop: 52 }}>
+        <div style={{ display: 'flex', gap: portrait ? 44 : 72, marginTop: 52 }}>
           {CHIFFRES.map((chiffre, index) => (
             <div
               key={chiffre.libelle}
@@ -57,7 +59,7 @@ export const Cloture: React.FC = () => {
                 opacity: spring({ frame, fps, delay: 26 + index * 6, config: SMOOTH, durationInFrames: 22 }),
               }}
             >
-              <div style={{ fontFamily: display, fontSize: 64, fontWeight: 700, color: COLORS.gold }}>
+              <div style={{ fontFamily: display, fontSize: portrait ? 56 : 64, fontWeight: 700, color: COLORS.gold }}>
                 {chiffre.valeur}
               </div>
               <div style={{ fontFamily: body, fontSize: 25, color: COLORS.mutedOnDark, marginTop: 4 }}>
@@ -75,7 +77,7 @@ export const Cloture: React.FC = () => {
             backgroundColor: COLORS.gold,
             color: COLORS.inkDeep,
             fontFamily: display,
-            fontSize: 38,
+            fontSize: portrait ? 42 : 38,
             fontWeight: 700,
             opacity: ctaIn,
             transform: `scale(${0.92 + ctaIn * 0.08})`,

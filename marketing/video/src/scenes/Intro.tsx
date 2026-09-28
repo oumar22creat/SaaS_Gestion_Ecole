@@ -4,10 +4,12 @@ import { Stage } from '../components/Stage';
 import { Mark } from '../components/Mark';
 import { COLORS, SMOOTH } from '../theme';
 import { display, body } from '../fonts';
+import { usePortrait } from '../format';
 
 export const Intro: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const portrait = usePortrait();
 
   const markIn = spring({ frame, fps, config: { damping: 14, stiffness: 120 } });
   const wordIn = spring({ frame, fps, delay: 12, config: SMOOTH, durationInFrames: 24 });
@@ -27,13 +29,13 @@ export const Intro: React.FC = () => {
         }}
       >
         <div style={{ transform: `scale(${markIn})`, marginBottom: 46 }}>
-          <Mark size={132} />
+          <Mark size={portrait ? 150 : 132} />
         </div>
 
         <div
           style={{
             fontFamily: display,
-            fontSize: 108,
+            fontSize: portrait ? 86 : 108,
             fontWeight: 700,
             letterSpacing: -2,
             opacity: wordIn,
@@ -56,7 +58,7 @@ export const Intro: React.FC = () => {
         <div
           style={{
             fontFamily: body,
-            fontSize: 34,
+            fontSize: portrait ? 36 : 34,
             letterSpacing: 1,
             color: COLORS.mutedOnDark,
             opacity: taglineIn,

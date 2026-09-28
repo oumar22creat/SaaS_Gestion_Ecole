@@ -4,6 +4,7 @@ import { Stage } from '../components/Stage';
 import { Kicker } from '../components/Kicker';
 import { COLORS, SMOOTH, SNAPPY } from '../theme';
 import { display, body } from '../fonts';
+import { usePortrait } from '../format';
 
 const ELEVES = [
   'Aminata Traoré',
@@ -33,6 +34,7 @@ const Check: React.FC<{ progress: number }> = ({ progress }) => (
 export const Mobile: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const portrait = usePortrait();
 
   const phoneIn = spring({ frame, fps, delay: 6, config: { damping: 22, stiffness: 110 } });
   const textIn = spring({ frame, fps, delay: 16, config: SMOOTH, durationInFrames: 26 });
@@ -46,21 +48,30 @@ export const Mobile: React.FC = () => {
     <Stage>
       <AbsoluteFill
         style={{
-          flexDirection: 'row',
+          flexDirection: portrait ? 'column' : 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 120,
-          padding: 110,
+          gap: portrait ? 44 : 120,
+          padding: portrait ? '0 60px' : 110,
         }}
       >
-        <div style={{ width: 760, opacity: textIn, transform: `translateX(${(1 - textIn) * -30}px)` }}>
+        <div
+          style={{
+            width: portrait ? 960 : 760,
+            textAlign: portrait ? 'center' : 'left',
+            opacity: textIn,
+            transform: portrait
+              ? `translateY(${(1 - textIn) * -24}px)`
+              : `translateX(${(1 - textIn) * -30}px)`,
+          }}
+        >
           <div style={{ marginBottom: 24 }}>
             <Kicker>Sur le terrain</Kicker>
           </div>
           <div
             style={{
               fontFamily: display,
-              fontSize: 86,
+              fontSize: portrait ? 68 : 86,
               fontWeight: 700,
               letterSpacing: -2,
               lineHeight: 1.06,
@@ -72,10 +83,10 @@ export const Mobile: React.FC = () => {
           <div
             style={{
               fontFamily: body,
-              fontSize: 32,
+              fontSize: portrait ? 28 : 32,
               lineHeight: 1.5,
               color: COLORS.mutedOnDark,
-              marginTop: 34,
+              marginTop: portrait ? 24 : 34,
             }}
           >
             Toute la classe validée depuis un seul écran, sur Android comme sur iOS — avec le logo
@@ -86,8 +97,8 @@ export const Mobile: React.FC = () => {
         {/* Téléphone */}
         <div
           style={{
-            width: 430,
-            height: 860,
+            width: portrait ? 470 : 430,
+            height: portrait ? 900 : 860,
             borderRadius: 54,
             padding: 14,
             backgroundColor: '#050f0c',

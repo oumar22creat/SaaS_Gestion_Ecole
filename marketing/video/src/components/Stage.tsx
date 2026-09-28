@@ -2,6 +2,7 @@ import React from 'react';
 import { AbsoluteFill } from 'remotion';
 import { COLORS } from '../theme';
 import { body } from '../fonts';
+import { SAFE_BOTTOM, SAFE_TOP, usePortrait } from '../format';
 
 /**
  * Fond commun à toutes les scènes sombres. La lueur radiale décentrée évite l’aplat mort
@@ -12,6 +13,7 @@ export const Stage: React.FC<{
   tone?: 'dark' | 'light';
 }> = ({ children, tone = 'dark' }) => {
   const dark = tone === 'dark';
+  const portrait = usePortrait();
   return (
     <AbsoluteFill
       style={{
@@ -23,13 +25,20 @@ export const Stage: React.FC<{
       {dark ? (
         <AbsoluteFill
           style={{
-            background:
-              'radial-gradient(900px 520px at 78% 8%, rgba(21,128,106,0.42), transparent 62%),' +
-              'radial-gradient(700px 480px at 12% 96%, rgba(201,162,39,0.14), transparent 60%)',
+            background: portrait
+              ? 'radial-gradient(760px 700px at 80% 12%, rgba(21,128,106,0.42), transparent 62%),' +
+                'radial-gradient(640px 640px at 10% 92%, rgba(201,162,39,0.14), transparent 60%)'
+              : 'radial-gradient(900px 520px at 78% 8%, rgba(21,128,106,0.42), transparent 62%),' +
+                'radial-gradient(700px 480px at 12% 96%, rgba(201,162,39,0.14), transparent 60%)',
           }}
         />
       ) : null}
-      {children}
+      {/* En 9:16, l'interface de WhatsApp recouvre le haut et le bas : le contenu vit entre. */}
+      <AbsoluteFill
+        style={portrait ? { paddingTop: SAFE_TOP, paddingBottom: SAFE_BOTTOM } : undefined}
+      >
+        {children}
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };

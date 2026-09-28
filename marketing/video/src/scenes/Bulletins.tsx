@@ -4,6 +4,7 @@ import { Stage } from '../components/Stage';
 import { Kicker } from '../components/Kicker';
 import { COLORS, SMOOTH, SNAPPY } from '../theme';
 import { display, body } from '../fonts';
+import { usePortrait } from '../format';
 
 const LIGNES = [
   { matiere: 'Mathématiques', note: '15,5', appreciation: 'Très bon trimestre' },
@@ -20,6 +21,7 @@ const LIGNES = [
 export const Bulletins: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const portrait = usePortrait();
 
   const textIn = spring({ frame, fps, delay: 6, config: SMOOTH, durationInFrames: 26 });
   const pageIn = spring({ frame, fps, delay: 10, config: { damping: 24, stiffness: 110 } });
@@ -29,22 +31,24 @@ export const Bulletins: React.FC = () => {
     <Stage>
       <AbsoluteFill
         style={{
-          flexDirection: 'row',
+          // En 9:16 le texte passe au-dessus : on annonce, puis on montre. L’ordre inverse
+          // du 16:9, où l'œil balaie de gauche à droite.
+          flexDirection: portrait ? 'column-reverse' : 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 110,
-          padding: 110,
+          gap: portrait ? 46 : 110,
+          padding: portrait ? '0 60px' : 110,
         }}
       >
         {/* Page de bulletin */}
         <div
           style={{
-            width: 700,
-            height: 880,
+            width: portrait ? 800 : 700,
+            height: portrait ? 940 : 880,
             borderRadius: 10,
             backgroundColor: COLORS.surface,
             boxShadow: '0 40px 90px rgba(0,0,0,0.42)',
-            padding: 52,
+            padding: portrait ? 46 : 52,
             opacity: pageIn,
             transform: `translateY(${(1 - pageIn) * 40}px) rotate(${interpolate(pageIn, [0, 1], [-3, -1.2])}deg)`,
           }}
@@ -122,14 +126,23 @@ export const Bulletins: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ width: 720, opacity: textIn, transform: `translateX(${(1 - textIn) * 30}px)` }}>
+        <div
+          style={{
+            width: portrait ? 960 : 720,
+            textAlign: portrait ? 'center' : 'left',
+            opacity: textIn,
+            transform: portrait
+              ? `translateY(${(1 - textIn) * -24}px)`
+              : `translateX(${(1 - textIn) * 30}px)`,
+          }}
+        >
           <div style={{ marginBottom: 24 }}>
             <Kicker>Bulletins</Kicker>
           </div>
           <div
             style={{
               fontFamily: display,
-              fontSize: 84,
+              fontSize: portrait ? 68 : 84,
               fontWeight: 700,
               letterSpacing: -2,
               lineHeight: 1.06,
@@ -141,10 +154,10 @@ export const Bulletins: React.FC = () => {
           <div
             style={{
               fontFamily: body,
-              fontSize: 32,
+              fontSize: portrait ? 27 : 32,
               lineHeight: 1.5,
               color: COLORS.mutedOnDark,
-              marginTop: 34,
+              marginTop: portrait ? 22 : 34,
             }}
           >
             Export PDF à l’en-tête de votre établissement : logo, mentions légales, moyennes et
@@ -156,7 +169,7 @@ export const Bulletins: React.FC = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 14,
-              marginTop: 40,
+              marginTop: portrait ? 28 : 40,
               padding: '16px 28px',
               borderRadius: 999,
               backgroundColor: 'rgba(201,162,39,0.16)',

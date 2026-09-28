@@ -4,6 +4,7 @@ import { Stage } from '../components/Stage';
 import { Kicker } from '../components/Kicker';
 import { COLORS, SMOOTH } from '../theme';
 import { display } from '../fonts';
+import { usePortrait } from '../format';
 
 /**
  * Le renversement : les trois silos éclatés se referment en une seule surface. Le mouvement
@@ -12,6 +13,7 @@ import { display } from '../fonts';
 export const Promesse: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const portrait = usePortrait();
 
   const converge = spring({ frame, fps, config: SMOOTH, durationInFrames: 34 });
   const reveal = spring({ frame, fps, delay: 18, config: SMOOTH, durationInFrames: 24 });
@@ -23,7 +25,14 @@ export const Promesse: React.FC = () => {
     <Stage>
       <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center' }}>
         {/* Les trois fragments viennent se superposer en une carte unique. */}
-        <div style={{ position: 'relative', width: 520, height: 300, marginBottom: 58 }}>
+        <div
+          style={{
+            position: 'relative',
+            width: portrait ? 760 : 520,
+            height: portrait ? 440 : 300,
+            marginBottom: portrait ? 78 : 58,
+          }}
+        >
           {[-1, 0, 1].map((slot) => (
             <div
               key={slot}
@@ -34,7 +43,7 @@ export const Promesse: React.FC = () => {
                 border: `1px solid ${COLORS.border}`,
                 backgroundColor: slot === 0 ? 'rgba(21,128,106,0.30)' : 'rgba(255,255,255,0.05)',
                 transform: [
-                  `translateX(${interpolate(converge, [0, 1], [slot * 430, 0])}px)`,
+                  `translateX(${interpolate(converge, [0, 1], [slot * (portrait ? 250 : 430), 0])}px)`,
                   `rotate(${interpolate(converge, [0, 1], [slot * 7, 0])}deg)`,
                   `scale(${interpolate(converge, [0, 1], [0.86, 1])})`,
                 ].join(' '),
@@ -90,7 +99,7 @@ export const Promesse: React.FC = () => {
         <div
           style={{
             fontFamily: display,
-            fontSize: 94,
+            fontSize: portrait ? 82 : 94,
             fontWeight: 700,
             letterSpacing: -2,
             lineHeight: 1.08,

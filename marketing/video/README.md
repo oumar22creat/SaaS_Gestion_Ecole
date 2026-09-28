@@ -8,7 +8,8 @@ logiciel d'édition, et une modification de texte ou de prix se fait dans un fic
 
 ```bash
 npm install
-npm run render     # → out/school-manager.mp4
+npm run render            # 16:9  → out/school-manager.mp4
+npm run render:vertical   # 9:16  → out/school-manager-vertical.mp4
 ```
 
 Node 22 minimum. Le premier rendu télécharge un Chrome Headless (~150 Mo), mis en cache
@@ -40,5 +41,5 @@ Le numéro WhatsApp de `src/scenes/Cloture.tsx` est celui de
 
 - **Pas de bande son.** Ajoutez une musique libre de droits au montage final si vous en
   voulez une ; le rythme des scènes est tenu sans elle.
-- **Pas de version verticale** (9:16 pour WhatsApp et les réseaux). Les scènes en deux
-  colonnes (mobile, bulletins) demandent une mise en page distincte, pas un recadrage.
+- **Pas de sous-titres incrustés.** Le film se lit sans son, tout le propos est déjà à
+  l’écran.

@@ -3,12 +3,13 @@ import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } fr
 import { Stage } from '../components/Stage';
 import { COLORS, SMOOTH } from '../theme';
 import { display, body } from '../fonts';
+import { usePortrait } from '../format';
 
 /** Les trois supports que l’application remplace, tels que les décrit le site vitrine. */
 const SILOS = [
-  { label: 'Les notes', support: 'dans un tableur', x: -430, rotate: -7 },
-  { label: 'Les absences', support: 'sur papier', x: 0, rotate: 3 },
-  { label: 'Les frais', support: 'dans un cahier', x: 430, rotate: 8 },
+  { label: 'Les notes', support: 'dans un tableur', x: -430, y: -230, rotate: -7 },
+  { label: 'Les absences', support: 'sur papier', x: 0, y: 0, rotate: 3 },
+  { label: 'Les frais', support: 'dans un cahier', x: 430, y: 230, rotate: 8 },
 ];
 
 /**
@@ -18,6 +19,7 @@ const SILOS = [
 export const Probleme: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const portrait = usePortrait();
 
   const punch = spring({ frame, fps, delay: 112, config: SMOOTH, durationInFrames: 26 });
   // Les cartes disparaissent AVANT que la phrase n’arrive : superposées, on ne lit ni l’une
@@ -31,7 +33,14 @@ export const Probleme: React.FC = () => {
   return (
     <Stage>
       <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ position: 'relative', width: 1500, height: 330, opacity: dim }}>
+        <div
+          style={{
+            position: 'relative',
+            width: portrait ? 900 : 1500,
+            height: portrait ? 700 : 330,
+            opacity: dim,
+          }}
+        >
           {SILOS.map((silo, index) => {
             const enter = spring({
               frame,
@@ -39,8 +48,10 @@ export const Probleme: React.FC = () => {
               delay: 6 + index * 12,
               config: { damping: 18, stiffness: 140 },
             });
-            // Dérive continue vers l’extérieur : les silos s’écartent avec le temps.
-            const spread = interpolate(frame, [30, 110], [0, 58 * Math.sign(silo.x || 1)], {
+            // Dérive continue vers l’extérieur : les silos s’écartent avec le temps. En 9:16
+            // l’écartement se fait en hauteur, seul axe qui reste disponible.
+            const axis = portrait ? silo.y : silo.x;
+            const spread = interpolate(frame, [30, 110], [0, 46 * Math.sign(axis || 1)], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',
             });
@@ -51,22 +62,23 @@ export const Probleme: React.FC = () => {
                 style={{
                   position: 'absolute',
                   left: '50%',
-                  top: 0,
-                  width: 380,
-                  marginLeft: -190,
+                  width: portrait ? 620 : 380,
+                  marginLeft: portrait ? -310 : -190,
+                  top: portrait ? '50%' : 0,
+                  marginTop: portrait ? -95 : 0,
                   padding: '38px 36px',
                   borderRadius: 22,
                   backgroundColor: 'rgba(255,255,255,0.05)',
                   border: `1px solid ${COLORS.border}`,
                   opacity: enter,
                   transform: [
-                    `translateX(${silo.x + spread}px)`,
-                    `translateY(${(1 - enter) * 40}px)`,
+                    `translateX(${portrait ? 0 : silo.x + spread}px)`,
+                    `translateY(${(portrait ? silo.y + spread : 0) + (1 - enter) * 40}px)`,
                     `rotate(${silo.rotate * enter}deg)`,
                   ].join(' '),
                 }}
               >
-                <div style={{ fontFamily: display, fontSize: 46, fontWeight: 600 }}>{silo.label}</div>
+                <div style={{ fontFamily: display, fontSize: portrait ? 52 : 46, fontWeight: 600 }}>{silo.label}</div>
                 <div style={{ fontFamily: body, fontSize: 30, color: COLORS.mutedOnDark, marginTop: 10 }}>
                   {silo.support}
                 </div>
@@ -79,7 +91,7 @@ export const Probleme: React.FC = () => {
           style={{
             position: 'absolute',
             fontFamily: display,
-            fontSize: 82,
+            fontSize: portrait ? 70 : 82,
             fontWeight: 600,
             letterSpacing: -1,
             textAlign: 'center',

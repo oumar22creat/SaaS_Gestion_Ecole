@@ -5,6 +5,7 @@ import { Kicker } from '../components/Kicker';
 import { Glyph, GlyphName } from '../components/Glyph';
 import { COLORS, SMOOTH, SNAPPY } from '../theme';
 import { display, body } from '../fonts';
+import { usePortrait } from '../format';
 
 /** Les six familles de modules, reprises mot pour mot de la section « Les modules » du site. */
 const MODULES: { icon: GlyphName; title: string; detail: string }[] = [
@@ -19,35 +20,36 @@ const MODULES: { icon: GlyphName; title: string; detail: string }[] = [
 export const Modules: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const portrait = usePortrait();
 
   const titleIn = spring({ frame, fps, config: SMOOTH, durationInFrames: 24 });
 
   return (
     <Stage>
-      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', padding: 90 }}>
+      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', padding: portrait ? 50 : 90 }}>
         <div style={{ opacity: titleIn, textAlign: 'center', marginBottom: 20 }}>
           <Kicker>Les modules</Kicker>
         </div>
         <div
           style={{
             fontFamily: display,
-            fontSize: 72,
+            fontSize: portrait ? 62 : 72,
             fontWeight: 700,
             letterSpacing: -1.5,
-            marginBottom: 64,
+            marginBottom: portrait ? 56 : 64,
             opacity: titleIn,
             transform: `translateY(${(1 - titleIn) * 20}px)`,
           }}
         >
-          Tout ce qu’un établissement gère vraiment
+          {portrait ? 'Tout ce qu’une école gère vraiment' : 'Tout ce qu’un établissement gère vraiment'}
         </div>
 
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 28,
-            width: 1620,
+            gridTemplateColumns: portrait ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+            gap: portrait ? 22 : 28,
+            width: portrait ? 960 : 1620,
           }}
         >
           {MODULES.map((module, index) => {
@@ -58,7 +60,7 @@ export const Modules: React.FC = () => {
               <div
                 key={module.title}
                 style={{
-                  padding: '34px 34px 38px',
+                  padding: portrait ? '28px 26px 30px' : '34px 34px 38px',
                   borderRadius: 22,
                   backgroundColor: 'rgba(255,255,255,0.055)',
                   border: `1px solid ${COLORS.border}`,
@@ -68,26 +70,26 @@ export const Modules: React.FC = () => {
               >
                 <div
                   style={{
-                    width: 68,
-                    height: 68,
+                    width: portrait ? 58 : 68,
+                    height: portrait ? 58 : 68,
                     borderRadius: 18,
                     display: 'grid',
                     placeItems: 'center',
                     backgroundColor: 'rgba(201,162,39,0.14)',
-                    marginBottom: 24,
+                    marginBottom: portrait ? 18 : 24,
                   }}
                 >
-                  <Glyph name={module.icon} color={COLORS.gold} size={36} />
+                  <Glyph name={module.icon} color={COLORS.gold} size={portrait ? 30 : 36} />
                 </div>
-                <div style={{ fontFamily: display, fontSize: 36, fontWeight: 600, lineHeight: 1.15 }}>
+                <div style={{ fontFamily: display, fontSize: portrait ? 31 : 36, fontWeight: 600, lineHeight: 1.15 }}>
                   {module.title}
                 </div>
                 <div
                   style={{
                     fontFamily: body,
-                    fontSize: 26,
+                    fontSize: portrait ? 22 : 26,
                     color: COLORS.mutedOnDark,
-                    marginTop: 12,
+                    marginTop: 10,
                   }}
                 >
                   {module.detail}

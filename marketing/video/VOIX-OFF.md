@@ -1,6 +1,6 @@
 # Texte de voix off — vidéo de présentation
 
-Calé sur le minutage réel des scènes (`src/Presentation.tsx`, 30 images/seconde, 50,3 s).
+Calé sur le minutage réel des scènes (`src/Presentation.tsx`, 30 images/seconde, 51,4 s).
 
 ## Principe
 
@@ -24,7 +24,7 @@ qui est dit.
 | **26,9 – 33,4 s** | Ils arrivent prêts, pas à refaire. | « Les bulletins sortent à votre en-tête, moyennes et rangs calculés. Plus rien à ressaisir. » |
 | **32,8 – 38,8 s** | Vos données restent les vôtres · 0 | « Vos données sont isolées. Aucune école ne voit celles d'une autre. Jamais. » |
 | **38,3 – 45,3 s** | Les trois plans | « Un plan selon votre effectif, à partir de cent quatre-vingt mille francs par an. » |
-| **44,8 – 50,3 s** | Démarrer l'essai gratuit · +223 79 82 79 79 | « Trente jours d'essai gratuit. Écrivez-nous sur WhatsApp, le numéro est à l'écran. » |
+| **44,8 – 51,4 s** | Démarrer l'essai gratuit · +223 79 82 79 79 | « Trente jours d'essai gratuit. Écrivez-nous sur WhatsApp, le numéro est à l'écran. » |
 
 Total : environ 105 mots.
 
@@ -65,3 +65,42 @@ Total : environ 105 mots.
 La vidéo est du code : les durées de scènes se changent dans `src/Presentation.tsx`. Si la
 voix dépasse, on allonge les scènes concernées et on refait le rendu — ce n'est pas au
 comédien de parler plus vite.
+
+## Minutage vérifié
+
+Chaque segment a été lu par une synthèse vocale à 160 mots/minute, puis mesuré contre la
+durée de sa scène. Tout passe, avec de la marge :
+
+| Segment | Scène | Lu | Marge |
+|---|---|---|---|
+| Intro | 4,0 s | 3,3 s | +0,7 s |
+| Problème | 6,5 s | 4,2 s | +2,3 s |
+| Promesse | 4,7 s | 3,7 s | +1,0 s |
+| Modules | 8,0 s | 5,9 s | +2,1 s |
+| Mobile | 6,5 s | 5,7 s | +0,8 s |
+| Bulletins | 6,5 s | 5,7 s | +0,8 s |
+| Sécurité | 6,0 s | 4,8 s | +1,2 s |
+| Tarifs | 7,0 s | 4,9 s | +2,1 s |
+| Clôture | 6,7 s | 5,5 s | +1,2 s |
+
+La clôture ne laissait aucune marge : la scène est passée de 165 à 200 images. Le numéro de
+téléphone reste ainsi à l'écran plus longtemps, ce qui est de toute façon souhaitable — c'est
+l'image où le spectateur le note.
+
+## Quelle voix
+
+Par ordre de préférence :
+
+1. **Une vraie personne.** Un français d'Afrique de l'Ouest situe le produit sur son marché ;
+   aucune synthèse vocale grand public ne le propose. Un téléphone récent suffit.
+2. **ElevenLabs** (modèle multilingue) pour une synthèse : la meilleure en français à ce jour.
+   **Le plan gratuit interdit l'usage commercial** — il faut l'offre payante d'entrée de gamme
+   pour une vidéo de vente.
+3. **Google Cloud Text-to-Speech** (voix françaises « Studio ») ou **Azure Speech**
+   (Denise, Henri) : qualité proche, usage commercial inclus, facturation à l'usage — quelques
+   centimes pour ce texte.
+
+Dans tous les cas, écrivez les nombres en toutes lettres dans le texte soumis
+(« cent quatre-vingt mille », pas « 180 000 ») : les synthèses les lisent souvent mal, et un
+prix mal prononcé est pire que pas de prix du tout. Vérifiez la licence avant de publier : la
+case « usage commercial » n'est pas cochée par défaut partout.

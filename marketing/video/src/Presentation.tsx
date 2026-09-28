@@ -28,7 +28,8 @@ export const SCENES = [
   { component: Bulletins, duration: 195 },
   { component: Securite, duration: 180 },
   { component: Tarifs, duration: 210 },
-  { component: Cloture, duration: 165 },
+  // Plus longue que les autres : c’est l’image où le spectateur note le numéro.
+  { component: Cloture, duration: 200 },
 ] as const;
 
 /**

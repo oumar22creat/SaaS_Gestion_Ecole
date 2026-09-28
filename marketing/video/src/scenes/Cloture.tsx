@@ -110,7 +110,7 @@ export const Cloture: React.FC = () => {
           style={{
             pointerEvents: 'none',
             backgroundColor: COLORS.inkDeep,
-            opacity: interpolate(frame, [130, 150], [0, 1], {
+            opacity: interpolate(frame, [172, 194], [0, 1], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',
             }),

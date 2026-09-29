@@ -1,0 +1,139 @@
+# Pile de production. Se lance depuis la racine du dépôt :
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d
+#
+# Les limites mémoire sont dimensionnées pour un serveur de 8 Go (Hostinger KVM 2) : elles
+# laissent environ 3 Go au cache disque du système, dont PostgreSQL dépend fortement — sans
+# quoi la base relit le disque à chaque requête.
+
+name: school-manager
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      # Rôle superutilisateur : utilisé uniquement par Flyway pour les migrations (DDL).
+      POSTGRES_USER: ${DB_ADMIN_USER}
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD}
+      # Rôle applicatif restreint, créé par le script d'init : c'est lui que le backend
+      # utilise, pour que les politiques Row-Level Security s'appliquent réellement (ADR-001).
+      DB_APP_USER: ${DB_USER}
+      DB_APP_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../backend/docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    # Pas de ports publiés : la base n'est joignable que depuis le réseau Docker interne.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_ADMIN_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "192mb", "--maxmemory-policy", "allkeys-lru", "--save", ""]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_ADMIN_USER: ${DB_ADMIN_USER}
+      DB_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      # Les navigateurs appellent l'API sur leur propre sous-domaine : même origine, donc
+      # aucune requête inter-origine en production. La liste reste explicite pour que rien
+      # d'autre ne soit accepté.
+      CORS_ALLOWED_ORIGINS: https://${DOMAIN},https://www.${DOMAIN}
+      STORAGE_LOCAL_PATH: /app/storage
+      SMS_ENABLED: ${SMS_ENABLED:-false}
+      SMS_PROVIDER: ${SMS_PROVIDER:-}
+      SMS_URL: ${SMS_URL:-}
+      SMS_AUTH_HEADER: ${SMS_AUTH_HEADER:-}
+      SMS_AUTH_VALUE: ${SMS_AUTH_VALUE:-}
+      SMS_SENDER_NAME: ${SMS_SENDER_NAME:-School Manager}
+      SMS_DEFAULT_COUNTRY_CODE: ${SMS_DEFAULT_COUNTRY_CODE:-223}
+      BILLING_CASH_GRACE_DAYS: ${BILLING_CASH_GRACE_DAYS:-0}
+    volumes:
+      # Logos d'établissement et documents générés. Sauvegardé au même titre que la base :
+      # un bulletin sans le logo de son école n'est plus le même document.
+      - backend_storage:/app/storage
+    deploy:
+      resources:
+        limits:
+          memory: 2560m
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      DOMAIN: ${DOMAIN}
+    # Un certificat renouvelé n'est pris en compte qu'après rechargement : sans cette boucle,
+    # le site servirait un certificat expiré jusqu'au prochain redémarrage manuel.
+    command: >
+      sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done &
+      nginx -g 'daemon off;'"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  # Renouvellement automatique du certificat générique. Voir deploy/init-letsencrypt.sh pour
+  # la première émission, qui exige une validation DNS (un certificat *.domaine ne peut pas
+  # être validé par HTTP).
+  certbot:
+    image: certbot/dns-cloudflare:latest
+    restart: unless-stopped
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+      - ./certbot/cloudflare.ini:/etc/cloudflare.ini:ro
+    entrypoint: >
+      sh -c "trap exit TERM;
+      while :; do
+        certbot renew --dns-cloudflare --dns-cloudflare-credentials /etc/cloudflare.ini --quiet;
+        sleep 12h & wait $${!};
+      done"
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_storage:
+  certbot_conf:
+  certbot_www:

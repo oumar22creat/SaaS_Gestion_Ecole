@@ -219,3 +219,9 @@ celui choisi à l'inscription (`POST /api/v1/tenants/register`).
 - [`docs/MOCKUPS.md`](docs/MOCKUPS.md) — maquettes basse fidélité des écrans clés
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — backlog du projet (état d'avancement)
 - [`docs/SESSION_LOG.md`](docs/SESSION_LOG.md) — historique des sessions de travail
+
+## Déploiement
+
+La procédure complète — serveur, DNS générique, TLS, sauvegardes chiffrées hors site et
+mises à jour — est dans [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md). Les fichiers
+correspondants vivent dans `deploy/`.

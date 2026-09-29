@@ -1,0 +1,91 @@
+# Redirection HTTP → HTTPS, sauf le chemin de validation Let's Encrypt.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN} www.${DOMAIN} *.${DOMAIN};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# ------------------------------------------------------------------ Site vitrine (domaine nu)
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    include /etc/nginx/ssl-params.conf;
+
+    root /usr/share/nginx/html/site;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ $uri.html =404;
+    }
+
+    # Les fichiers du site portent un nom stable : un cache court évite de servir une ancienne
+    # version pendant des semaines après une mise à jour du discours commercial.
+    location ~* \.(css|js|svg|jpg|jpeg|png|webp|woff2)$ {
+        expires 1h;
+        add_header Cache-Control "public";
+    }
+}
+
+# ------------------------------------------- Application : un sous-domaine par établissement
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name *.${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    include /etc/nginx/ssl-params.conf;
+
+    root /usr/share/nginx/html/app;
+    index index.html;
+
+    # ------------------------------------------------------------------------------- API
+    location /api/v1/auth/login {
+        limit_req zone=auth burst=5 nodelay;
+        include /etc/nginx/proxy-params.conf;
+        proxy_pass http://backend:8080;
+    }
+
+    location /api/ {
+        include /etc/nginx/proxy-params.conf;
+        proxy_pass http://backend:8080;
+        # Les exports PDF d'un trimestre entier prennent parfois plusieurs dizaines de secondes.
+        proxy_read_timeout 120s;
+    }
+
+    location /actuator/health {
+        include /etc/nginx/proxy-params.conf;
+        proxy_pass http://backend:8080;
+        access_log off;
+    }
+
+    # ------------------------------------------------------------------ Application Angular
+    # Les fichiers générés par Angular portent une empreinte dans leur nom : ils peuvent être
+    # mis en cache indéfiniment, et une nouvelle version change leur nom.
+    location ~* \.(js|css|woff2|svg|png|jpg|webp)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # index.html jamais mis en cache : c'est lui qui désigne les fichiers ci-dessus. Servi
+    # depuis un cache, il réclamerait des morceaux d'une version qui n'existe plus — c'est
+    # exactement l'erreur « Failed to fetch dynamically imported module ».
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache";
+    }
+}

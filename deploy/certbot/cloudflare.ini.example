@@ -1,0 +1,12 @@
+# Jeton d'API Cloudflare, nécessaire pour émettre le certificat générique *.votredomaine.
+#
+# Pourquoi Cloudflare : un certificat couvrant *.domaine ne peut pas être validé par la
+# méthode HTTP habituelle — Let's Encrypt exige une preuve DNS, donc un accès programmatique
+# à la zone. Cloudflare est gratuit et fonctionne quel que soit votre registrar : il suffit
+# d'y déléguer les serveurs de noms. Pour un autre hébergeur DNS, remplacez l'image
+# `certbot/dns-cloudflare` par le greffon correspondant dans docker-compose.prod.yml.
+#
+# Créez le jeton sur dash.cloudflare.com → My Profile → API Tokens, avec la seule permission
+# « Zone:DNS:Edit » sur la zone concernée. Pas de clé globale : elle donnerait accès à tout
+# le compte.
+dns_cloudflare_api_token = REMPLACER_PAR_VOTRE_JETON

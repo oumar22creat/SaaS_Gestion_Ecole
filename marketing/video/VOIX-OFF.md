@@ -5,10 +5,11 @@ Tout y est : ce qu'on voit, ce qui est écrit à l'écran, ce qui est dit, et à
 
 | | |
 |---|---|
-| **Durée** | 51,4 s (1543 images à 30 i/s) |
+| **Durée** | 54,1 s (1623 images à 30 i/s) |
 | **Formats** | 16:9 — 1920×1080 · 9:16 — 1080×1920 (statut WhatsApp) |
 | **Langue** | Français |
-| **Musique** | Aucune pour l'instant |
+| **Voix off** | Enregistrée et montée — `public/voix-off/` |
+| **Musique** | Aucune |
 | **Source du minutage** | `src/Presentation.tsx` — c'est ce fichier qui fait foi |
 
 ## Principe de rédaction
@@ -24,7 +25,7 @@ dans un film de cinquante secondes, le silence est ce qui donne du poids à ce q
 
 ## Le script, scène par scène
 
-### 1 — Ouverture · 0,0 → 4,0 s
+### 1 — Ouverture · 0,0 → 5,3 s
 
 **Image** : fond vert profond, la toque de diplômé apparaît avec un léger rebond, le nom se
 pose, un filet or s'étire sous lui.
@@ -32,7 +33,7 @@ pose, un filet or s'étire sous lui.
 **Voix off** *(entrer à 1 s, laisser le logo respirer)* :
 > Diriger une école, c'est tenir cent choses à la fois.
 
-### 2 — Le problème · 3,5 → 10,0 s
+### 2 — Le problème · 4,9 → 11,4 s
 
 **Image** : trois cartes entrent séparément et s'écartent l'une de l'autre, puis disparaissent.
 Un demi-temps de vide, et la phrase tombe.
@@ -43,7 +44,7 @@ cahier → **Personne ne voit l'ensemble.**
 
 *Laisser la phrase à l'écran tomber dans le silence : ne rien dire par-dessus.*
 
-### 3 — La promesse · 9,3 → 14,0 s
+### 3 — La promesse · 10,6 → 15,3 s
 
 **Image** : les trois fragments se referment en une seule surface, où apparaît l'esquisse d'une
 application.
@@ -51,7 +52,7 @@ application.
 **Voix off** :
 > School Manager rassemble tout, avec les droits de chacun.
 
-### 4 — Les modules · 13,4 → 21,4 s
+### 4 — Les modules · 14,8 → 22,8 s
 
 **Image** : six cartes entrent en cascade.
 **À l'écran** : Scolarité et bulletins · Absences et emploi du temps · Communication aux
@@ -60,7 +61,7 @@ familles · Frais de scolarité · Cantine, transport, bibliothèque · Pilotage
 > Vingt modules, de l'inscription au bulletin. Tout ce que votre école gère déjà, sans le
 > papier.
 
-### 5 — Sur le terrain · 20,9 → 27,4 s
+### 5 — Sur le terrain · 22,2 → 28,7 s
 
 **Image** : un téléphone, la feuille d'appel d'une classe, les élèves cochés un à un, un
 chronomètre qui monte à trente.
@@ -68,7 +69,7 @@ chronomètre qui monte à trente.
 **Voix off** :
 > L'enseignant fait l'appel depuis son téléphone. Trente secondes, et c'est enregistré.
 
-### 6 — Les bulletins · 26,9 → 33,4 s
+### 6 — Les bulletins · 28,2 → 34,7 s
 
 **Image** : une page de bulletin se compose ligne à ligne, à l'en-tête de l'établissement,
 jusqu'à la moyenne générale et le rang.
@@ -76,7 +77,7 @@ jusqu'à la moyenne générale et le rang.
 **Voix off** :
 > Les bulletins sortent à votre en-tête, moyennes et rangs calculés. Plus rien à ressaisir.
 
-### 7 — La sécurité · 32,8 → 38,8 s
+### 7 — La sécurité · 34,2 → 40,2 s
 
 **Image** : deux établissements séparés par une cloison qui se referme, un zéro au centre.
 **À l'écran** : Vos données restent les vôtres — **0** donnée partagée entre deux
@@ -84,14 +85,14 @@ jusqu'à la moyenne générale et le rang.
 **Voix off** :
 > Vos données sont isolées. Aucune école ne voit celles d'une autre. Jamais.
 
-### 8 — Les tarifs · 38,3 → 45,3 s
+### 8 — Les tarifs · 39,6 → 46,6 s
 
 **Image** : les trois plans, les montants se composant comme un compteur.
 **À l'écran** : Essentiel 180 000 · Standard 750 000 · Premium dès 1 800 000 FCFA par an
 **Voix off** :
 > Un plan selon votre effectif, à partir de cent quatre-vingt mille francs par an.
 
-### 9 — Clôture · 44,8 → 51,4 s
+### 9 — Clôture · 46,1 → 54,1 s
 
 **Image** : la marque, les trois chiffres clés, le bouton, le numéro WhatsApp. Fondu au noir
 sur la fin.
@@ -125,24 +126,31 @@ sur la fin.
 
 Environ 105 mots.
 
-## Minutage vérifié
+## Minutage final
 
-Chaque réplique a été lue par une synthèse vocale à 160 mots/minute puis mesurée contre la
-durée de sa scène. Tout passe, avec de la marge :
+Durées réelles des enregistrements livrés, mesurées contre le temps disponible dans chaque
+scène (durée de la scène moins le retard d'entrée de la voix) :
 
-| Scène | Disponible | Lu | Marge |
-|---|---|---|---|
-| 1 Ouverture | 4,0 s | 3,3 s | +0,7 s |
-| 2 Problème | 6,5 s | 4,2 s | +2,3 s |
-| 3 Promesse | 4,7 s | 3,7 s | +1,0 s |
-| 4 Modules | 8,0 s | 5,9 s | +2,1 s |
-| 5 Terrain | 6,5 s | 5,7 s | +0,8 s |
-| 6 Bulletins | 6,5 s | 5,7 s | +0,8 s |
-| 7 Sécurité | 6,0 s | 4,8 s | +1,2 s |
-| 8 Tarifs | 7,0 s | 4,9 s | +2,1 s |
-| 9 Clôture | 6,7 s | 5,5 s | +1,2 s |
+| Scène | Voix entre à | Durée voix | Disponible | Marge |
+|---|---|---|---|---|
+| 1 Ouverture | 1,0 s | 3,6 s | 4,3 s | +0,7 s |
+| 2 Problème | 5,3 s | 3,9 s | 6,1 s | +2,2 s |
+| 3 Promesse | 11,0 s | 3,5 s | 4,3 s | +0,9 s |
+| 4 Modules | 15,2 s | 5,4 s | 7,6 s | +2,2 s |
+| 5 Terrain | 22,6 s | 5,4 s | 6,1 s | +0,7 s |
+| 6 Bulletins | 28,6 s | 5,7 s | 6,1 s | +0,4 s |
+| 7 Sécurité | 34,6 s | 4,7 s | 5,6 s | +0,9 s |
+| 8 Tarifs | 40,0 s | 3,4 s | 6,6 s | +3,2 s |
+| 9 Clôture | 46,4 s | 6,3 s | 6,9 s | +0,6 s |
 
-La clôture ne laissait aucune marge : la scène est passée de 165 à 200 images.
+Deux répliques débordaient de leur scène à la livraison : l'ouverture de 0,6 s et la clôture
+de 0,2 s. **Les scènes ont été rallongées** — l'ouverture de 120 à 160 images, la clôture de
+200 à 240 — et le fondu final décalé d'autant, pour qu'il ne commence qu'après la dernière
+phrase. Le film passe de 51,4 s à 54,1 s.
+
+L'alignement a été vérifié sur le rendu final en mesurant l'énergie du signal : chaque
+réplique démarre à moins de 0,1 s de sa position prévue, et aucun silence ne descend sous
+0,25 s entre deux répliques.
 
 ---
 

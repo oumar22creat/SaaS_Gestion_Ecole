@@ -21,7 +21,8 @@ import { VoixOff } from './VoixOff';
  * une fois entrée.
  */
 export const SCENES = [
-  { component: Intro, duration: 120 },
+  // Rallongée pour que la réplique d’ouverture finisse avant la transition.
+  { component: Intro, duration: 160 },
   { component: Probleme, duration: 195 },
   { component: Promesse, duration: 140 },
   { component: Modules, duration: 240 },
@@ -30,7 +31,7 @@ export const SCENES = [
   { component: Securite, duration: 180 },
   { component: Tarifs, duration: 210 },
   // Plus longue que les autres : c’est l’image où le spectateur note le numéro.
-  { component: Cloture, duration: 200 },
+  { component: Cloture, duration: 240 },
 ] as const;
 
 /**

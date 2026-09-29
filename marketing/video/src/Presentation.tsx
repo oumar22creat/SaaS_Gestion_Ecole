@@ -14,6 +14,7 @@ import { Securite } from './scenes/Securite';
 import { Tarifs } from './scenes/Tarifs';
 import { Cloture } from './scenes/Cloture';
 import { VoixOff } from './VoixOff';
+import { Musique } from './Musique';
 
 /**
  * Durées en images (30 i/s). Elles sont calées sur le temps de lecture du texte français à
@@ -80,6 +81,7 @@ export const Presentation: React.FC = () => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: COLORS.ink }}>
+      <Musique debuts={sceneStarts(fps)} />
       <VoixOff debuts={sceneStarts(fps)} />
       <TransitionSeries>
         {SCENES.map((scene, index) => {

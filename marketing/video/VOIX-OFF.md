@@ -9,7 +9,7 @@ Tout y est : ce qu'on voit, ce qui est écrit à l'écran, ce qui est dit, et à
 | **Formats** | 16:9 — 1920×1080 · 9:16 — 1080×1920 (statut WhatsApp) |
 | **Langue** | Français |
 | **Voix off** | Enregistrée et montée — `public/voix-off/` |
-| **Musique** | Aucune |
+| **Musique** | `public/musique-fond.mp3`, abaissée sous la voix |
 | **Source du minutage** | `src/Presentation.tsx` — c'est ce fichier qui fait foi |
 
 ## Principe de rédaction

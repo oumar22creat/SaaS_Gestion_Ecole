@@ -19,20 +19,25 @@ export interface VoixOffPiste {
    * avant que la voix n'entre — l'ouverture, notamment, où le logo doit se poser seul.
    */
   retard: number;
+  /**
+   * Durée du fichier en secondes, mesurée à la livraison. Sert à baisser la musique pendant
+   * la parole : sans elle, il faudrait deviner où la voix commence et s'arrête.
+   */
+  duree: number;
   /** Texte attendu, pour relire le montage sans rouvrir le script. */
   texte: string;
 }
 
 export const VOIX_OFF: VoixOffPiste[] = [
-  { scene: 0, fichier: '1-ouverture.mp3', retard: 30, texte: "Diriger une école, c’est tenir cent choses à la fois." },
-  { scene: 1, fichier: '2-probleme.mp3', retard: 12, texte: "Chaque information vit dans son coin. Aucune ne parle à l’autre." },
-  { scene: 2, fichier: '3-promesse.mp3', retard: 10, texte: "School Manager rassemble tout, avec les droits de chacun." },
-  { scene: 3, fichier: '4-modules.mp3', retard: 12, texte: "Vingt modules, de l’inscription au bulletin. Tout ce que votre école gère déjà, sans le papier." },
-  { scene: 4, fichier: '5-terrain.mp3', retard: 12, texte: "L’enseignant fait l’appel depuis son téléphone. Trente secondes, et c’est enregistré." },
-  { scene: 5, fichier: '6-bulletins.mp3', retard: 12, texte: "Les bulletins sortent à votre en-tête, moyennes et rangs calculés. Plus rien à ressaisir." },
-  { scene: 6, fichier: '7-securite.mp3', retard: 12, texte: "Vos données sont isolées. Aucune école ne voit celles d’une autre. Jamais." },
-  { scene: 7, fichier: '8-tarifs.mp3', retard: 12, texte: "Un plan selon votre effectif, à partir de cent quatre-vingt mille francs par an." },
-  { scene: 8, fichier: '9-cloture.mp3', retard: 10, texte: "Trente jours d’essai gratuit. Écrivez-nous sur WhatsApp, le numéro est à l’écran." },
+  { scene: 0, fichier: '1-ouverture.mp3', retard: 30, duree: 3.63, texte: "Diriger une école, c’est tenir cent choses à la fois." },
+  { scene: 1, fichier: '2-probleme.mp3', retard: 12, duree: 3.87, texte: "Chaque information vit dans son coin. Aucune ne parle à l’autre." },
+  { scene: 2, fichier: '3-promesse.mp3', retard: 10, duree: 3.47, texte: "School Manager rassemble tout, avec les droits de chacun." },
+  { scene: 3, fichier: '4-modules.mp3', retard: 12, duree: 5.41, texte: "Vingt modules, de l’inscription au bulletin. Tout ce que votre école gère déjà, sans le papier." },
+  { scene: 4, fichier: '5-terrain.mp3', retard: 12, duree: 5.41, texte: "L’enseignant fait l’appel depuis son téléphone. Trente secondes, et c’est enregistré." },
+  { scene: 5, fichier: '6-bulletins.mp3', retard: 12, duree: 5.72, texte: "Les bulletins sortent à votre en-tête, moyennes et rangs calculés. Plus rien à ressaisir." },
+  { scene: 6, fichier: '7-securite.mp3', retard: 12, duree: 4.68, texte: "Vos données sont isolées. Aucune école ne voit celles d’une autre. Jamais." },
+  { scene: 7, fichier: '8-tarifs.mp3', retard: 12, duree: 3.4, texte: "Un plan selon votre effectif, à partir de cent quatre-vingt mille francs par an." },
+  { scene: 8, fichier: '9-cloture.mp3', retard: 10, duree: 6.27, texte: "Trente jours d’essai gratuit. Écrivez-nous sur WhatsApp, le numéro est à l’écran." },
 ];
 
 /** Vrai dès qu'au moins une piste est enregistrée : évite de monter une bande vide. */

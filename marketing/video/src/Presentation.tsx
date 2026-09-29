@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill } from 'remotion';
+import { AbsoluteFill, useVideoConfig } from 'remotion';
 import { TransitionSeries, linearTiming, springTiming } from '@remotion/transitions';
 import { fade } from '@remotion/transitions/fade';
 import { slide } from '@remotion/transitions/slide';
@@ -13,6 +13,7 @@ import { Bulletins } from './scenes/Bulletins';
 import { Securite } from './scenes/Securite';
 import { Tarifs } from './scenes/Tarifs';
 import { Cloture } from './scenes/Cloture';
+import { VoixOff } from './VoixOff';
 
 /**
  * Durées en images (30 i/s). Elles sont calées sur le temps de lecture du texte français à
@@ -54,26 +55,50 @@ export const totalDuration = (fps: number): number => {
   return scenes - overlap;
 };
 
-export const Presentation: React.FC = () => (
-  <AbsoluteFill style={{ backgroundColor: COLORS.ink }}>
-    <TransitionSeries>
-      {SCENES.map((scene, index) => {
-        const Scene = scene.component;
-        const transition = TRANSITIONS[index];
-        return (
-          <React.Fragment key={index}>
-            <TransitionSeries.Sequence durationInFrames={scene.duration}>
-              <Scene />
-            </TransitionSeries.Sequence>
-            {transition ? (
-              <TransitionSeries.Transition
-                presentation={transition.presentation}
-                timing={transition.timing}
-              />
-            ) : null}
-          </React.Fragment>
-        );
-      })}
-    </TransitionSeries>
-  </AbsoluteFill>
-);
+/**
+ * Image de départ de chaque scène dans le film monté.
+ *
+ * <p>Une transition recouvre les deux plans qu'elle relie : la scène suivante commence donc
+ * avant que la précédente ne finisse. C'est là-dessus que se cale la voix off, et c'est
+ * pourquoi ces débuts sont calculés plutôt que notés à la main — une scène rallongée décale
+ * tout ce qui suit.
+ */
+export const sceneStarts = (fps: number): number[] => {
+  const starts: number[] = [];
+  let cursor = 0;
+  SCENES.forEach((scene, index) => {
+    starts.push(cursor);
+    const transition = TRANSITIONS[index];
+    cursor += scene.duration - (transition ? transition.timing.getDurationInFrames({ fps }) : 0);
+  });
+  return starts;
+};
+
+export const Presentation: React.FC = () => {
+  const { fps } = useVideoConfig();
+
+  return (
+    <AbsoluteFill style={{ backgroundColor: COLORS.ink }}>
+      <VoixOff debuts={sceneStarts(fps)} />
+      <TransitionSeries>
+        {SCENES.map((scene, index) => {
+          const Scene = scene.component;
+          const transition = TRANSITIONS[index];
+          return (
+            <React.Fragment key={index}>
+              <TransitionSeries.Sequence durationInFrames={scene.duration}>
+                <Scene />
+              </TransitionSeries.Sequence>
+              {transition ? (
+                <TransitionSeries.Transition
+                  presentation={transition.presentation}
+                  timing={transition.timing}
+                />
+              ) : null}
+            </React.Fragment>
+          );
+        })}
+      </TransitionSeries>
+    </AbsoluteFill>
+  );
+};

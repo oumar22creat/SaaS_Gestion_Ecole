@@ -80,8 +80,20 @@ class AttendanceTest extends AbstractIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.length()").value(2));
 
+        // Le message doit NOMMER l'élève, pas porter son identifiant interne : c'est la raison
+        // d'être de guardianMessage() (« Élève 7 — ABSENT » ne disait rien à un parent, encore
+        // moins à une famille de plusieurs enfants).
+        //
+        // L'assertion portait justement sur cet identifiant, et ne passait plus que par
+        // coïncidence — quand le numéro de l'élève se trouvait être une sous-chaîne de la date
+        // (« 15/09/2026 » contient 15, 09, 2026, 5, 9, 20, 26…). Elle passait en local, où les
+        // identifiants dépendent de l'historique de la base, et échouait en intégration
+        // continue, où la base est neuve.
         verify(notificationGateway).send(argThat(event ->
-                event.type() == NotificationType.ABSENCE && event.body().contains(absent.getId().toString())));
+                event.type() == NotificationType.ABSENCE
+                        && event.body().contains("Tom Dupont")
+                        && event.body().contains("15/09/2026")
+                        && !event.body().contains("Élève " + absent.getId())));
         verifyNoMoreInteractions(notificationGateway);
 
         mockMvc.perform(get("/api/v1/attendance")

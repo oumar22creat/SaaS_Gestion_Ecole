@@ -121,6 +121,26 @@ class StudentNumberTest extends AbstractIntegrationTest {
         assertThat(matricules).hasSize(demandes);
     }
 
+    /**
+     * La liste doit fonctionner pour un établissement dont aucun élève n'a de compte famille —
+     * c'est-à-dire tout établissement qui vient d'ouvrir. La carte des adresses de connexion
+     * était alors immuable, et l'interroger avec un identifiant nul levait une
+     * NullPointerException : erreur 500 sur le premier écran que voit une école.
+     */
+    @Test
+    void listsStudentsWhoHaveNoFamilyAccount() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Sans Portail");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "sec-portail@ecole.example", Role.SECRETARY);
+        inscrire(tenant, token, "Kadiatou", null);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/students").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].portalEmail").doesNotExist());
+    }
+
     /** Un établissement qui reprend un effectif existant garde sa propre numérotation. */
     @Test
     void keepsAnExplicitlyProvidedNumber() throws Exception {

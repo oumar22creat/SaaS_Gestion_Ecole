@@ -2,6 +2,7 @@ package com.schoolsaas.portal;
 
 import com.schoolsaas.auth.User;
 import com.schoolsaas.auth.UserRepository;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,7 +39,11 @@ public class FamilyAccountLookup {
     public Map<Long, String> emailsOf(List<Long> userIds) {
         List<Long> present = userIds.stream().filter(Objects::nonNull).distinct().toList();
         if (present.isEmpty()) {
-            return Map.of();
+            // HashMap et non Map.of() : les appelants interrogent cette carte avec l'identifiant
+            // de compte de chaque fiche, qui est NUL pour quiconque n'a pas de compte famille —
+            // le cas ordinaire. Map.of().get(null) lève une NullPointerException, et la liste
+            // des élèves d'un établissement neuf tombait ainsi en erreur 500.
+            return new HashMap<>();
         }
         return userRepository.findAllById(present).stream()
                 .collect(Collectors.toMap(User::getId, User::getEmail));

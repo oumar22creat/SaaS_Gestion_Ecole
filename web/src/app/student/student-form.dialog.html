@@ -1,11 +1,16 @@
 <h2 mat-dialog-title>{{ data.student ? "Modifier l'élève" : 'Ajouter un élève' }}</h2>
 <form [formGroup]="form" (ngSubmit)="submit()">
   <mat-dialog-content>
-    <mat-form-field appearance="outline">
-      <mat-label>Matricule</mat-label>
-      <input matInput formControlName="studentNumber" />
-      <mat-error>{{ fieldError(form.controls.studentNumber) }}</mat-error>
-    </mat-form-field>
+    @if (data.student) {
+      <p class="matricule">
+        <span class="matricule-label">Matricule</span>
+        <span class="matricule-value">{{ data.student.studentNumber }}</span>
+      </p>
+    } @else {
+      <p class="matricule matricule-a-venir">
+        Le matricule est attribué automatiquement à l'enregistrement.
+      </p>
+    }
 
     <mat-form-field appearance="outline">
       <mat-label>Prénom</mat-label>

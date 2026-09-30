@@ -9,9 +9,15 @@
   <mat-step label="Déposer le fichier">
     <p class="hint">
       Fichier CSV avec en-tête
-      <code>studentNumber,firstName,lastName,birthDate,gender,className</code> — seules les 3
-      premières colonnes sont obligatoires. <code>className</code> doit correspondre exactement au
-      nom d'une classe existante (sinon l'élève est importé sans classe).
+      <code>studentNumber,firstName,lastName,birthDate,gender,className</code> — seuls
+      <code>firstName</code> et <code>lastName</code> sont obligatoires. <code>className</code>
+      doit correspondre exactement au nom d'une classe existante (sinon l'élève est importé sans
+      classe).
+    </p>
+    <p class="hint">
+      Laissez <code>studentNumber</code> vide et l'application attribue les matricules
+      elle-même. Renseignez-le pour conserver la numérotation de vos dossiers existants — elle
+      figure sur des documents papier qu'il serait absurde de renuméroter.
     </p>
 
     <input type="file" accept=".csv,text/csv" (change)="onFileSelected($event)" />

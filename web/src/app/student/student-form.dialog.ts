@@ -77,10 +77,6 @@ export class StudentFormDialog {
   }
 
   protected readonly form = this.formBuilder.nonNullable.group({
-    studentNumber: [
-      this.data.student?.studentNumber ?? '',
-      [Validators.required, Validators.maxLength(64)],
-    ],
     firstName: [
       this.data.student?.firstName ?? '',
       [Validators.required, Validators.maxLength(100)],

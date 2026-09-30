@@ -26,24 +26,30 @@ public class StudentService {
     private final StudentRepository studentRepository;
     private final SchoolClassRepository schoolClassRepository;
     private final SchoolYearService schoolYearService;
+    private final StudentNumberGenerator studentNumberGenerator;
 
     public StudentService(
             StudentRepository studentRepository,
             SchoolClassRepository schoolClassRepository,
-            SchoolYearService schoolYearService) {
+            SchoolYearService schoolYearService,
+            StudentNumberGenerator studentNumberGenerator) {
         this.studentRepository = studentRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.schoolYearService = schoolYearService;
+        this.studentNumberGenerator = studentNumberGenerator;
     }
 
     @Transactional
+    /**
+     * Le matricule est attribué par l'application. Un établissement qui reprend un effectif
+     * existant peut néanmoins imposer le sien, via l'import ou en le fournissant ici : sa
+     * numérotation figure sur des dossiers papier qu'on ne va pas renuméroter.
+     */
     public Student create(StudentRequest request) {
         validateSchoolClass(request.schoolClassId());
-        if (studentRepository.existsByStudentNumber(request.studentNumber())) {
-            throw ApiException.conflict("STUDENT_NUMBER_ALREADY_USED", "Ce matricule est déjà utilisé");
-        }
+        String studentNumber = resolveStudentNumber(request.studentNumber());
         Student student = studentRepository.save(new Student(
-                request.studentNumber(), request.firstName(), request.lastName(),
+                studentNumber, request.firstName(), request.lastName(),
                 request.birthDate(), request.gender(), request.schoolClassId()));
         recordEnrollment(student);
         return student;
@@ -73,11 +79,9 @@ public class StudentService {
     public Student update(Long id, StudentRequest request) {
         validateSchoolClass(request.schoolClassId());
         Student student = getById(id);
-        if (!student.getStudentNumber().equals(request.studentNumber())
-                && studentRepository.existsByStudentNumber(request.studentNumber())) {
-            throw ApiException.conflict("STUDENT_NUMBER_ALREADY_USED", "Ce matricule est déjà utilisé");
-        }
-        student.setStudentNumber(request.studentNumber());
+        // Le matricule n'est pas modifiable : il identifie l'élève sur les bulletins, les reçus
+        // et les certificats déjà remis aux familles. Le changer rendrait ces documents
+        // incohérents avec le dossier.
         student.setFirstName(request.firstName());
         student.setLastName(request.lastName());
         student.setBirthDate(request.birthDate());
@@ -159,12 +163,12 @@ public class StudentService {
         String gender = column(columns, 4);
         String className = column(columns, 5);
 
-        if (studentNumber == null || firstName == null || lastName == null) {
-            throw ApiException.badRequest("INVALID_ROW", "studentNumber, firstName et lastName sont obligatoires", List.of());
+        if (firstName == null || lastName == null) {
+            throw ApiException.badRequest("INVALID_ROW", "firstName et lastName sont obligatoires", List.of());
         }
-        if (studentRepository.existsByStudentNumber(studentNumber)) {
-            throw ApiException.conflict("STUDENT_NUMBER_ALREADY_USED", "Matricule déjà utilisé : " + studentNumber);
-        }
+        // Colonne matricule laissée vide : l'application en attribue un. Renseignée :
+        // l'établissement conserve la numérotation de ses dossiers existants.
+        studentNumber = resolveStudentNumber(studentNumber);
 
         LocalDate birthDate = null;
         if (birthDateRaw != null) {
@@ -186,6 +190,21 @@ public class StudentService {
         }
         String value = columns[index].trim();
         return value.isEmpty() ? null : value;
+    }
+
+    /**
+     * Rend le matricule fourni s'il est libre, sinon en attribue un. Le refus d'un doublon est
+     * conservé : accepter deux fois le même numéro rendrait deux dossiers indiscernables.
+     */
+    private String resolveStudentNumber(String fourni) {
+        if (fourni == null || fourni.isBlank()) {
+            return studentNumberGenerator.next();
+        }
+        String matricule = fourni.trim();
+        if (studentRepository.existsByStudentNumber(matricule)) {
+            throw ApiException.conflict("STUDENT_NUMBER_ALREADY_USED", "Ce matricule est déjà utilisé : " + matricule);
+        }
+        return matricule;
     }
 
     private void validateSchoolClass(Long schoolClassId) {

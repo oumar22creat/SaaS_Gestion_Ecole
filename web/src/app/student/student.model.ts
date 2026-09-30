@@ -16,7 +16,9 @@ export interface Student {
 }
 
 export interface StudentRequest {
-  studentNumber: string;
+  /** Omis à la création : le serveur attribue le matricule. Renseigné seulement à l'import
+   *  d'un effectif existant, où l'établissement conserve sa numérotation. */
+  studentNumber?: string;
   firstName: string;
   lastName: string;
   birthDate: string | null;

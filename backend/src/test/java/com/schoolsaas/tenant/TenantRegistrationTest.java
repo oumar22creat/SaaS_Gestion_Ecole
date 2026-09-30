@@ -66,6 +66,25 @@ class TenantRegistrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.error.code").value("SUBDOMAIN_ALREADY_TAKEN"));
     }
 
+    /**
+     * Un établissement qui réclamerait « www » ou « app » détournerait des adresses dont la
+     * plateforme a besoin : le site vitrine pour la première, le lien d'inscription public
+     * pour la seconde.
+     */
+    @Test
+    void rejectsAReservedSubdomain() throws Exception {
+        for (String reserve : java.util.List.of("www", "app", "admin", "api")) {
+            var request = new TenantRegistrationRequest(
+                    "École Opportuniste", reserve, "admin@ecole.example", "Sup3rSecret!", "Ada", "Lovelace");
+
+            mockMvc.perform(post("/api/v1/tenants/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.error.code").value("SUBDOMAIN_RESERVED"));
+        }
+    }
+
     @Test
     void rejectsAWeakPassword() throws Exception {
         var request = new TenantRegistrationRequest(

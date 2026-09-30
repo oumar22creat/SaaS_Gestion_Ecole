@@ -27,6 +27,20 @@ server {
     root /usr/share/nginx/html/site;
     index index.html;
 
+    # « Démarrer l'essai gratuit » et « Se connecter » pointent vers /register et /login, qui
+    # sont des routes de l'application Angular, pas des pages du site vitrine. Sans ces deux
+    # redirections, les deux boutons d'appel à l'action du site tombent sur un 404 de Nginx.
+    #
+    # Redirection ici plutôt que liens absolus dans le HTML : le nom de domaine reste écrit à
+    # un seul endroit, celui qui le connaît déjà.
+    location = /register {
+        return 302 https://app.${DOMAIN}/register;
+    }
+
+    location = /login {
+        return 302 https://app.${DOMAIN}/login;
+    }
+
     location / {
         try_files $uri $uri/ $uri.html =404;
     }

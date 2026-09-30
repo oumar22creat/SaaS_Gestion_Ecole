@@ -7,6 +7,7 @@ import com.schoolsaas.auth.UserRepository;
 import com.schoolsaas.auth.dto.TokenPairResponse;
 import com.schoolsaas.billing.SubscriptionService;
 import com.schoolsaas.common.ApiException;
+import java.util.Set;
 import com.schoolsaas.tenant.dto.TenantRegistrationRequest;
 import com.schoolsaas.tenant.dto.TenantRegistrationResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,8 +53,29 @@ public class TenantRegistrationService {
         this.subscriptionService = subscriptionService;
     }
 
+    /**
+     * Sous-domaines que la plateforme se réserve.
+     *
+     * <p>Chaque établissement vit sur son sous-domaine, et rien n'empêchait jusqu'ici une école
+     * de réclamer {@code www}, {@code app} ou {@code api}. Les conséquences vont du bénin au
+     * fâcheux : {@code www} ne lui aurait jamais été routé (le reverse proxy l'envoie au site
+     * vitrine), tandis que {@code app} aurait détourné le lien d'inscription du site public.
+     *
+     * <p>Les noms d'infrastructure (mail, ns, autodiscover…) sont inclus pour que la
+     * plateforme puisse un jour les utiliser sans devoir déloger un client installé.
+     */
+    private static final Set<String> SOUS_DOMAINES_RESERVES = Set.of(
+            "www", "app", "admin", "api", "static", "assets", "cdn", "media",
+            "mail", "smtp", "imap", "pop", "webmail", "autodiscover", "mx",
+            "ns", "ns1", "ns2", "dns",
+            "status", "support", "aide", "docs", "blog", "shop",
+            "dev", "test", "staging", "preprod", "sandbox");
+
     @Transactional
     public TenantRegistrationResponse register(TenantRegistrationRequest request) {
+        if (SOUS_DOMAINES_RESERVES.contains(request.subdomain())) {
+            throw ApiException.conflict("SUBDOMAIN_RESERVED", "Ce sous-domaine est réservé à la plateforme");
+        }
         if (tenantRepository.existsBySubdomain(request.subdomain())) {
             throw ApiException.conflict("SUBDOMAIN_ALREADY_TAKEN", "Ce sous-domaine est déjà utilisé");
         }

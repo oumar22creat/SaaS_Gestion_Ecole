@@ -3,6 +3,7 @@ package com.schoolsaas.onboarding;
 import com.schoolsaas.onboarding.dto.OnboardingStatusResponse;
 import com.schoolsaas.onboarding.dto.OnboardingStatusResponse.Step;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
+import com.schoolsaas.schoolyear.SchoolYearService;
 import com.schoolsaas.student.StudentRepository;
 import com.schoolsaas.subject.SubjectRepository;
 import com.schoolsaas.teacher.TeacherRepository;
@@ -27,6 +28,7 @@ public class OnboardingService {
     static final List<String> STEP_ORDER =
             List.of("CLASSES", "SUBJECTS", "STUDENTS", "TEACHERS", "TIMETABLE");
 
+    private final SchoolYearService schoolYearService;
     private final SchoolClassRepository schoolClassRepository;
     private final SubjectRepository subjectRepository;
     private final StudentRepository studentRepository;
@@ -34,11 +36,13 @@ public class OnboardingService {
     private final TimetableEntryRepository timetableEntryRepository;
 
     public OnboardingService(
+            SchoolYearService schoolYearService,
             SchoolClassRepository schoolClassRepository,
             SubjectRepository subjectRepository,
             StudentRepository studentRepository,
             TeacherRepository teacherRepository,
             TimetableEntryRepository timetableEntryRepository) {
+        this.schoolYearService = schoolYearService;
         this.schoolClassRepository = schoolClassRepository;
         this.subjectRepository = subjectRepository;
         this.studentRepository = studentRepository;
@@ -48,6 +52,10 @@ public class OnboardingService {
 
     public OnboardingStatusResponse status() {
         List<Step> steps = List.of(
+                // En tête, parce que c'est un prérequis et non une étape parmi d'autres : sans
+                // année active, ni certificat de scolarité, ni inscription, ni bulletin. Un
+                // établissement pouvait franchir tout le guide et buter dessus au guichet.
+                Step.of("SCHOOL_YEAR", schoolYearService.active().isPresent() ? 1 : 0),
                 Step.of("CLASSES", schoolClassRepository.count()),
                 Step.of("SUBJECTS", subjectRepository.count()),
                 Step.of("STUDENTS", studentRepository.countByActiveTrue()),

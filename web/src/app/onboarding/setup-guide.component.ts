@@ -7,6 +7,12 @@ import { OnboardingService, OnboardingStep } from './onboarding.service';
 /** Libellés et destinations : l'API ne renvoie que des clés, elle ne connaît pas les écrans. */
 const STEP_LABELS: Record<string, { title: string; hint: string; route: string; action: string }> =
   {
+    SCHOOL_YEAR: {
+      title: 'Ouvrir une année scolaire',
+      hint: "Prérequis de tout le reste : sans année active, ni inscription, ni bulletin, ni certificat de scolarité.",
+      route: '/school-years',
+      action: 'Ouvrir une année',
+    },
     CLASSES: {
       title: 'Créer vos classes',
       hint: 'Les classes structurent tout le reste : élèves, emploi du temps, appel et bulletins.',

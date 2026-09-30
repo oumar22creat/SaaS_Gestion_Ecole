@@ -21,3 +21,30 @@ export function extractErrorMessage(
   }
   return fallback;
 }
+
+/**
+ * Rend lisible l'erreur d'une requête en `responseType: 'blob'`.
+ *
+ * <p>Une telle requête reçoit AUSSI le corps des réponses en échec sous forme de Blob :
+ * `extractErrorMessage` y voit un objet opaque et retombe sur son message générique.
+ * L'application connaissait donc la cause exacte — « Aucune année scolaire active : créez-en
+ * une et activez-la » — et affichait « Une erreur est survenue. Merci de réessayer. »
+ *
+ * <p>Appelée par les services de téléchargement plutôt que par chaque écran : la conversion
+ * vaut pour tous les appelants, y compris ceux qu'on ajoutera.
+ */
+export async function withReadableBody(error: unknown): Promise<unknown> {
+  if (error instanceof HttpErrorResponse && error.error instanceof Blob) {
+    try {
+      return new HttpErrorResponse({
+        error: JSON.parse(await error.error.text()) as ApiErrorBody,
+        status: error.status,
+        statusText: error.statusText,
+        url: error.url ?? undefined,
+      });
+    } catch {
+      // Corps illisible ou non JSON : l'erreur d'origine reste la meilleure information.
+    }
+  }
+  return error;
+}

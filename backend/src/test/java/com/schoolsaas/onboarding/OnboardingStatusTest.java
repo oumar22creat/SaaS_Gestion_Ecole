@@ -77,10 +77,12 @@ class OnboardingStatusTest extends AbstractIntegrationTest {
                         .header(TenantResolver.TENANT_HEADER, tenant.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.complete").value(false))
-                .andExpect(jsonPath("$.data.steps.length()").value(5))
-                .andExpect(jsonPath("$.data.steps[0].key").value("CLASSES"))
-                .andExpect(jsonPath("$.data.steps[0].done").value(false))
-                .andExpect(jsonPath("$.data.steps[0].count").value(0));
+                .andExpect(jsonPath("$.data.steps.length()").value(6))
+                // L'année scolaire ouvre le guide : sans elle, ni inscription, ni bulletin, ni certificat.
+                .andExpect(jsonPath("$.data.steps[0].key").value("SCHOOL_YEAR"))
+                .andExpect(jsonPath("$.data.steps[1].key").value("CLASSES"))
+                .andExpect(jsonPath("$.data.steps[1].done").value(false))
+                .andExpect(jsonPath("$.data.steps[1].count").value(0));
     }
 
     /**
@@ -99,15 +101,15 @@ class OnboardingStatusTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/v1/onboarding/status")
                         .header("Authorization", "Bearer " + token)
                         .header(TenantResolver.TENANT_HEADER, tenant.getId()))
-                .andExpect(jsonPath("$.data.steps[0].done").value(true))
-                .andExpect(jsonPath("$.data.steps[0].count").value(1));
+                .andExpect(jsonPath("$.data.steps[1].done").value(true))
+                .andExpect(jsonPath("$.data.steps[1].count").value(1));
 
         schoolClassRepository.delete(schoolClass);
 
         mockMvc.perform(get("/api/v1/onboarding/status")
                         .header("Authorization", "Bearer " + token)
                         .header(TenantResolver.TENANT_HEADER, tenant.getId()))
-                .andExpect(jsonPath("$.data.steps[0].done").value(false));
+                .andExpect(jsonPath("$.data.steps[1].done").value(false));
     }
 
     @Test

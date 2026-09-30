@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { withReadableBody } from '../core/http-error.util';
 
 const BASE_URL = `${environment.apiUrl}/paperwork`;
 
@@ -30,7 +31,14 @@ export class PaperworkService {
   }
 
   private async download(url: string, filename: string): Promise<void> {
-    const blob = await firstValueFrom(this.http.get(url, { responseType: 'blob' }));
+    let blob: Blob;
+    try {
+      blob = await firstValueFrom(this.http.get(url, { responseType: 'blob' }));
+    } catch (error) {
+      // Sans cette conversion, l'écran affiche « Une erreur est survenue » alors que le
+      // serveur a expliqué précisément ce qui manque.
+      throw await withReadableBody(error);
+    }
     const objectUrl = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = objectUrl;

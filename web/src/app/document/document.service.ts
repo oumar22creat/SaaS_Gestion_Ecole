@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { withReadableBody } from '../core/http-error.util';
 import { ApiResponse } from '../core/api-response.model';
 
 export type DocumentScope = 'SUBJECT' | 'CLASS' | 'SERVICE';
@@ -42,9 +43,12 @@ export class DocumentService {
   }
 
   async download(id: number, fileName: string): Promise<void> {
-    const blob = await firstValueFrom(
-      this.http.get(`${BASE_URL}/${id}/download`, { responseType: 'blob' }),
-    );
+    let blob: Blob;
+    try {
+      blob = await firstValueFrom(this.http.get(`${BASE_URL}/${id}/download`, { responseType: 'blob' }));
+    } catch (error) {
+      throw await withReadableBody(error);
+    }
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;

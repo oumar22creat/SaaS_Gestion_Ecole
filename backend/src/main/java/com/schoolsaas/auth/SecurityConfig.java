@@ -42,13 +42,23 @@ public class SecurityConfig {
     }
 
     /**
-     * Nécessaire pour que le Web (Angular, `ng serve` sur une origine différente du backend
-     * en dev/staging) puisse appeler l'API depuis un navigateur — voir CorsProperties.
+     * Origines autorisées à appeler l'API depuis un navigateur.
+     *
+     * <p>{@code setAllowedOriginPatterns} et non {@code setAllowedOrigins} : chaque
+     * établissement vit sur son propre sous-domaine, et une liste d'origines exactes ne peut
+     * pas les couvrir. Les motifs acceptent aussi les valeurs exactes, les origines de
+     * développement restent donc valables telles quelles.
+     *
+     * <p>Le CORS s'applique en production, contrairement à ce qui était supposé ici : les
+     * navigateurs envoient un en-tête {@code Origin} sur les POST même lorsque la page et
+     * l'API partagent le domaine, et Spring traite toute requête portant cet en-tête comme
+     * une requête CORS. Avec la seule origine du domaine nu, chaque école recevait
+     * « Invalid CORS request » en 403 sur la moindre écriture.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(corsProperties.allowedOrigins());
+        configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-Id"));
         configuration.setAllowCredentials(true);

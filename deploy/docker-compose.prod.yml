@@ -67,10 +67,10 @@ services:
       DB_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
-      # Les navigateurs appellent l'API sur leur propre sous-domaine : même origine, donc
-      # aucune requête inter-origine en production. La liste reste explicite pour que rien
-      # d'autre ne soit accepté.
-      CORS_ALLOWED_ORIGINS: https://${DOMAIN},https://www.${DOMAIN}
+      # Chaque établissement vit sur son sous-domaine : le motif générique est indispensable.
+      # Sans lui, les navigateurs — qui envoient un en-tête Origin même en même-origine —
+      # reçoivent « Invalid CORS request » en 403 sur toute écriture.
+      CORS_ALLOWED_ORIGINS: https://${DOMAIN},https://*.${DOMAIN}
       STORAGE_LOCAL_PATH: /app/storage
       SMS_ENABLED: ${SMS_ENABLED:-false}
       SMS_PROVIDER: ${SMS_PROVIDER:-}

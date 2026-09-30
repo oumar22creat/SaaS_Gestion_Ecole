@@ -43,9 +43,19 @@ public class TenantSettingsController {
         this.tenantLogoService = tenantLogoService;
     }
 
+    /**
+     * Répond la marque neutre plutôt qu'un 404 lorsque l'hôte ne désigne aucun établissement —
+     * sous-domaine applicatif, page d'inscription, développement local. C'est un état normal :
+     * l'appelant demande « quelle marque afficher ? », et la réponse existe.
+     *
+     * <p>Le 404 précédent obligeait chaque client à traiter un échec attendu, et inscrivait une
+     * erreur dans la console du navigateur à chaque chargement — de quoi masquer les vraies.
+     */
     @GetMapping("/branding")
     public TenantBrandingResponse branding() {
-        return TenantBrandingResponse.from(tenantSettingsService.currentTenant());
+        return tenantSettingsService.currentTenantIfResolved()
+                .map(TenantBrandingResponse::from)
+                .orElseGet(TenantBrandingResponse::neutre);
     }
 
     @PutMapping("/branding")

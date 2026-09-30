@@ -45,6 +45,21 @@ class TenantSettingsTest extends AbstractIntegrationTest {
     @Autowired
     private PlanRepository planRepository;
 
+    /**
+     * Sans établissement résolu — sous-domaine applicatif, page d'inscription, développement
+     * local — la marque neutre est une réponse valide, pas une erreur. Le 404 précédent
+     * inscrivait une erreur dans la console du navigateur à chaque chargement, de quoi masquer
+     * les vraies.
+     */
+    @Test
+    void servesNeutralBrandingWhenNoEstablishmentIsResolved() throws Exception {
+        mockMvc.perform(get("/api/v1/tenants/current/branding"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").doesNotExist())
+                .andExpect(jsonPath("$.primaryColor").value("#0f5c4c"))
+                .andExpect(jsonPath("$.secondaryColor").value("#c9a227"));
+    }
+
     @Test
     void brandingIsPublicByDefaultAndReflectsAdminUpdates() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Branding");

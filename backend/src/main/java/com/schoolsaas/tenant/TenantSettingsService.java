@@ -21,6 +21,15 @@ public class TenantSettingsService {
         this.planFeatureService = planFeatureService;
     }
 
+    /**
+     * L'établissement courant s'il y en a un. Distinct de {@link #currentTenant()}, qui exige
+     * sa présence : une écriture sans établissement est une erreur, une lecture de marque non.
+     */
+    public java.util.Optional<Tenant> currentTenantIfResolved() {
+        Long tenantId = TenantContext.get();
+        return tenantId == null ? java.util.Optional.empty() : tenantRepository.findById(tenantId);
+    }
+
     public Tenant currentTenant() {
         Long tenantId = TenantContext.get();
         if (tenantId == null) {

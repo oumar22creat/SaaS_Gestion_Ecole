@@ -63,6 +63,10 @@ export const NAV_LINKS: NavLink[] = [
     roles: ADMIN_DIR,
     section: 'Scolarité',
   },
+  // Juste après l'emploi du temps, seul écran qui s'en sert. L'écran existait et sa route
+  // aussi, mais aucune entrée de menu n'y menait : il était inaccessible autrement qu'en
+  // tapant l'adresse à la main.
+  { icon: 'meeting_room', label: 'Salles', path: '/rooms', roles: ADMIN_DIR, section: 'Scolarité' },
 
   {
     icon: 'how_to_reg',

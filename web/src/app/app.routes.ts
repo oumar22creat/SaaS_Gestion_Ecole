@@ -77,10 +77,9 @@ export const routes: Routes = [
       staffPage('timetable', () =>
         import('./timetable/timetable-list.page').then((m) => m.TimetableListPage),
       ),
-      staffPage('rooms', () => import('./timetable/room-list.page').then((m) => m.RoomListPage), [
-        'ADMIN',
-        'DIRECTION',
-      ]),
+      // Les rôles viennent désormais de l'entrée de menu, comme pour les autres écrans : une
+      // liste écrite ici en double finirait par diverger de celle qui s'affiche.
+      staffPage('rooms', () => import('./timetable/room-list.page').then((m) => m.RoomListPage)),
       staffPage('attendance', () =>
         import('./attendance/roll-call.page').then((m) => m.RollCallPage),
       ),

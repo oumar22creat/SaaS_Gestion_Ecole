@@ -13,11 +13,11 @@ function route(path: string): ActivatedRouteSnapshot {
 
 describe('roleGuard', () => {
   beforeEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
   });
 
-  afterEach(() => sessionStorage.clear());
+  afterEach(() => localStorage.clear());
 
   it('allows a teacher on the roll-call screen', () => {
     TestBed.inject(AuthTokenService).store({

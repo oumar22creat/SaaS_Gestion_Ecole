@@ -13,7 +13,7 @@ describe('HomePage', () => {
   let router: Router;
 
   beforeEach(async () => {
-    sessionStorage.clear();
+    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [HomePage],
       providers: [provideHttpClient(), provideRouter([])],
@@ -24,7 +24,7 @@ describe('HomePage', () => {
     spyOn(router, 'navigateByUrl').and.resolveTo(true);
   });
 
-  afterEach(() => sessionStorage.clear());
+  afterEach(() => localStorage.clear());
 
   function render(role: string): ComponentFixture<HomePage> {
     authTokenService.store({

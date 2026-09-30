@@ -40,12 +40,15 @@ export class TenantBrandingService {
     root.style.setProperty('--tenant-on-primary', contrastColor(branding.primaryColor));
   }
 
+  // localStorage comme les jetons : la session survit à la fermeture de l'application, les
+  // couleurs de l'établissement doivent en faire autant. Sinon le premier écran au lancement
+  // s'affiche en neutre avant de basculer, ce qui se voit.
   private readCache(): TenantBranding | null {
-    const raw = sessionStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(CACHE_KEY);
     return raw ? (JSON.parse(raw) as TenantBranding) : null;
   }
 
   private writeCache(branding: TenantBranding): void {
-    sessionStorage.setItem(CACHE_KEY, JSON.stringify(branding));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(branding));
   }
 }

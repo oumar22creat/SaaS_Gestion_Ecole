@@ -10,7 +10,7 @@ describe('TenantBrandingService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
     document.documentElement.style.removeProperty('--tenant-primary');
     document.documentElement.style.removeProperty('--tenant-secondary');
     document.documentElement.style.removeProperty('--tenant-on-primary');
@@ -24,7 +24,7 @@ describe('TenantBrandingService', () => {
 
   afterEach(() => {
     httpMock.verify();
-    sessionStorage.clear();
+    localStorage.clear();
     // Ces tests posent des propriétés CSS inline sur <html>, qui persisteraient sinon au-delà
     // de ce fichier de test (même document partagé par tous les specs dans Karma).
     document.documentElement.style.removeProperty('--tenant-primary');
@@ -55,7 +55,7 @@ describe('TenantBrandingService', () => {
 
     expect(service.branding()).toEqual(branding);
     expect(document.documentElement.style.getPropertyValue('--tenant-primary')).toBe('#123456');
-    expect(JSON.parse(sessionStorage.getItem('tenant-branding')!)).toEqual(branding);
+    expect(JSON.parse(localStorage.getItem('tenant-branding')!)).toEqual(branding);
   });
 
   it('keeps the neutral default branding if the API call fails', () => {
@@ -74,7 +74,7 @@ describe('TenantBrandingService', () => {
       primaryColor: '#654321',
       secondaryColor: '#fedcba',
     };
-    sessionStorage.setItem('tenant-branding', JSON.stringify(cached));
+    localStorage.setItem('tenant-branding', JSON.stringify(cached));
 
     service.init();
 

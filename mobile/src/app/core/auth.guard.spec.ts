@@ -5,11 +5,11 @@ import { authGuard } from './auth.guard';
 
 describe('authGuard', () => {
   beforeEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
   });
 
-  afterEach(() => sessionStorage.clear());
+  afterEach(() => localStorage.clear());
 
   it('allows navigation when authenticated', () => {
     TestBed.inject(AuthTokenService).store({

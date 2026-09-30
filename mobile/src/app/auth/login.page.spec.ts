@@ -13,7 +13,7 @@ describe('LoginPage', () => {
   let router: Router;
 
   beforeEach(async () => {
-    sessionStorage.clear();
+    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [LoginPage],
       providers: [provideHttpClient(), provideHttpClientTesting()],
@@ -28,7 +28,7 @@ describe('LoginPage', () => {
 
   afterEach(() => {
     httpMock.verify();
-    sessionStorage.clear();
+    localStorage.clear();
   });
 
   it('does not submit an invalid form', async () => {

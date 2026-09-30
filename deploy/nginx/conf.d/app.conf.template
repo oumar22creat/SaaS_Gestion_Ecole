@@ -58,6 +58,7 @@ server {
         limit_req zone=auth burst=5 nodelay;
         include /etc/nginx/proxy-params.conf;
         proxy_pass http://backend:8080;
+        proxy_read_timeout 30s;
     }
 
     location /api/ {
@@ -70,6 +71,7 @@ server {
     location /actuator/health {
         include /etc/nginx/proxy-params.conf;
         proxy_pass http://backend:8080;
+        proxy_read_timeout 10s;
         access_log off;
     }
 

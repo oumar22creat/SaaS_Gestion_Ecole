@@ -98,11 +98,9 @@ services:
       - backend
     environment:
       DOMAIN: ${DOMAIN}
-    # Un certificat renouvelé n'est pris en compte qu'après rechargement : sans cette boucle,
-    # le site servirait un certificat expiré jusqu'au prochain redémarrage manuel.
-    command: >
-      sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done &
-      nginx -g 'daemon off;'"
+    # Pas de `command:` ici : le remplacer empêcherait l'entrypoint de l'image de générer la
+    # configuration à partir des templates. Le rechargement périodique est installé dans
+    # /docker-entrypoint.d/ (voir deploy/nginx/99-rechargement.sh).
     ports:
       - "80:80"
       - "443:443"

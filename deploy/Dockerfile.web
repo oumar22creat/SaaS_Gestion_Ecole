@@ -16,10 +16,31 @@ FROM nginx:1.27-alpine AS runtime
 COPY --from=build /build/dist/web/browser /usr/share/nginx/html/app
 COPY landing/ /usr/share/nginx/html/site/
 
+# Le serveur par défaut de l'image répondrait à n'importe quel nom d'hôte non prévu par la
+# page d'accueil de Nginx. Rien ne doit être servi pour un hôte que nous ne connaissons pas.
+RUN rm /etc/nginx/conf.d/default.conf
+
 COPY deploy/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY deploy/nginx/ssl-params.conf deploy/nginx/proxy-params.conf /etc/nginx/
 # L'image officielle substitue les variables des fichiers *.template au démarrage et dépose
 # le résultat dans conf.d/ : c'est ainsi que ${DOMAIN} devient le vrai domaine.
 COPY deploy/nginx/conf.d/ /etc/nginx/templates/
+COPY deploy/nginx/99-rechargement.sh /docker-entrypoint.d/99-rechargement.sh
+RUN chmod +x /docker-entrypoint.d/99-rechargement.sh
+
+# Plages d'adresses de Cloudflare, récupérées à la construction plutôt que recopiées : une
+# liste figée dans le dépôt finirait par être fausse. Sans cela, toutes les requêtes venant
+# du proxy porteraient la même adresse, et la limitation des tentatives de connexion
+# compterait pour un seul visiteur ce que font tous les établissements réunis.
+RUN apk add --no-cache curl \
+    && { \
+        for plage in $(curl -fsS https://www.cloudflare.com/ips-v4) $(curl -fsS https://www.cloudflare.com/ips-v6); do \
+            echo "set_real_ip_from $plage;"; \
+        done; \
+        echo "real_ip_header CF-Connecting-IP;"; \
+        echo "real_ip_recursive on;"; \
+    } > /etc/nginx/cloudflare-realip.conf \
+    && apk del curl \
+    && test -s /etc/nginx/cloudflare-realip.conf
 
 EXPOSE 80 443

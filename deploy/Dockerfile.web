@@ -21,7 +21,7 @@ COPY landing/ /usr/share/nginx/html/site/
 RUN rm /etc/nginx/conf.d/default.conf
 
 COPY deploy/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY deploy/nginx/ssl-params.conf deploy/nginx/proxy-params.conf /etc/nginx/
+COPY deploy/nginx/ssl-params.conf deploy/nginx/proxy-params.conf deploy/nginx/security-headers.conf /etc/nginx/
 # L'image officielle substitue les variables des fichiers *.template au démarrage et dépose
 # le résultat dans conf.d/ : c'est ainsi que ${DOMAIN} devient le vrai domaine.
 COPY deploy/nginx/conf.d/ /etc/nginx/templates/

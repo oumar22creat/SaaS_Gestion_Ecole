@@ -1,0 +1,11 @@
+-- La salle d'un créneau devient facultative.
+--
+-- Elle était obligatoire, ce qui suppose des salles banalisées où les classes se déplacent.
+-- Beaucoup d'établissements fonctionnent à l'inverse : chaque classe a sa salle attitrée et
+-- ce sont les enseignants qui circulent. La salle n'y dit alors rien de plus que la classe,
+-- et l'exiger imposait de créer des salles fictives avant de pouvoir poser le moindre cours.
+--
+-- Le contrôle d'occupation reste entier là où une salle est indiquée : deux classes ne
+-- peuvent toujours pas occuper la même pièce au même moment. Il ne s'applique simplement plus
+-- aux créneaux qui n'en désignent aucune.
+ALTER TABLE timetable_entries ALTER COLUMN room_id DROP NOT NULL;

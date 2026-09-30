@@ -77,7 +77,11 @@ class OnboardingStatusTest extends AbstractIntegrationTest {
                         .header(TenantResolver.TENANT_HEADER, tenant.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.complete").value(false))
-                .andExpect(jsonPath("$.data.steps.length()").value(6))
+                .andExpect(jsonPath("$.data.steps.length()").value(7))
+                // Les salles sont proposées sans être exigées : une classe qui ne bouge pas
+                // n'en a pas besoin, et le guide ne doit pas rester inachevé pour autant.
+                .andExpect(jsonPath("$.data.steps[5].key").value("ROOMS"))
+                .andExpect(jsonPath("$.data.steps[5].required").value(false))
                 // L'année scolaire ouvre le guide : sans elle, ni inscription, ni bulletin, ni certificat.
                 .andExpect(jsonPath("$.data.steps[0].key").value("SCHOOL_YEAR"))
                 .andExpect(jsonPath("$.data.steps[1].key").value("CLASSES"))

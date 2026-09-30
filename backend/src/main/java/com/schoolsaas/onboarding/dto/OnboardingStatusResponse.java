@@ -10,11 +10,23 @@ import java.util.List;
  */
 public record OnboardingStatusResponse(List<Step> steps, boolean complete) {
 
-    /** `key` identifie l'étape ; `count` sert à afficher l'avancement réel, pas juste coché/non coché. */
-    public record Step(String key, long count, boolean done) {
+    /**
+     * `key` identifie l'étape ; `count` sert à afficher l'avancement réel, pas juste
+     * coché/non coché.
+     *
+     * <p>`required` distingue ce dont l'établissement ne peut pas se passer de ce qui lui est
+     * simplement proposé. Les salles, par exemple : utiles à qui fait circuler ses classes,
+     * sans objet pour qui attribue une salle fixe par classe. Les compter comme obligatoires
+     * laisserait le guide inachevé à jamais chez ce dernier.
+     */
+    public record Step(String key, long count, boolean done, boolean required) {
 
         public static Step of(String key, long count) {
-            return new Step(key, count, count > 0);
+            return new Step(key, count, count > 0, true);
+        }
+
+        public static Step optionnelle(String key, long count) {
+            return new Step(key, count, count > 0, false);
         }
     }
 }

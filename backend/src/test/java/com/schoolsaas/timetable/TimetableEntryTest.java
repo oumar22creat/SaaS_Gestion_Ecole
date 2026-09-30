@@ -77,6 +77,54 @@ class TimetableEntryTest extends AbstractIntegrationTest {
                 + ",\"roomId\":" + f.roomId() + ",\"dayOfWeek\":\"MONDAY\",\"startTime\":\"" + start + "\",\"endTime\":\"" + end + "\"}";
     }
 
+    /** Créneau sans salle : le cas d'un établissement où chaque classe a la sienne à demeure. */
+    private String entryJsonSansSalle(Fixture f, String start, String end) {
+        return "{\"schoolClassId\":" + f.classId() + ",\"subjectId\":" + f.subjectId()
+                + ",\"teacherId\":" + f.teacherId()
+                + ",\"dayOfWeek\":\"TUESDAY\",\"startTime\":\"" + start + "\",\"endTime\":\"" + end + "\"}";
+    }
+
+    /**
+     * La salle est facultative depuis V64 : l'exiger obligeait les établissements où la classe
+     * ne bouge pas à créer des salles fictives avant de poser le moindre cours.
+     */
+    @Test
+    void createsAnEntryWithoutARoom() throws Exception {
+        Fixture f = setUpFixture("École Sans Salle");
+
+        mockMvc.perform(post("/api/v1/timetable-entries")
+                        .header("Authorization", "Bearer " + f.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(entryJsonSansSalle(f, "08:00", "09:00")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.roomId").doesNotExist());
+    }
+
+    /**
+     * Deux créneaux sans salle ne s'occupent pas mutuellement : le contrôle porte sur une salle
+     * précise, il n'a pas d'objet quand aucune n'est désignée. Seul le conflit de classe joue
+     * ici, d'où l'usage d'une seconde classe.
+     */
+    @Test
+    void twoEntriesWithoutARoomDoNotCollide() throws Exception {
+        Fixture f = setUpFixture("École Sans Salle Bis");
+
+        mockMvc.perform(post("/api/v1/timetable-entries")
+                        .header("Authorization", "Bearer " + f.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(entryJsonSansSalle(f, "08:00", "09:00")))
+                .andExpect(status().isCreated());
+
+        String autreClasse = "{\"schoolClassId\":" + f.class2Id() + ",\"subjectId\":" + f.subjectId()
+                + ",\"teacherId\":" + f.teacherId()
+                + ",\"dayOfWeek\":\"TUESDAY\",\"startTime\":\"09:00\",\"endTime\":\"10:00\"}";
+        mockMvc.perform(post("/api/v1/timetable-entries")
+                        .header("Authorization", "Bearer " + f.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(autreClasse))
+                .andExpect(status().isCreated());
+    }
+
     @Test
     void createsATimetableEntry() throws Exception {
         Fixture f = setUpFixture("École Emploi du Temps");

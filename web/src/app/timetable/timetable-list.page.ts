@@ -78,7 +78,11 @@ export class TimetableListPage {
     return teacher ? `${teacher.firstName} ${teacher.lastName}` : `#${id}`;
   }
 
-  roomName(id: number): string {
+  /** Le tiret cadratin plutôt qu'un vide : la colonne reste lisible, l'absence est explicite. */
+  roomName(id: number | null): string {
+    if (id === null) {
+      return '—';
+    }
     return this.rooms().find((r) => r.id === id)?.name ?? `#${id}`;
   }
 

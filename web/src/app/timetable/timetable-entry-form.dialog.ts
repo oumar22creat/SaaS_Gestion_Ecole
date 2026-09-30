@@ -58,7 +58,9 @@ export class TimetableEntryFormDialog {
     schoolClassId: [this.data.entry?.schoolClassId ?? null, [Validators.required]],
     subjectId: [this.data.entry?.subjectId ?? null, [Validators.required]],
     teacherId: [this.data.entry?.teacherId ?? null, [Validators.required]],
-    roomId: [this.data.entry?.roomId ?? null, [Validators.required]],
+    // Facultative : beaucoup d'établissements attribuent une salle fixe par classe, où
+    // l'information ne dirait rien de plus que la classe elle-même.
+    roomId: [this.data.entry?.roomId ?? null],
     dayOfWeek: [this.data.entry?.dayOfWeek ?? null, [Validators.required]],
     startTime: [this.data.entry?.startTime?.slice(0, 5) ?? '', [Validators.required]],
     endTime: [this.data.entry?.endTime?.slice(0, 5) ?? '', [Validators.required]],
@@ -90,7 +92,7 @@ export class TimetableEntryFormDialog {
         schoolClassId: value.schoolClassId!,
         subjectId: value.subjectId!,
         teacherId: value.teacherId!,
-        roomId: value.roomId!,
+        roomId: value.roomId,
         dayOfWeek: value.dayOfWeek!,
         startTime: value.startTime,
         endTime: value.endTime,

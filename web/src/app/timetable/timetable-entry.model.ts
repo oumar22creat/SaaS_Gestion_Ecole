@@ -16,7 +16,8 @@ export interface TimetableEntry {
   schoolClassId: number;
   subjectId: number;
   teacherId: number;
-  roomId: number;
+  /** Nulle quand la classe occupe toujours la même salle (voir migration V64). */
+  roomId: number | null;
   dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
@@ -26,7 +27,8 @@ export interface TimetableEntryRequest {
   schoolClassId: number;
   subjectId: number;
   teacherId: number;
-  roomId: number;
+  /** Nulle quand la classe occupe toujours la même salle (voir migration V64). */
+  roomId: number | null;
   dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;

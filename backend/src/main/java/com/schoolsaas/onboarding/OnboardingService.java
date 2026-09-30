@@ -2,6 +2,7 @@ package com.schoolsaas.onboarding;
 
 import com.schoolsaas.onboarding.dto.OnboardingStatusResponse;
 import com.schoolsaas.onboarding.dto.OnboardingStatusResponse.Step;
+import com.schoolsaas.timetable.RoomRepository;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.schoolyear.SchoolYearService;
 import com.schoolsaas.student.StudentRepository;
@@ -33,6 +34,7 @@ public class OnboardingService {
     private final SubjectRepository subjectRepository;
     private final StudentRepository studentRepository;
     private final TeacherRepository teacherRepository;
+    private final RoomRepository roomRepository;
     private final TimetableEntryRepository timetableEntryRepository;
 
     public OnboardingService(
@@ -41,12 +43,14 @@ public class OnboardingService {
             SubjectRepository subjectRepository,
             StudentRepository studentRepository,
             TeacherRepository teacherRepository,
+            RoomRepository roomRepository,
             TimetableEntryRepository timetableEntryRepository) {
         this.schoolYearService = schoolYearService;
         this.schoolClassRepository = schoolClassRepository;
         this.subjectRepository = subjectRepository;
         this.studentRepository = studentRepository;
         this.teacherRepository = teacherRepository;
+        this.roomRepository = roomRepository;
         this.timetableEntryRepository = timetableEntryRepository;
     }
 
@@ -60,7 +64,13 @@ public class OnboardingService {
                 Step.of("SUBJECTS", subjectRepository.count()),
                 Step.of("STUDENTS", studentRepository.countByActiveTrue()),
                 Step.of("TEACHERS", teacherRepository.countByActiveTrue()),
+                // Facultative, et placée juste avant l'emploi du temps, seul écran qui s'en
+                // sert : la liste des salles y était vide sans que rien n'ait jamais invité à
+                // la remplir.
+                Step.optionnelle("ROOMS", roomRepository.count()),
                 Step.of("TIMETABLE", timetableEntryRepository.count()));
-        return new OnboardingStatusResponse(steps, steps.stream().allMatch(Step::done));
+        // Une étape facultative non faite ne retient pas l'achèvement du guide.
+        return new OnboardingStatusResponse(
+                steps, steps.stream().filter(Step::required).allMatch(Step::done));
     }
 }

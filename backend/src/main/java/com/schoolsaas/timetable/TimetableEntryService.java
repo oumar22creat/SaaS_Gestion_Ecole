@@ -96,10 +96,14 @@ public class TimetableEntryService {
             throw ApiException.conflict("TEACHER_ALREADY_BOOKED", "Cet enseignant a déjà un cours sur ce créneau");
         }
 
-        List<TimetableEntry> sameDayForRoom =
-                timetableEntryRepository.findAllByDayOfWeekAndRoomId(request.dayOfWeek(), request.roomId());
-        if (hasOverlap(sameDayForRoom, request, excludingId)) {
-            throw ApiException.conflict("ROOM_ALREADY_BOOKED", "Cette salle est déjà occupée sur ce créneau");
+        // Sans salle indiquée, il n'y a pas d'occupation à vérifier : la protection vaut pour
+        // qui s'en sert, elle ne pénalise pas qui n'en a pas besoin.
+        if (request.roomId() != null) {
+            List<TimetableEntry> sameDayForRoom =
+                    timetableEntryRepository.findAllByDayOfWeekAndRoomId(request.dayOfWeek(), request.roomId());
+            if (hasOverlap(sameDayForRoom, request, excludingId)) {
+                throw ApiException.conflict("ROOM_ALREADY_BOOKED", "Cette salle est déjà occupée sur ce créneau");
+            }
         }
 
         List<TimetableEntry> sameDayForClass =
@@ -125,7 +129,7 @@ public class TimetableEntryService {
         if (teacherRepository.findById(request.teacherId()).isEmpty()) {
             throw ApiException.notFound("TEACHER_NOT_FOUND", "Enseignant introuvable");
         }
-        if (roomRepository.findById(request.roomId()).isEmpty()) {
+        if (request.roomId() != null && roomRepository.findById(request.roomId()).isEmpty()) {
             throw ApiException.notFound("ROOM_NOT_FOUND", "Salle introuvable");
         }
     }

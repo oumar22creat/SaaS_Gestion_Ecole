@@ -37,6 +37,12 @@ const STEP_LABELS: Record<string, { title: string; hint: string; route: string; 
       route: '/teachers',
       action: 'Ajouter un enseignant',
     },
+    ROOMS: {
+      title: 'Déclarer vos salles',
+      hint: "Utile si vos classes se déplacent : l'application signale alors deux cours placés au même moment dans la même salle. Inutile si chaque classe a la sienne.",
+      route: '/rooms',
+      action: 'Ajouter une salle',
+    },
     TIMETABLE: {
       title: "Bâtir l'emploi du temps",
       hint: 'Classe, matière, enseignant, salle et horaire. Les conflits sont détectés à la saisie.',
@@ -76,6 +82,9 @@ const STEP_LABELS: Record<string, { title: string; hint: string; route: string; 
                   {{ labelFor(step.key).title }}
                   @if (step.count > 0) {
                     <span class="step-count">{{ step.count }}</span>
+                  }
+                  @if (!step.required) {
+                    <span class="step-optional">facultatif</span>
                   }
                 </span>
                 <span class="step-hint">{{ labelFor(step.key).hint }}</span>
@@ -174,6 +183,19 @@ const STEP_LABELS: Record<string, { title: string; hint: string; route: string; 
     /* Une étape faite reste lisible : on l'atténue sans la barrer ni la masquer. */
     .step-done .step-title {
       color: var(--color-text-secondary);
+    }
+
+    /* Une étape facultative non cochée n'est pas un reste à faire : il faut le dire, sinon la
+       pastille vide se lit comme un oubli. */
+    .step-optional {
+      margin-left: var(--space-2);
+      padding: 1px var(--space-2);
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-caption);
+      font-weight: var(--font-weight-regular, 400);
+      text-transform: none;
     }
 
     .step-count {

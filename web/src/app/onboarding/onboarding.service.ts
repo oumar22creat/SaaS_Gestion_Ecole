@@ -8,6 +8,8 @@ export interface OnboardingStep {
   key: string;
   count: number;
   done: boolean;
+  /** Une étape facultative est proposée sans retenir l'achèvement du guide. */
+  required: boolean;
 }
 
 export interface OnboardingStatus {

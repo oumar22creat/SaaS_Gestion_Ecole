@@ -26,7 +26,8 @@ public class TimetableEntry extends TenantScopedEntity {
     @Column(name = "teacher_id", nullable = false)
     private Long teacherId;
 
-    @Column(name = "room_id", nullable = false)
+    /** Facultative : voir V64. Nulle quand la classe occupe toujours la même salle. */
+    @Column(name = "room_id")
     private Long roomId;
 
     @Enumerated(EnumType.STRING)

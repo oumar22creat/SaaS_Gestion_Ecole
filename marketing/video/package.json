@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "remotion studio",
     "render": "remotion render Presentation out/school-manager.mp4",
-    "render:vertical": "remotion render PresentationVerticale out/school-manager-vertical.mp4"
+    "render:vertical": "remotion render PresentationVerticale out/school-manager-vertical.mp4",
+    "capsules": "for c in CapsuleBulletins CapsuleAppel CapsuleFrais CapsuleSecurite CapsuleParents CapsuleEleves; do remotion render $c out/tiktok-$(echo $c | sed 's/Capsule//' | tr '[:upper:]' '[:lower:]').mp4; done"
   },
   "dependencies": {
     "@remotion/cli": "4.0.409",

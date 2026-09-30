@@ -1,3 +1,4 @@
+import { createContext, useContext } from 'react';
 import { useVideoConfig } from 'remotion';
 
 /**
@@ -22,3 +23,19 @@ export const usePortrait = (): boolean => {
  */
 export const SAFE_TOP = 230;
 export const SAFE_BOTTOM = 280;
+
+/**
+ * Marges du cadre TikTok.
+ *
+ * <p>L'interface de TikTok recouvre le bas de l'écran (légende, nom du compte, musique) et la
+ * colonne de droite (boutons j'aime, commentaires, partage). Les marges du film long ne
+ * suffisent pas : un numéro de téléphone posé dessous passerait sous la légende, et un texte
+ * qui court jusqu'au bord droit finirait derrière les boutons.
+ */
+export const TIKTOK_HAUT = 260;
+export const TIKTOK_BAS = 440;
+export const TIKTOK_DROITE = 150;
+
+/** Vrai à l'intérieur d'une capsule : le décor applique alors les marges ci-dessus. */
+export const CadreTikTok = createContext(false);
+export const useTikTok = (): boolean => useContext(CadreTikTok);

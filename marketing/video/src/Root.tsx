@@ -1,6 +1,7 @@
 import React from 'react';
 import { Composition } from 'remotion';
 import { Presentation, totalDuration } from './Presentation';
+import { CAPSULES, CapsuleVideo, DUREE_CAPSULE } from './Capsules';
 import { FPS } from './theme';
 
 export const RemotionRoot: React.FC = () => (
@@ -23,5 +24,18 @@ export const RemotionRoot: React.FC = () => (
       width={1080}
       height={1920}
     />
+    {/* Capsules TikTok : une idée chacune, dix-huit secondes, cadre 9:16. */}
+    {CAPSULES.map((capsule) => (
+      <Composition
+        key={capsule.id}
+        id={capsule.id}
+        component={CapsuleVideo}
+        defaultProps={{ id: capsule.id }}
+        durationInFrames={DUREE_CAPSULE}
+        fps={FPS}
+        width={1080}
+        height={1920}
+      />
+    ))}
   </>
 );

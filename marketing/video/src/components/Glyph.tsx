@@ -1,6 +1,15 @@
 import React from 'react';
 
-export type GlyphName = 'book' | 'calendar' | 'chat' | 'money' | 'bus' | 'chart' | 'phone' | 'shield';
+export type GlyphName =
+  | 'book'
+  | 'calendar'
+  | 'chat'
+  | 'money'
+  | 'bus'
+  | 'chart'
+  | 'phone'
+  | 'shield'
+  | 'clock';
 
 /** Tracés au trait, dessinés à la main : aucune police d’icônes à charger au rendu. */
 const PATHS: Record<GlyphName, React.ReactNode> = {
@@ -50,6 +59,12 @@ const PATHS: Record<GlyphName, React.ReactNode> = {
     <>
       <rect x="11" y="3" width="18" height="34" rx="4" />
       <path d="M17 7h6" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="20" cy="20" r="15" />
+      <path d="M20 11v9l6 4" />
     </>
   ),
   shield: (

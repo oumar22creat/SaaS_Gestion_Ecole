@@ -2,7 +2,15 @@ import React from 'react';
 import { AbsoluteFill } from 'remotion';
 import { COLORS } from '../theme';
 import { body } from '../fonts';
-import { SAFE_BOTTOM, SAFE_TOP, usePortrait } from '../format';
+import {
+  SAFE_BOTTOM,
+  SAFE_TOP,
+  TIKTOK_BAS,
+  TIKTOK_DROITE,
+  TIKTOK_HAUT,
+  usePortrait,
+  useTikTok,
+} from '../format';
 
 /**
  * Fond commun à toutes les scènes sombres. La lueur radiale décentrée évite l’aplat mort
@@ -14,6 +22,7 @@ export const Stage: React.FC<{
 }> = ({ children, tone = 'dark' }) => {
   const dark = tone === 'dark';
   const portrait = usePortrait();
+  const tiktok = useTikTok();
   return (
     <AbsoluteFill
       style={{
@@ -35,7 +44,13 @@ export const Stage: React.FC<{
       ) : null}
       {/* En 9:16, l'interface de WhatsApp recouvre le haut et le bas : le contenu vit entre. */}
       <AbsoluteFill
-        style={portrait ? { paddingTop: SAFE_TOP, paddingBottom: SAFE_BOTTOM } : undefined}
+        style={
+          tiktok
+            ? { paddingTop: TIKTOK_HAUT, paddingBottom: TIKTOK_BAS, paddingRight: TIKTOK_DROITE }
+            : portrait
+              ? { paddingTop: SAFE_TOP, paddingBottom: SAFE_BOTTOM }
+              : undefined
+        }
       >
         {children}
       </AbsoluteFill>

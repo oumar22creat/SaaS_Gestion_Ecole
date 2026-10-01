@@ -8,8 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /** Traduit toute exception en enveloppe d'erreur uniforme — voir docs/API_CONVENTIONS.md. */
@@ -37,6 +39,24 @@ public class GlobalExceptionHandler {
                 .toList();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorBody(new ErrorDetail("VALIDATION_ERROR", "Requête invalide", details)));
+    }
+
+    /**
+     * Paramètre de requête absent ou intraduisible : la faute est au client, pas au serveur.
+     *
+     * <p>Sans ce traitement, l'exception tombait dans le filet général et l'appelant recevait
+     * 500 « Erreur interne », avec une pile d'exception dans les journaux pour chaque appel
+     * mal formé. Une supervision qui compte les 500 y voyait une panne, et le développeur
+     * d'un client n'apprenait pas quel paramètre il avait oublié.
+     */
+    @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ErrorBody> handleBadRequestParameter(Exception ex) {
+        String parametre = ex instanceof MissingServletRequestParameterException manquant
+                ? manquant.getParameterName()
+                : ((MethodArgumentTypeMismatchException) ex).getName();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorBody(new ErrorDetail(
+                        "INVALID_PARAMETER", "Paramètre de requête invalide", List.of(parametre))));
     }
 
     @ExceptionHandler(BadCredentialsException.class)

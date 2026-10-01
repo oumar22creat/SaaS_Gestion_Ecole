@@ -1,6 +1,7 @@
 package com.schoolsaas.auth;
 
 import com.schoolsaas.common.RestSecurityHandlers;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +37,14 @@ public class SecurityConfig {
         this.corsProperties = corsProperties;
     }
 
+    /**
+     * Origines fixes du WebView de l'application mobile (voir corsConfigurationSource).
+     * {@code http://localhost} est l'origine de la compilation de vérification sur émulateur,
+     * qui bascule en clair pour joindre un backend de développement.
+     */
+    private static final List<String> ORIGINES_APPLICATION_MOBILE =
+            List.of("https://localhost", "capacitor://localhost", "ionic://localhost", "http://localhost");
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -54,11 +63,25 @@ public class SecurityConfig {
      * l'API partagent le domaine, et Spring traite toute requête portant cet en-tête comme
      * une requête CORS. Avec la seule origine du domaine nu, chaque école recevait
      * « Invalid CORS request » en 403 sur la moindre écriture.
+     *
+     * <p>Les origines de l'application mobile s'ajoutent d'office à celles configurées. Un
+     * WebView Capacitor ne sert pas l'application depuis le domaine de l'API mais depuis une
+     * origine locale fixe — {@code https://localhost} sur Android, {@code capacitor://localhost}
+     * sur iOS — et ses appels sont donc soumis au CORS comme ceux d'un navigateur. Ces valeurs
+     * ne dépendent d'aucun déploiement : les laisser à la charge de la configuration revenait
+     * à livrer une application mobile dont chaque requête échouait en 403, l'écran de
+     * connexion compris.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
+        List<String> origines = new ArrayList<>(corsProperties.allowedOrigins());
+        for (String origineMobile : ORIGINES_APPLICATION_MOBILE) {
+            if (!origines.contains(origineMobile)) {
+                origines.add(origineMobile);
+            }
+        }
+        configuration.setAllowedOriginPatterns(origines);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-Id"));
         configuration.setAllowCredentials(true);

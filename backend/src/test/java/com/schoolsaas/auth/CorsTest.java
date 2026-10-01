@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.schoolsaas.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
@@ -60,5 +62,22 @@ class CorsTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(INSCRIPTION.formatted(suffixe, suffixe)))
                 .andExpect(status().isForbidden());
+    }
+
+    /**
+     * L'application mobile n'appelle pas l'API depuis le domaine de l'école mais depuis
+     * l'origine locale de son WebView. Cette origine n'apparaît dans aucune configuration de
+     * déploiement : si le backend ne l'accepte pas d'office, l'application compilée échoue en
+     * 403 dès l'écran de connexion, alors que le site web fonctionne.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"https://localhost", "capacitor://localhost", "ionic://localhost"})
+    void acceptsARequestFromTheMobileWebView(String origine) throws Exception {
+        String suffixe = "mobile" + System.nanoTime();
+        mockMvc.perform(post("/api/v1/tenants/register")
+                        .header("Origin", origine)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(INSCRIPTION.formatted(suffixe, suffixe)))
+                .andExpect(status().isCreated());
     }
 }

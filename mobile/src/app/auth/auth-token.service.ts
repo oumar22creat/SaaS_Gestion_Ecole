@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { decodeAccessToken } from '../core/jwt.util';
 
 export interface TokenPair {
@@ -22,17 +22,36 @@ const STORAGE_KEY = 'auth-tokens';
  */
 @Injectable({ providedIn: 'root' })
 export class AuthTokenService {
+  /*
+   * Un signal double le stockage, qui n'est pas réactif.
+   *
+   * L'application tourne sans zone.js : un écran n'est redessiné que si une source réactive
+   * le signale. Tant que le rôle et l'adresse n'étaient que des lectures de `localStorage`,
+   * l'accueil gardait l'identité du compte précédent après une reconnexion — `ion-router-outlet`
+   * conserve les écrans montés dans sa pile, et rien ne venait les marquer à rafraîchir.
+   *
+   * `localStorage` reste la mémoire qui survit à la fermeture de l'application ; le signal
+   * n'en est que le reflet en mémoire, et toute écriture passe par `store` ou `clear`.
+   */
+  private readonly jetons = signal<TokenPair | null>(lireStockage());
+
+  private readonly jetonDecode = computed(() => {
+    const tokens = this.jetons();
+    return tokens ? decodeAccessToken(tokens.accessToken) : null;
+  });
+
   store(tokens: TokenPair): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+    this.jetons.set(tokens);
   }
 
   read(): TokenPair | null {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as TokenPair) : null;
+    return this.jetons();
   }
 
   clear(): void {
     localStorage.removeItem(STORAGE_KEY);
+    this.jetons.set(null);
   }
 
   isAuthenticated(): boolean {
@@ -41,12 +60,24 @@ export class AuthTokenService {
 
   /** Affichage uniquement (nom du rôle dans l'app) — voir core/jwt.util.ts. */
   role(): string | null {
-    const tokens = this.read();
-    return tokens ? (decodeAccessToken(tokens.accessToken)?.role ?? null) : null;
+    return this.jetonDecode()?.role ?? null;
   }
 
   email(): string | null {
-    const tokens = this.read();
-    return tokens ? (decodeAccessToken(tokens.accessToken)?.email ?? null) : null;
+    return this.jetonDecode()?.email ?? null;
+  }
+}
+
+/** Jetons retenus d'une exécution précédente ; une valeur illisible vaut « pas de session ». */
+function lireStockage(): TokenPair | null {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as TokenPair;
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
   }
 }

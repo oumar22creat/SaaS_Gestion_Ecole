@@ -1,13 +1,13 @@
 <ion-content class="ion-padding">
   <section class="greeting">
-    <p class="greeting-eyebrow">{{ eyebrow }}</p>
+    <p class="greeting-eyebrow">{{ eyebrow() }}</p>
     <h1 class="greeting-title">Bonjour</h1>
-    <p class="greeting-user">{{ email ?? 'Compte connecté' }}</p>
+    <p class="greeting-user">{{ email() ?? 'Compte connecté' }}</p>
   </section>
 
   <p class="section-label">Actions du jour</p>
   <div class="tiles">
-    @for (tile of tiles; track tile.label) {
+    @for (tile of tiles(); track tile.label) {
       @if (tile.path) {
         <a [routerLink]="tile.path" class="tile" [class.tile-wide]="tile.path === '/timetable'">
           <ion-icon class="tile-icon" aria-hidden="true" [name]="tile.icon"></ion-icon>

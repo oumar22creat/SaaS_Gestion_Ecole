@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { IonButton, IonContent, IonIcon } from '@ionic/angular';
+import { Component, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { IonButton, IonContent, IonIcon, NavController } from '@ionic/angular';
 import { AuthTokenService } from '../auth/auth-token.service';
 import { homeEyebrowForRole, homeTilesForRole } from '../core/role-access';
 
@@ -92,15 +92,33 @@ import { homeEyebrowForRole, homeTilesForRole } from '../core/role-access';
 })
 export class HomePage {
   private readonly authTokenService = inject(AuthTokenService);
-  private readonly router = inject(Router);
+  private readonly navController = inject(NavController);
 
-  protected readonly email = this.authTokenService.email();
-  protected readonly role = this.authTokenService.role();
-  protected readonly eyebrow = homeEyebrowForRole(this.role);
-  protected readonly tiles = homeTilesForRole(this.role);
+  /*
+   * Dérivé du jeton courant, et non figé à la construction.
+   *
+   * `ion-router-outlet` garde les écrans montés dans sa pile de navigation pour rendre le
+   * retour instantané. Des champs initialisés une seule fois figeaient donc l'identité du
+   * premier compte connecté : sur un téléphone partagé, l'enseignant se déconnectait, un
+   * parent se connectait, et l'accueil lui présentait encore l'adresse de l'enseignant et
+   * les tuiles de saisie des notes. Le jeton stocké était pourtant bien le sien.
+   *
+   * Des signaux calculés, et non de simples accesseurs : sans zone.js, un écran déjà monté
+   * n'est redessiné que si une source réactive le demande.
+   */
+  protected readonly role = computed(() => this.authTokenService.role());
+  protected readonly email = computed(() => this.authTokenService.email());
+  protected readonly eyebrow = computed(() => homeEyebrowForRole(this.role()));
+  protected readonly tiles = computed(() => homeTilesForRole(this.role()));
 
   async logout(): Promise<void> {
     this.authTokenService.clear();
-    await this.router.navigateByUrl('/login');
+    /*
+     * `navigateRoot` et non `navigateByUrl` : il vide la pile d'Ionic au lieu d'empiler
+     * l'écran de connexion par-dessus les écrans du compte précédent. Sans cela, les pages
+     * déjà visitées restent montées avec leurs données en mémoire, et le compte suivant
+     * peut les retrouver telles quelles.
+     */
+    await this.navController.navigateRoot('/login');
   }
 }

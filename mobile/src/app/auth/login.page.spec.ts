@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { NavController } from '@ionic/angular';
 import { environment } from '../../environments/environment';
 import { AuthTokenService } from './auth-token.service';
 import { LoginPage } from './login.page';
@@ -10,7 +10,7 @@ describe('LoginPage', () => {
   let fixture: ComponentFixture<LoginPage>;
   let component: LoginPage;
   let httpMock: HttpTestingController;
-  let router: Router;
+  let navController: NavController;
 
   beforeEach(async () => {
     localStorage.clear();
@@ -22,8 +22,8 @@ describe('LoginPage', () => {
     fixture = TestBed.createComponent(LoginPage);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
-    router = TestBed.inject(Router);
-    spyOn(router, 'navigateByUrl').and.resolveTo(true);
+    navController = TestBed.inject(NavController);
+    spyOn(navController, 'navigateRoot').and.resolveTo(true);
   });
 
   afterEach(() => {
@@ -55,7 +55,9 @@ describe('LoginPage', () => {
       refreshToken: 'refresh',
       expiresIn: 900,
     });
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/home');
+    // navigateRoot et non navigateByUrl : entrer dans l'application repart d'une pile vide,
+    // sans quoi les écrans du compte précédent restent montés dessous.
+    expect(navController.navigateRoot).toHaveBeenCalledWith('/home');
   });
 
   it('shows an error message when the credentials are invalid', async () => {

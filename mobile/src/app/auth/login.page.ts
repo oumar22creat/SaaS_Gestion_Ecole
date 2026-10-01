@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { IonButton, IonContent, IonIcon, IonInput, IonItem, IonSpinner } from '@ionic/angular';
+import { IonButton, IonContent, IonIcon, IonInput, IonItem, IonSpinner, NavController } from '@ionic/angular';
 import { extractErrorMessage } from '../core/http-error.util';
 import { AuthTokenService } from './auth-token.service';
 import { AuthService } from './auth.service';
@@ -44,7 +43,7 @@ export class LoginPage {
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly authTokenService = inject(AuthTokenService);
-  private readonly router = inject(Router);
+  private readonly navController = inject(NavController);
 
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -67,7 +66,11 @@ export class LoginPage {
       const { subdomain, email, password } = this.form.getRawValue();
       const tokens = await this.authService.login(subdomain, email, password);
       this.authTokenService.store(tokens);
-      await this.router.navigateByUrl('/home');
+      /*
+       * `navigateRoot` vide la pile d'Ionic : l'écran de connexion ne reste pas monté
+       * derrière l'accueil, et aucun écran du compte précédent ne subsiste dans la pile.
+       */
+      await this.navController.navigateRoot('/home');
     } catch (error) {
       this.errorMessage.set(extractErrorMessage(error, 'Identifiants invalides.'));
     } finally {

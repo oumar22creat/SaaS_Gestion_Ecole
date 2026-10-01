@@ -5,3 +5,148 @@
   display: flex;
   gap: var(--space-2);
 }
+
+.class-filter {
+  min-width: 220px;
+  margin-bottom: var(--space-4);
+}
+
+/*
+ * La grille garde une largeur minimale par colonne et défile horizontalement en dessous :
+ * comprimer sept colonnes dans une fenêtre étroite rendait les intitulés de matière
+ * illisibles, ce qui est précisément ce qu'on vient lire ici.
+ */
+.timetable-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.timetable {
+  display: grid;
+  min-width: 760px;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.th {
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+}
+
+.time-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: 62px;
+}
+
+/* La case vide reste dessinée : un trou dans la grille se repère mieux qu'un blanc. */
+.slot-empty {
+  flex: 1;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.course {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  /* Le liseré de couleur porte la teinte de la matière ; le fond reste pâle derrière le texte. */
+  border-left: 3px solid var(--course-accent);
+  border-radius: var(--radius-sm);
+  background: var(--course-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.course:hover,
+.course:focus-visible {
+  box-shadow: var(--shadow-1);
+}
+
+.course-subject {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+
+.course-meta {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+}
+
+.course-class {
+  margin-top: 2px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+/*
+ * Six teintes en rotation sur l'identifiant de matière : assez pour distinguer les matières
+ * d'une même journée, assez peu pour que la grille ne vire pas au nuancier. Deux matières
+ * éloignées dans la semaine peuvent partager une couleur, ce qui est sans conséquence —
+ * la couleur aide à suivre une matière, elle ne la nomme pas.
+ */
+.course[data-tint='0'] {
+  --course-accent: #2f8f6b;
+  --course-surface: #e8f5ef;
+}
+.course[data-tint='1'] {
+  --course-accent: #3b73c4;
+  --course-surface: #e7eefa;
+}
+.course[data-tint='2'] {
+  --course-accent: #8a5cc4;
+  --course-surface: #f0e9fa;
+}
+.course[data-tint='3'] {
+  --course-accent: #c47a26;
+  --course-surface: #fbf0e2;
+}
+.course[data-tint='4'] {
+  --course-accent: #c2536b;
+  --course-surface: #fbe9ed;
+}
+.course[data-tint='5'] {
+  --course-accent: #2b8f93;
+  --course-surface: #e5f4f4;
+}
+
+.break-band {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}

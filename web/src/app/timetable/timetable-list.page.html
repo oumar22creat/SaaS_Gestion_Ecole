@@ -9,56 +9,61 @@
   </div>
 </div>
 
-<div class="table-scroll">
-  <table mat-table [dataSource]="entries()" class="data-table">
-    <ng-container matColumnDef="dayOfWeek">
-      <th mat-header-cell *matHeaderCellDef>Jour</th>
-      <td mat-cell *matCellDef="let entry">{{ dayLabels.get(entry.dayOfWeek) }}</td>
-    </ng-container>
+@if (classes().length > 0) {
+  <mat-form-field class="class-filter" subscriptSizing="dynamic">
+    <mat-label>Classe</mat-label>
+    <mat-select [value]="classeChoisie()" (valueChange)="classeChoisie.set($event)">
+      <mat-option [value]="null">Toutes les classes</mat-option>
+      @for (schoolClass of classes(); track schoolClass.id) {
+        <mat-option [value]="schoolClass.id">{{ schoolClass.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+}
 
-    <ng-container matColumnDef="time">
-      <th mat-header-cell *matHeaderCellDef>Horaire</th>
-      <td mat-cell *matCellDef="let entry">
-        {{ entry.startTime.slice(0, 5) }} – {{ entry.endTime.slice(0, 5) }}
-      </td>
-    </ng-container>
+@if (bandes().length > 0) {
+  <div class="timetable-scroll">
+    <div class="timetable" [style.grid-template-columns]="colonnesCss()">
+      <div class="th th-time">Horaire</div>
+      @for (jour of jours(); track jour.value) {
+        <div class="th">{{ jour.label }}</div>
+      }
 
-    <ng-container matColumnDef="schoolClassId">
-      <th mat-header-cell *matHeaderCellDef>Classe</th>
-      <td mat-cell *matCellDef="let entry">{{ className(entry.schoolClassId) }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="subjectId">
-      <th mat-header-cell *matHeaderCellDef>Matière</th>
-      <td mat-cell *matCellDef="let entry">{{ subjectName(entry.subjectId) }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="teacherId">
-      <th mat-header-cell *matHeaderCellDef>Enseignant</th>
-      <td mat-cell *matCellDef="let entry">{{ teacherName(entry.teacherId) }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="roomId">
-      <th mat-header-cell *matHeaderCellDef>Salle</th>
-      <td mat-cell *matCellDef="let entry">{{ roomName(entry.roomId) }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let entry">
-        <button mat-icon-button (click)="openEditDialog(entry)" aria-label="Modifier">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button (click)="remove(entry)" aria-label="Supprimer">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="columns"></tr>
-    <tr mat-row *matRowDef="let row; columns: columns"></tr>
-  </table>
-</div>
+      @for (bande of bandes(); track bande.genre + bande.debut + bande.fin) {
+        @if (bande.genre === 'cours') {
+          <div class="time-cell">{{ bande.debut }} – {{ bande.fin }}</div>
+          @for (jour of jours(); track jour.value) {
+            <div class="slot">
+              @for (entry of creneauxDe(bande, jour.value); track entry.id) {
+                <button
+                  type="button"
+                  class="course"
+                  [attr.data-tint]="teinte(entry.subjectId)"
+                  (click)="openEditDialog(entry)"
+                  [attr.aria-label]="'Modifier ' + subjectName(entry.subjectId) + ' le ' + jour.label"
+                >
+                  <span class="course-subject">{{ subjectName(entry.subjectId) }}</span>
+                  <span class="course-meta">{{ teacherName(entry.teacherId) }}</span>
+                  @if (entry.roomId !== null) {
+                    <span class="course-meta">{{ roomName(entry.roomId) }}</span>
+                  }
+                  @if (classeChoisie() === null) {
+                    <span class="course-class">{{ className(entry.schoolClassId) }}</span>
+                  }
+                </button>
+              } @empty {
+                <span class="slot-empty" aria-hidden="true"></span>
+              }
+            </div>
+          }
+        } @else {
+          <div class="time-cell time-cell-break">{{ bande.debut }} – {{ bande.fin }}</div>
+          <div class="break-band" [style.grid-column]="'span ' + jours().length">Pause</div>
+        }
+      }
+    </div>
+  </div>
+}
 
 @if (!loading() && entries().length === 0) {
   <div class="empty-state">
@@ -73,5 +78,12 @@
         <mat-icon>add</mat-icon> Ajouter un créneau
       </button>
     </span>
+  </div>
+}
+
+@if (!loading() && entries().length > 0 && bandes().length === 0) {
+  <div class="empty-state">
+    <span class="empty-title">Aucun créneau pour cette classe</span>
+    <span class="empty-hint">Choisissez une autre classe, ou ajoutez un créneau à celle-ci.</span>
   </div>
 }

@@ -109,7 +109,7 @@ interface RollCallRow {
         <ion-button expand="block" class="save" (click)="submit()"><ion-icon aria-hidden="true" name="save-outline"></ion-icon> Enregistrer l'appel ({{ rows().length }})
         </ion-button>
       } @else {
-        <p class="empty-state">Choisissez une classe et une date pour démarrer l'appel.</p>
+        <p class="empty-state">{{ messageListeVide() }}</p>
       }
     </ion-content>
   `,
@@ -201,6 +201,27 @@ export class RollCallPage {
   protected schoolClassId: number | null = null;
   protected date = new Date().toISOString().slice(0, 10);
 
+  /*
+   * Reflet de `schoolClassId`, que `[(ngModel)]` écrit sans prévenir personne.
+   *
+   * Sans zone.js, un écran n'est redessiné que si un signal lu par le gabarit change ; un
+   * simple champ ne déclenche rien. `load()` tient donc ce signal à jour, et le message
+   * ci-dessous en dérive.
+   */
+  private readonly classeChoisie = signal<number | null>(null);
+
+  /*
+   * Deux absences de liste à ne pas confondre : aucune classe n'a encore été choisie, ou la
+   * classe choisie ne compte aucun élève. Le même message invitait à choisir une classe alors
+   * qu'une classe venait de l'être, ce qui donnait l'impression que la sélection n'avait pas
+   * été prise en compte.
+   */
+  protected readonly messageListeVide = computed(() =>
+    this.classeChoisie() === null
+      ? "Choisissez une classe et une date pour démarrer l'appel."
+      : 'Aucun élève inscrit dans cette classe.',
+  );
+
   private readonly tally = computed(() => {
     const counts = new Map<AttendanceStatus, number>();
     for (const row of this.rows()) {
@@ -233,6 +254,7 @@ export class RollCallPage {
   async load(): Promise<void> {
     this.success.set(false);
     this.errorMessage.set(null);
+    this.classeChoisie.set(this.schoolClassId);
     if (this.schoolClassId === null) {
       this.rows.set([]);
       return;

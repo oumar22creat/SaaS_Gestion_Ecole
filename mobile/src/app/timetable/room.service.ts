@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/api-response.model';
+import { PARAMS_REFERENTIEL } from '../core/referentiel.params';
 import { Room } from './room.model';
 
 const BASE_URL = `${environment.apiUrl}/rooms`;
@@ -18,7 +19,7 @@ export class RoomService {
 
   async list(): Promise<Room[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<Room[]>>(BASE_URL, { params: { pageSize: 200 } }),
+      this.http.get<ApiResponse<Room[]>>(BASE_URL, { params: PARAMS_REFERENTIEL }),
     );
     return response.data;
   }

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/api-response.model';
+import { PARAMS_REFERENTIEL } from '../core/referentiel.params';
 import { Exam, ExamRequest, ExamStatistics } from './grade.model';
 
 const BASE_URL = `${environment.apiUrl}/exams`;
@@ -13,7 +14,7 @@ export class ExamService {
 
   async list(): Promise<Exam[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<Exam[]>>(BASE_URL, { params: { pageSize: 200 } }),
+      this.http.get<ApiResponse<Exam[]>>(BASE_URL, { params: PARAMS_REFERENTIEL }),
     );
     return response.data;
   }

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/api-response.model';
+import { PARAMS_REFERENTIEL } from '../core/referentiel.params';
 
 export interface Conversation {
   id: number;
@@ -82,7 +83,7 @@ export class MessagingService {
   async listUsers(): Promise<StaffUser[]> {
     const response = await firstValueFrom(
       this.http.get<ApiResponse<StaffUser[]>>(`${environment.apiUrl}/users`, {
-        params: { pageSize: 200 },
+        params: PARAMS_REFERENTIEL,
       }),
     );
     return response.data;

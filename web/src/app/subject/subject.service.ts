@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/api-response.model';
+import { PARAMS_REFERENTIEL } from '../core/referentiel.params';
 import { Subject, SubjectRequest } from './subject.model';
 
 const BASE_URL = `${environment.apiUrl}/subjects`;
@@ -13,7 +14,7 @@ export class SubjectService {
 
   async list(): Promise<Subject[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<Subject[]>>(BASE_URL, { params: { pageSize: 200 } }),
+      this.http.get<ApiResponse<Subject[]>>(BASE_URL, { params: PARAMS_REFERENTIEL }),
     );
     return response.data;
   }

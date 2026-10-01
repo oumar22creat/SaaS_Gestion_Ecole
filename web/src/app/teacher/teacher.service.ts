@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/api-response.model';
 import { PageQuery, Paged, pageParams } from '../core/paged.model';
+import { PARAMS_REFERENTIEL } from '../core/referentiel.params';
 import { Teacher, TeacherRequest } from './teacher.model';
 
 const BASE_URL = `${environment.apiUrl}/teachers`;
@@ -26,7 +27,7 @@ export class TeacherService {
 
   async list(): Promise<Teacher[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<Teacher[]>>(BASE_URL, { params: { pageSize: 200 } }),
+      this.http.get<ApiResponse<Teacher[]>>(BASE_URL, { params: PARAMS_REFERENTIEL }),
     );
     return response.data;
   }

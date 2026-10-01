@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   IonButton,
@@ -97,11 +97,11 @@ function schoolYearRange(): { from: string; to: string } {
           </div>
         }
       } @else if (tab() === 'attendance') {
-        @if (attendance().length === 0) {
+        @if (absences().length === 0) {
           <p class="empty-state">Aucune absence sur l'année scolaire en cours.</p>
         } @else {
           <div class="record-list">
-            @for (entry of attendance(); track entry.date) {
+            @for (entry of absences(); track entry.date) {
               <div class="record-row">
                 <span class="record-text">
                   <span class="record-label">{{ statusLabel(entry.status) }}</span>
@@ -299,6 +299,18 @@ export class PortalStudentRecordPage {
   protected readonly tab = signal<'grades' | 'attendance' | 'fees' | 'timetable'>('grades');
   protected readonly grades = signal<PortalGrade[]>([]);
   protected readonly attendance = signal<PortalAttendance[]>([]);
+
+  /*
+   * L'onglet s'appelle « Absences » et ne doit montrer que cela.
+   *
+   * L'API sert l'assiduité complète, jour présent compris : c'est ce qu'il faut à un bulletin
+   * ou à une statistique. Affichée telle quelle à une famille, elle donnait une liste de cent
+   * quatre-vingts lignes « Présent · Non justifiée », où la seule absence réelle se perdait —
+   * et la mention « Non justifiée » accolée à une présence n'a aucun sens.
+   */
+  protected readonly absences = computed(() =>
+    this.attendance().filter((entry) => entry.status !== 'PRESENT'),
+  );
   protected readonly timetable = signal<PortalTimetableSlot[]>([]);
   protected readonly fees = signal<PortalFeeSummary | null>(null);
   protected readonly loading = signal(true);

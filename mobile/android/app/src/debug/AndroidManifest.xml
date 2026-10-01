@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Surcouche appliquée aux seules compilations de débogage : elle branche la configuration
+  réseau qui autorise le backend local (voir res/xml/network_security_config.xml).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:networkSecurityConfig="@xml/network_security_config" />
+</manifest>

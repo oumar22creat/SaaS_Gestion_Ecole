@@ -225,3 +225,7 @@ celui choisi à l'inscription (`POST /api/v1/tenants/register`).
 La procédure complète — serveur, DNS générique, TLS, sauvegardes chiffrées hors site et
 mises à jour — est dans [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md). Les fichiers
 correspondants vivent dans `deploy/`.
+
+Les notifications push ne sont pas encore envoyées : la passerelle journalise sans émettre
+(ADR-020). La collecte des clés Firebase et Apple, préalable au câblage, est décrite dans
+[docs/NOTIFICATIONS-PUSH.md](docs/NOTIFICATIONS-PUSH.md).

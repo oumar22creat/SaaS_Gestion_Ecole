@@ -12,6 +12,9 @@ import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.format.DateTimeFormatter;
+import com.schoolsaas.student.StudentRepository;
+import com.schoolsaas.notification.FamilyRecipients;
 
 /**
  * Relances automatiques pour les emprunts en retard (cahier-des-charges.md §19.3). Aucun
@@ -31,16 +34,28 @@ public class LibraryOverdueReminderJob {
     private final TenantSessionConfigurer tenantSessionConfigurer;
     private final BookLoanRepository bookLoanRepository;
     private final NotificationDispatcher notificationDispatcher;
+    private final FamilyRecipients familyRecipients;
+    private final StudentRepository studentRepository;
+    private final BookRepository bookRepository;
+
+    /** Les familles lisent une date, pas un format ISO. */
+    private static final DateTimeFormatter JOUR_MOIS_ANNEE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public LibraryOverdueReminderJob(
             TenantRepository tenantRepository,
             TenantSessionConfigurer tenantSessionConfigurer,
             BookLoanRepository bookLoanRepository,
-            NotificationDispatcher notificationDispatcher) {
+            NotificationDispatcher notificationDispatcher,
+            FamilyRecipients familyRecipients,
+            StudentRepository studentRepository,
+            BookRepository bookRepository) {
         this.tenantRepository = tenantRepository;
         this.tenantSessionConfigurer = tenantSessionConfigurer;
         this.bookLoanRepository = bookLoanRepository;
         this.notificationDispatcher = notificationDispatcher;
+        this.familyRecipients = familyRecipients;
+        this.studentRepository = studentRepository;
+        this.bookRepository = bookRepository;
     }
 
     @Scheduled(cron = "0 0 8 * * *")
@@ -68,13 +83,29 @@ public class LibraryOverdueReminderJob {
                 if (loan.isOverdue(today)) {
                     notificationDispatcher.dispatch(
                             NotificationType.LIBRARY_OVERDUE,
-                            List.of(),
+                            familyRecipients.familleDe(loan.getStudentId()),
                             "Retard de bibliothèque",
-                            "Élève " + loan.getStudentId() + " — ouvrage " + loan.getBookId() + " dû le " + loan.getDueDate());
+                            corpsDuRappel(loan));
                 }
             }
         } finally {
             TenantContext.clear();
         }
+    }
+
+    /**
+     * Le texte qu'une famille recevra.
+     *
+     * <p>Il portait des identifiants techniques — « Élève 5 — ouvrage 3 ». Personne ne le
+     * recevait, la liste de destinataires étant vide, ce qui masquait le défaut : le jour où
+     * l'envoi fonctionne, un parent doit reconnaître son enfant et le livre à rapporter.
+     */
+    private String corpsDuRappel(BookLoan loan) {
+        String eleve = studentRepository
+                .findById(loan.getStudentId())
+                .map(e -> e.getFirstName() + " " + e.getLastName())
+                .orElse("Votre enfant");
+        String ouvrage = bookRepository.findById(loan.getBookId()).map(Book::getTitle).orElse("un ouvrage");
+        return "%s — « %s » était dû le %s".formatted(eleve, ouvrage, loan.getDueDate().format(JOUR_MOIS_ANNEE));
     }
 }

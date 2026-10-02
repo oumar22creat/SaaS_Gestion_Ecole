@@ -144,7 +144,12 @@ class LibraryTest extends AbstractIntegrationTest {
 
         verify(notificationGateway).send(argThat(event ->
                 event.type() == NotificationType.LIBRARY_OVERDUE
-                        && event.body().contains("Élève " + student.getId() + " —")));
+                        // Le corps nommait l'élève et l'ouvrage par leur identifiant technique
+                        // — « Élève 5 — ouvrage 3 ». Le défaut passait inaperçu parce que la
+                        // liste de destinataires était vide : personne ne lisait ce texte.
+                        && event.body().contains("Grace H")
+                        && event.body().contains("Retard")
+                        && !event.body().contains("Élève " + student.getId())));
     }
 
     @Test

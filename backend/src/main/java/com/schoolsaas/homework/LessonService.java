@@ -5,9 +5,12 @@ import com.schoolsaas.document.DocumentRepository;
 import com.schoolsaas.homework.dto.LessonRequest;
 import com.schoolsaas.notification.NotificationDispatcher;
 import com.schoolsaas.notification.NotificationType;
+import com.schoolsaas.notification.FamilyRecipients;
+import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.subject.SubjectRepository;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
@@ -24,18 +27,24 @@ public class LessonService {
     private final SubjectRepository subjectRepository;
     private final DocumentRepository documentRepository;
     private final NotificationDispatcher notificationDispatcher;
+    private final FamilyRecipients familyRecipients;
+
+    /** Les familles lisent une date, pas un format ISO. */
+    private static final DateTimeFormatter JOUR_MOIS_ANNEE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public LessonService(
             LessonRepository lessonRepository,
             SchoolClassRepository schoolClassRepository,
             SubjectRepository subjectRepository,
             DocumentRepository documentRepository,
-            NotificationDispatcher notificationDispatcher) {
+            NotificationDispatcher notificationDispatcher,
+            FamilyRecipients familyRecipients) {
         this.lessonRepository = lessonRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.subjectRepository = subjectRepository;
         this.documentRepository = documentRepository;
         this.notificationDispatcher = notificationDispatcher;
+        this.familyRecipients = familyRecipients;
     }
 
     @Transactional
@@ -88,16 +97,26 @@ public class LessonService {
     }
 
     /**
-     * Notification nouveau devoir (cahier-des-charges.md §13/§16). Aucun compte utilisateur
-     * destinataire réel (élèves/parents sans portail, voir ADR-010) :
-     * {@link NotificationDispatcher} loggue simplement l'intention, voir ROADMAP.md 2.5.
+     * Notification nouveau devoir (cahier-des-charges.md §13/§16), à toutes les familles de la
+     * classe.
+     *
+     * <p>La liste était vide et le corps portait des identifiants techniques — « Classe 12 —
+     * séance 7 ». Personne ne la recevait, ce qui masquait le second défaut : une famille n'a
+     * que faire d'un numéro de séance, elle veut savoir pour quand le devoir est à rendre.
      */
     private void notifyNewHomework(Lesson lesson) {
+        String classe = schoolClassRepository
+                .findById(lesson.getSchoolClassId())
+                .map(SchoolClass::getName)
+                .orElse("votre classe");
+        String echeance = lesson.getHomeworkDueDate() == null
+                ? ""
+                : " — à rendre le " + lesson.getHomeworkDueDate().format(JOUR_MOIS_ANNEE);
         notificationDispatcher.dispatch(
                 NotificationType.NEW_HOMEWORK,
-                List.of(),
+                familyRecipients.famillesDeLaClasse(lesson.getSchoolClassId()),
                 "Nouveau devoir",
-                "Classe " + lesson.getSchoolClassId() + " — séance " + lesson.getId());
+                classe + echeance);
     }
 
     private void validateReferences(LessonRequest request) {

@@ -4,6 +4,7 @@ import com.schoolsaas.parent.Parent;
 import com.schoolsaas.parent.ParentRepository;
 import com.schoolsaas.parent.StudentParent;
 import com.schoolsaas.parent.StudentParentRepository;
+import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +47,21 @@ public class FamilyRecipients {
         return parentRepository.findAllById(liens.stream().map(StudentParent::getParentId).toList()).stream()
                 .map(Parent::getUserId)
                 .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+    }
+
+    /**
+     * Les comptes de toutes les familles d'une classe, élèves compris.
+     *
+     * <p>Pour un devoir, l'information s'adresse à la classe entière. Les doublons sont écartés :
+     * deux enfants d'une même fratrie dans la même classe partagent leurs tuteurs, qui ne
+     * doivent pas recevoir deux fois la même annonce.
+     */
+    public List<Long> famillesDeLaClasse(Long schoolClassId) {
+        return studentRepository.findAllBySchoolClassId(schoolClassId).stream()
+                .filter(Student::isActive)
+                .flatMap(eleve -> familleDe(eleve.getId()).stream())
                 .distinct()
                 .toList();
     }

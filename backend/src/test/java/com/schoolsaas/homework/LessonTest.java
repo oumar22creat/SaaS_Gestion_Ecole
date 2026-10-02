@@ -84,7 +84,11 @@ class LessonTest extends AbstractIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.homework").value("Exercices p.42"));
         verify(notificationGateway).send(argThat(event ->
-                event.type() == NotificationType.NEW_HOMEWORK && event.body().contains(schoolClass.getId().toString())));
+                event.type() == NotificationType.NEW_HOMEWORK
+                        // Le nom de la classe, et non son identifiant : une famille n'a que
+                        // faire d'un numéro de séance.
+                        && event.body().contains("6ème A")
+                        && !event.body().contains("séance")));
     }
 
     @Test

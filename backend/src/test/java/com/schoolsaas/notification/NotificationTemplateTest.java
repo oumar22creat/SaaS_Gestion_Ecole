@@ -126,7 +126,7 @@ class NotificationTemplateTest extends AbstractIntegrationTest {
         verify(notificationGateway).send(argThat(event ->
                 event.type() == NotificationType.LIBRARY_OVERDUE
                         && event.title().equals("Collège Voltaire — Retard")
-                        && event.body().startsWith("[Collège Voltaire] Élève " + student.getId() + " —")
+                        && event.body().startsWith("[Collège Voltaire] Rosalind F —")
                         && event.body().endsWith("Merci de régulariser.")));
     }
 }

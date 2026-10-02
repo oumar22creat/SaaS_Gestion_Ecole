@@ -8,7 +8,12 @@ import com.schoolsaas.grade.dto.GradeEntryRequest;
 import com.schoolsaas.grade.dto.SubjectAverageResponse;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
+import com.schoolsaas.notification.FamilyRecipients;
+import com.schoolsaas.notification.NotificationDispatcher;
+import com.schoolsaas.notification.NotificationType;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -21,11 +26,20 @@ public class GradeService {
     private final GradeRepository gradeRepository;
     private final ExamRepository examRepository;
     private final StudentRepository studentRepository;
+    private final NotificationDispatcher notificationDispatcher;
+    private final FamilyRecipients familyRecipients;
 
-    public GradeService(GradeRepository gradeRepository, ExamRepository examRepository, StudentRepository studentRepository) {
+    public GradeService(
+            GradeRepository gradeRepository,
+            ExamRepository examRepository,
+            StudentRepository studentRepository,
+            NotificationDispatcher notificationDispatcher,
+            FamilyRecipients familyRecipients) {
         this.gradeRepository = gradeRepository;
         this.examRepository = examRepository;
         this.studentRepository = studentRepository;
+        this.notificationDispatcher = notificationDispatcher;
+        this.familyRecipients = familyRecipients;
     }
 
     @Transactional
@@ -35,17 +49,45 @@ public class GradeService {
     }
 
     private Grade upsert(Exam exam, GradeEntryRequest entry) {
-        if (studentRepository.findById(entry.studentId()).isEmpty()) {
-            throw ApiException.notFound("STUDENT_NOT_FOUND", "Élève introuvable : " + entry.studentId());
-        }
+        Student student = studentRepository
+                .findById(entry.studentId())
+                .orElseThrow(() -> ApiException.notFound("STUDENT_NOT_FOUND", "Élève introuvable : " + entry.studentId()));
         validateScore(exam, entry.score(), entry.absent());
-        return gradeRepository.findByExamIdAndStudentId(exam.getId(), entry.studentId())
+        Optional<Grade> connue = gradeRepository.findByExamIdAndStudentId(exam.getId(), entry.studentId());
+        Double precedente = connue.map(Grade::getScore).orElse(null);
+        Grade grade = connue
                 .map(existing -> {
                     existing.update(entry.score(), entry.absent(), entry.comment());
                     return existing;
                 })
                 .orElseGet(() -> gradeRepository.save(
                         new Grade(exam.getId(), entry.studentId(), entry.score(), entry.absent(), entry.comment())));
+        notifierSiNouvelleNote(exam, student, precedente, grade);
+        return grade;
+    }
+
+    /**
+     * Prévient la famille qu'une note est arrivée.
+     *
+     * <p>Un envoi par élève, et jamais un pour toute l'évaluation : le registre adresse le même
+     * texte à tous les destinataires d'un appel, et grouper la classe ferait lire à chaque
+     * famille le résultat des autres.
+     *
+     * <p>Le corps ne porte pas la note. Une notification s'affiche sur un écran verrouillé, que
+     * lit quiconque passe à côté ; l'intéressé ouvre l'application pour connaître le chiffre.
+     *
+     * <p>Rien ne part si la valeur n'a pas bougé : une saisie se corrige plusieurs fois de
+     * suite, et autant d'alertes pour une même note apprendraient surtout à les ignorer.
+     */
+    private void notifierSiNouvelleNote(Exam exam, Student student, Double precedente, Grade grade) {
+        if (grade.isAbsent() || grade.getScore() == null || Objects.equals(precedente, grade.getScore())) {
+            return;
+        }
+        notificationDispatcher.dispatch(
+                NotificationType.NEW_GRADE,
+                familyRecipients.familleDe(student.getId()),
+                "Nouvelle note",
+                "%s %s — %s".formatted(student.getFirstName(), student.getLastName(), exam.getLabel()));
     }
 
     @Transactional
@@ -54,7 +96,11 @@ public class GradeService {
         validateScore(exam, entry.score(), entry.absent());
         Grade grade = gradeRepository.findByExamIdAndStudentId(examId, studentId)
                 .orElseThrow(() -> ApiException.notFound("GRADE_NOT_FOUND", "Note introuvable"));
+        Double precedente = grade.getScore();
         grade.update(entry.score(), entry.absent(), entry.comment());
+        studentRepository
+                .findById(studentId)
+                .ifPresent(student -> notifierSiNouvelleNote(exam, student, precedente, grade));
         return grade;
     }
 

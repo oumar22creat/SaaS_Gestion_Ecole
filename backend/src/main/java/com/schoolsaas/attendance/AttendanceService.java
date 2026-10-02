@@ -3,6 +3,7 @@ package com.schoolsaas.attendance;
 import com.schoolsaas.attendance.dto.AttendanceRecordRequest;
 import com.schoolsaas.attendance.dto.RollCallRequest;
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.notification.FamilyRecipients;
 import com.schoolsaas.notification.NotificationDispatcher;
 import com.schoolsaas.notification.NotificationType;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
@@ -22,6 +23,7 @@ public class AttendanceService {
     private final SchoolClassRepository schoolClassRepository;
     private final StudentRepository studentRepository;
     private final NotificationDispatcher notificationDispatcher;
+    private final FamilyRecipients familyRecipients;
     private final SmsService smsService;
 
     public AttendanceService(
@@ -30,13 +32,15 @@ public class AttendanceService {
             SchoolClassRepository schoolClassRepository,
             StudentRepository studentRepository,
             SmsService smsService,
-            NotificationDispatcher notificationDispatcher) {
+            NotificationDispatcher notificationDispatcher,
+            FamilyRecipients familyRecipients) {
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.attendanceRecordChangeRepository = attendanceRecordChangeRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.studentRepository = studentRepository;
         this.smsService = smsService;
         this.notificationDispatcher = notificationDispatcher;
+        this.familyRecipients = familyRecipients;
     }
 
     @Transactional
@@ -115,7 +119,15 @@ public class AttendanceService {
             return;
         }
         String message = guardianMessage(record);
-        notificationDispatcher.dispatch(NotificationType.ABSENCE, List.of(), "Absence signalée", message);
+        // Les tuteurs seulement, pas l'élève : le message est rédigé à l'intention d'un parent.
+        // La liste était jusqu'ici vide, ce chemin ayant été écrit pour le SMS — qui vise les
+        // tuteurs par numéro de téléphone et n'a donc jamais eu besoin de comptes. Aucune
+        // notification ne partait, sans que rien ne le signale.
+        notificationDispatcher.dispatch(
+                NotificationType.ABSENCE,
+                familyRecipients.tuteursDe(record.getStudentId()),
+                "Absence signalée",
+                message);
         smsService.notifyGuardians(record.getStudentId(), NotificationType.ABSENCE, message);
         record.setParentNotified(true);
     }

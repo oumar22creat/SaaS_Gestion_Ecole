@@ -256,3 +256,12 @@ ion-app > ion-router-outlet {
   flex: 1 1 auto;
   min-height: 0;
 }
+
+/* Un seul en-tête touche le haut de l'écran : celui de la marque, posé dans app.html. Les
+   en-têtes de page vivent dessous, mais Ionic ajoute le retrait de la barre d'état à la
+   première barre de chaque `ion-header` — sur iPhone, cela laissait une bande sombre vide
+   d'une soixantaine de points au-dessus de chaque écran. On déclare donc le retrait nul
+   pour ces en-têtes-là, ce qui est la réalité : rien ne les recouvre. */
+ion-router-outlet ion-header {
+  --ion-safe-area-top: 0px;
+}

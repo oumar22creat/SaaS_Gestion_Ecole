@@ -81,4 +81,39 @@ describe('TenantBrandingService', () => {
     expect(service.branding()).toEqual(cached);
     httpMock.expectOne(`${environment.apiUrl}/tenants/current/branding`).flush(cached);
   });
+
+  /**
+   * Le serveur renvoie la marque neutre sans nom tant qu'aucun établissement n'est résolu —
+   * écran de connexion, page d'inscription. Appliquée telle quelle, elle vidait l'en-tête de
+   * l'application : le nom du produit y laissait place à une barre de titre muette.
+   */
+  it('complète une réponse partielle au lieu de vider la marque', () => {
+    service.init();
+    httpMock.expectOne(`${environment.apiUrl}/tenants/current/branding`).flush({
+      name: null,
+      logoUrl: null,
+      primaryColor: '#0f5c4c',
+      secondaryColor: '#c9a227',
+    });
+
+    expect(service.branding().name).toBe(DEFAULT_BRANDING.name);
+    expect(service.branding().primaryColor).toBe('#0f5c4c');
+  });
+
+  /**
+   * Le cache peut provenir d'une version anterieure de l'application, ou l'appel reseau
+   * echouer : l'en-tete restait alors muet au lancement, avant toute reponse du serveur.
+   */
+  it('complète aussi la marque lue dans le cache', () => {
+    localStorage.setItem(
+      'tenant-branding',
+      JSON.stringify({ name: null, logoUrl: null, primaryColor: '#0f5c4c', secondaryColor: '#c9a227' }),
+    );
+
+    service.init();
+
+    expect(service.branding().name).toBe(DEFAULT_BRANDING.name);
+    httpMock.expectOne(`${environment.apiUrl}/tenants/current/branding`).flush({}, { status: 503, statusText: 'x' });
+    localStorage.removeItem('tenant-branding');
+  });
 });

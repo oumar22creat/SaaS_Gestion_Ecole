@@ -50,12 +50,16 @@ class TenantSettingsTest extends AbstractIntegrationTest {
      * local — la marque neutre est une réponse valide, pas une erreur. Le 404 précédent
      * inscrivait une erreur dans la console du navigateur à chaque chargement, de quoi masquer
      * les vraies.
+     *
+     * <p>Le nom accompagne les couleurs, et ce test l'exigeait auparavant absent. Les clients
+     * affichent ce champ tel quel dans leur en-tête : un nom nul y remplaçait le nom du
+     * produit par du vide, et l'application mobile se lançait sur une barre de titre muette.
      */
     @Test
     void servesNeutralBrandingWhenNoEstablishmentIsResolved() throws Exception {
         mockMvc.perform(get("/api/v1/tenants/current/branding"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").doesNotExist())
+                .andExpect(jsonPath("$.name").value("Gestion Scolaire"))
                 .andExpect(jsonPath("$.primaryColor").value("#0f5c4c"))
                 .andExpect(jsonPath("$.secondaryColor").value("#c9a227"));
     }

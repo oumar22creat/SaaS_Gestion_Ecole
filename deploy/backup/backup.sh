@@ -68,6 +68,12 @@ RETENTION="${BACKUP_RETENTION_DAYS:-30}"
 if [ -n "${BACKUP_S3_BUCKET:-}" ]; then
     export AWS_ACCESS_KEY_ID="${BACKUP_S3_ACCESS_KEY}"
     export AWS_SECRET_ACCESS_KEY="${BACKUP_S3_SECRET_KEY}"
+    # Depuis la version 2.23, l'outil aws joint une somme de contrôle CRC32 à chaque envoi.
+    # Les stockages compatibles S3 qui ne sont pas AWS — Cloudflare R2, Backblaze B2, Scaleway —
+    # la rejettent, et l'erreur renvoyée ne mentionne ni la somme ni le client. On ne la demande
+    # donc que lorsque le service l'exige : l'intégrité reste vérifiée plus bas, par relecture
+    # de la taille déposée.
+    export AWS_REQUEST_CHECKSUM_CALCULATION=when_required
     s3() { aws --endpoint-url "${BACKUP_S3_ENDPOINT}" "$@"; }
 
     journal "Envoi vers ${BACKUP_S3_BUCKET}…"

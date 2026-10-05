@@ -4,9 +4,16 @@ Produit les cinq images sources de ce dossier. Les déclinaisons par plateforme 
 ensuite :
 
     python3 assets/dessiner-la-marque.py
-    npx @capacitor/assets generate \
+    npx @capacitor/assets generate --ios --android \
         --iconBackgroundColor '#0b231e' --iconBackgroundColorDark '#0b231e' \
         --splashBackgroundColor '#eef1f0' --splashBackgroundColorDark '#0b231e'
+
+`--ios --android` restreint la génération aux deux plateformes qui nous concernent. Sans ces
+drapeaux, l'outil produit en plus un jeu d'icônes PWA et un manifest.webmanifest déposé dans
+`public/` — le dossier d'actifs d'Angular, donc embarqué dans la compilation, avec des chemins
+pointant hors du paquet et un type MIME erroné. Une application Capacitor n'en a aucun usage.
+
+L'outil reformate aussi AndroidManifest.xml au passage ; c'est à défaire.
 
 Le tracé est programmatique plutôt qu'un fichier de dessin : la marque se réduit à quelques
 polygones, et la garder en code permet de la régénérer après un changement de palette sans

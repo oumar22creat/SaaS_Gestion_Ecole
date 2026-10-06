@@ -10,15 +10,47 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=4">
 <style>
-  .legal { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
-  .legal h1 { margin-bottom: .25rem; }
-  .legal .maj { color: #566a64; font-size: .95rem; margin-bottom: 2.5rem; }
-  .legal h2 { margin-top: 2.75rem; }
-  .legal h3 { margin-top: 1.75rem; font-size: 1.05rem; }
-  .legal table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .95rem; }
-  .legal th, .legal td { border: 1px solid #dde5e2; padding: .6rem .75rem; text-align: left; vertical-align: top; }
-  .legal th { background: #f6f8f7; }
-  .legal .encadre { border-inline-start: 3px solid #0f5c4c; background: #f6f8f7; padding: 1rem 1.25rem; border-radius: 0 10px 10px 0; margin: 1.5rem 0; }
+  /*
+   * La vitrine est sur fond sombre. La première version de cette page reprenait des surfaces
+   * claires — encadré et en-têtes de tableau en #f6f8f7 — sur lesquelles le texte, hérité du
+   * corps, restait presque blanc : contraste mesuré à 1,02:1, autrement dit illisible. Tout
+   * est donc repris sur les jetons du site.
+   */
+  .legal { max-width: 46rem; margin: 0 auto; padding: 3rem var(--pad) 6rem; color: var(--bone-dim); }
+  .legal h1 { margin-bottom: .35rem; color: var(--bone); font-family: var(--font-display); }
+  .legal h2 { margin-top: 3rem; color: var(--bone); font-family: var(--font-display); font-size: 1.3rem; }
+  .legal h3 { margin-top: 1.75rem; color: var(--bone); font-size: 1.05rem; }
+  .legal p, .legal li { line-height: 1.7; }
+  .legal .maj { color: var(--bone-muted); font-size: .95rem; margin-bottom: 3rem; }
+
+  /* L'or se détache du vert du fond sans rivaliser avec les titres ; le texte courant, lui,
+     reste en gris clair, de sorte qu'un lien se repère sans être souligné partout. */
+  .legal a { color: var(--gold-bright); text-underline-offset: .2em; }
+  .legal a:hover { color: var(--gold); }
+
+  .legal table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: .95rem; }
+  .legal th, .legal td { border: 1px solid var(--line); padding: .7rem .85rem; text-align: left; vertical-align: top; }
+  .legal th { background: var(--surface); color: var(--bone); font-weight: 600; }
+  .legal td { background: transparent; }
+  .legal tbody tr:nth-child(even) td { background: var(--line-soft); }
+
+  .legal .encadre {
+    border-inline-start: 3px solid var(--gold);
+    background: var(--surface);
+    color: var(--bone);
+    padding: 1.1rem 1.35rem;
+    border-radius: 0 12px 12px 0;
+    margin: 1.75rem 0;
+  }
+
+  .legal .retour { display: inline-block; margin-top: 3.5rem; }
+
+  /* Le tableau garde ses colonnes lisibles sur téléphone plutôt que de les écraser. */
+  @media (max-width: 34rem) {
+    .legal { padding-inline: 1.1rem; }
+    .legal table { display: block; overflow-x: auto; white-space: nowrap; }
+    .legal td, .legal th { white-space: normal; min-width: 9rem; }
+  }
 </style>
 </head>
 <body>
@@ -214,7 +246,7 @@
   <a href="mailto:oumarcoulou44@gmail.com">oumarcoulou44@gmail.com</a>
 </p>
 
-<p style="margin-top:3rem"><a href="/">← Retour à l'accueil</a></p>
+<p><a class="retour" href="/">← Retour à l'accueil</a></p>
 
 </main>
 </body>

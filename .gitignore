@@ -10,3 +10,8 @@ credentials.json
 # Outillage local de skills — jamais versionné
 .agents/
 skills-lock.json
+
+# Identifiants du compte de démonstration remis aux équipes de revue Apple et Google.
+# Fichier de travail local : il contient un mot de passe en clair, par nécessité —
+# les deux formulaires de revue le réclament tel quel.
+identifiants-revue-stores.txt

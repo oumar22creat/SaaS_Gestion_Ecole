@@ -1,5 +1,23 @@
 apply plugin: 'com.android.application'
 
+/*
+ * Identifiants de signature, lus hors du dépôt.
+ *
+ * Google Play signe lui-même l'application distribuée ; ce qu'on fournit ici n'est que la
+ * « clé de téléversement », celle qui prouve à Play que la livraison vient bien de nous. Elle
+ * se remplace en cas de perte, contrairement à la clé de signature — raison pour laquelle on
+ * accepte Play App Signing.
+ *
+ * Le fichier keystore.properties n'est pas versionné (voir .gitignore). Sans lui, la
+ * compilation de release reste possible mais non signée : utile en intégration continue, où
+ * personne n'a à détenir la clé.
+ */
+def proprietesSignature = new Properties()
+def fichierSignature = rootProject.file('keystore.properties')
+if (fichierSignature.exists()) {
+    fichierSignature.withInputStream { proprietesSignature.load(it) }
+}
+
 android {
     namespace = "com.schoolsaas.mobile"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +34,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (proprietesSignature.containsKey('storeFile')) {
+                storeFile rootProject.file(proprietesSignature['storeFile'])
+                storePassword proprietesSignature['storePassword']
+                keyAlias proprietesSignature['keyAlias']
+                keyPassword proprietesSignature['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            // Signée seulement si la clé est présente : sinon Gradle produirait un artefact
+            // signé avec la clé de débogage, que Play refuse sans expliquer pourquoi.
+            signingConfig proprietesSignature.containsKey('storeFile') ? signingConfigs.release : null
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

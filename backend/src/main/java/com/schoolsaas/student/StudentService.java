@@ -181,7 +181,14 @@ public class StudentService {
 
         Long schoolClassId = className == null ? null : classIdsByName.get(className.trim().toLowerCase());
 
-        studentRepository.save(new Student(studentNumber, firstName, lastName, birthDate, gender, schoolClassId));
+        // Même traitement que la création unitaire : un élève importé est inscrit à l'année
+        // active comme les autres. L'oubli était silencieux et coûteux — une école qui démarre
+        // en important son effectif, le cas normal, se retrouvait avec une année scolaire vide,
+        // donc sans passage de classe possible en fin d'année et sans effectif au tableau de
+        // bord, sans qu'aucune erreur ne le signale.
+        recordEnrollment(
+                studentRepository.save(
+                        new Student(studentNumber, firstName, lastName, birthDate, gender, schoolClassId)));
     }
 
     private String column(String[] columns, int index) {

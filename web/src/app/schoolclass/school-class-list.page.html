@@ -6,6 +6,10 @@
   </button>
 </div>
 
+@if (errorMessage()) {
+  <p class="flash-error">{{ errorMessage() }}</p>
+}
+
 <div class="table-scroll">
   <table mat-table [dataSource]="classes()" class="data-table">
     <ng-container matColumnDef="name">

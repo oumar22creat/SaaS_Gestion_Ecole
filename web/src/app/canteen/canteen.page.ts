@@ -164,6 +164,6 @@ export class CanteenPage {
   protected onUnpaidPage(event: PageEvent): void {
     this.unpaidPage.set(event.pageIndex);
     this.unpaidSize.set(event.pageSize);
-    void this.load();
+    void this.refresh();
   }
 }

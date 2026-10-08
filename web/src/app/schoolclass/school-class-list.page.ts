@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
+import { extractErrorMessage } from '../core/http-error.util';
 import { Teacher } from '../teacher/teacher.model';
 import { TeacherService } from '../teacher/teacher.service';
 import { SchoolClassFormDialog } from './school-class-form.dialog';
@@ -26,6 +27,7 @@ export class SchoolClassListPage {
   protected readonly classes = signal<SchoolClass[]>([]);
   protected readonly teachers = signal<Teacher[]>([]);
   protected readonly loading = signal(false);
+  protected readonly errorMessage = signal<string | null>(null);
   /** Identifiant de la classe dont la planche se prépare : une classe de cinquante prend quelques secondes. */
   protected readonly printingCards = signal<number | null>(null);
   protected readonly columns = ['name', 'headTeacherId', 'actions'];

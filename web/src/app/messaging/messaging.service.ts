@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/api-response.model';
-import { PARAMS_REFERENTIEL } from '../core/referentiel.params';
+import { PARAMS_LISTE_COMPLETE, PARAMS_REFERENTIEL } from '../core/referentiel.params';
 
 export interface Conversation {
   id: number;

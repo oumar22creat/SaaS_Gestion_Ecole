@@ -1,6 +1,7 @@
 package com.schoolsaas.reportcard;
 
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.common.TexteImprimable;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.subject.Subject;
@@ -378,14 +379,14 @@ public class ReportCardPdfExporter {
         c.beginText();
         c.setFont(police, taille);
         c.newLineAtOffset(x, y);
-        c.showText(nettoyer(texte));
+        c.showText(TexteImprimable.nettoyer(texte));
         c.endText();
     }
 
     private void ecrireCentre(
             PDPageContentStream c, PDType1Font police, float taille, float x, float largeurCellule, float y, String texte)
             throws IOException {
-        String propre = nettoyer(texte);
+        String propre = TexteImprimable.nettoyer(texte);
         ecrire(c, police, taille, x + (largeurCellule - largeurTexte(police, taille, propre)) / 2, y, propre);
     }
 
@@ -395,47 +396,15 @@ public class ReportCardPdfExporter {
 
     private float largeurTexte(PDType1Font police, float taille, String texte) {
         try {
-            return police.getStringWidth(nettoyer(texte)) / 1000 * taille;
+            return police.getStringWidth(TexteImprimable.nettoyer(texte)) / 1000 * taille;
         } catch (IOException e) {
             // Mesure impossible : mieux vaut un texte mal centré qu'un bulletin non produit.
             return texte.length() * taille * 0.5f;
         }
     }
 
-    /**
-     * Les polices Standard 14 de PDFBox encodent en WinAnsi : un caractère hors de ce jeu
-     * fait échouer tout le document. Un nom à l'orthographe inattendue ne doit pas empêcher
-     * d'imprimer la liasse d'une classe entière.
-     */
-    private String nettoyer(String texte) {
-        if (texte == null) {
-            return "";
-        }
-        StringBuilder propre = new StringBuilder(texte.length());
-        for (char caractere : texte.toCharArray()) {
-            if (caractere == '\u2019' || caractere == '\u2018') {
-                propre.append('\'');       // apostrophe typographique, fréquente dans les noms
-            } else if (caractere == '\u201C' || caractere == '\u201D') {
-                propre.append('"');
-            } else if (caractere == '\u2014' || caractere == '\u2013' || caractere == '\u2011') {
-                propre.append('-');        // tirets cadratin et demi-cadratin
-            } else if (caractere == '\u00A0' || caractere == '\u202F') {
-                propre.append(' ');        // espaces insécables
-            } else if (caractere == '\u2026') {
-                propre.append("...");
-            } else if (caractere >= 0x20 && caractere <= 0x7E) {
-                propre.append(caractere);  // ASCII imprimable
-            } else if (caractere >= 0xA0 && caractere <= 0xFF) {
-                propre.append(caractere);  // Latin-1 : accents français, ç, œ exclu
-            } else {
-                propre.append('?');
-            }
-        }
-        return propre.toString();
-    }
-
     private String tronquer(PDType1Font police, float taille, String texte, float largeurDisponible) {
-        String propre = nettoyer(texte);
+        String propre = TexteImprimable.nettoyer(texte);
         if (largeurTexte(police, taille, propre) <= largeurDisponible - 6) {
             return propre;
         }

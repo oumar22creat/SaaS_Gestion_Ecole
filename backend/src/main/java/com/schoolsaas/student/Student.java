@@ -29,6 +29,14 @@ public class Student extends TenantScopedEntity {
     @Column
     private String gender;
 
+    /**
+     * Clé du portrait dans le stockage objet, pour la carte d'identité scolaire. L'image
+     * elle-même n'est pas en base : une colonne binaire ferait grossir chaque sauvegarde de
+     * plusieurs dizaines de mégaoctets par école, pour une donnée jamais interrogée en SQL.
+     */
+    @Column(name = "photo_storage_key")
+    private String photoStorageKey;
+
     @Column(name = "school_class_id")
     private Long schoolClassId;
 
@@ -123,5 +131,13 @@ public class Student extends TenantScopedEntity {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getPhotoStorageKey() {
+        return photoStorageKey;
+    }
+
+    public void setPhotoStorageKey(String photoStorageKey) {
+        this.photoStorageKey = photoStorageKey;
     }
 }

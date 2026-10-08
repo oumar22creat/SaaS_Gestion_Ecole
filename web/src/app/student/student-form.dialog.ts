@@ -6,6 +6,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { extractErrorMessage } from '../core/http-error.util';
@@ -45,6 +46,7 @@ function toIsoDate(date: Date | null): string | null {
     MatDatepickerModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    MatIconModule,
   ],
   providers: [FRENCH_DATE_LOCALE],
   templateUrl: './student-form.dialog.html',
@@ -61,6 +63,8 @@ export class StudentFormDialog {
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly classes = signal<SchoolClass[]>([]);
+  protected readonly photoPreview = signal<string | null>(null);
+  protected readonly photoBusy = signal(false);
 
   /**
    * Le sexe était un champ libre : des fiches importées par CSV peuvent porter une valeur
@@ -91,6 +95,57 @@ export class StudentFormDialog {
 
   constructor() {
     void this.schoolClassService.list().then((classes) => this.classes.set(classes));
+    if (this.data.student?.hasPhoto) {
+      void this.refreshPhoto();
+    }
+  }
+
+  /** Recharge l'aperçu et libère le précédent, qui resterait sinon en mémoire. */
+  private async refreshPhoto(): Promise<void> {
+    if (!this.data.student) {
+      return;
+    }
+    const previous = this.photoPreview();
+    this.photoPreview.set(await this.studentService.loadPhotoPreview(this.data.student.id));
+    if (previous) {
+      URL.revokeObjectURL(previous);
+    }
+  }
+
+  async onPhotoChosen(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.data.student) {
+      return;
+    }
+    this.photoBusy.set(true);
+    this.errorMessage.set(null);
+    try {
+      this.data.student = await this.studentService.uploadPhoto(this.data.student.id, file);
+      await this.refreshPhoto();
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    } finally {
+      this.photoBusy.set(false);
+      // Sans cela, re-choisir le même fichier après une erreur ne déclencherait rien.
+      input.value = '';
+    }
+  }
+
+  async removePhoto(): Promise<void> {
+    if (!this.data.student) {
+      return;
+    }
+    this.photoBusy.set(true);
+    this.errorMessage.set(null);
+    try {
+      this.data.student = await this.studentService.removePhoto(this.data.student.id);
+      await this.refreshPhoto();
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    } finally {
+      this.photoBusy.set(false);
+    }
   }
 
   async submit(): Promise<void> {

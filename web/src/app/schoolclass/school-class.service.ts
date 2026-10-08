@@ -65,4 +65,24 @@ export class SchoolClassService {
   async unassign(classId: number, subjectId: number): Promise<void> {
     await firstValueFrom(this.http.delete<void>(`${BASE_URL}/${classId}/subjects/${subjectId}`));
   }
+
+  /**
+   * Les cartes d'identité de toute la classe, en une planche de huit par page A4.
+   *
+   * <p>Le PDF est fabriqué par le serveur, qui y pose les portraits : les élèves sans photo
+   * obtiennent un cadre vide plutôt que de faire échouer le tirage de la classe entière.
+   */
+  async downloadIdCards(schoolClass: { id: number; name: string }): Promise<void> {
+    const blob = await firstValueFrom(
+      this.http.get(`${environment.apiUrl}/classes/${schoolClass.id}/id-cards.pdf`, {
+        responseType: 'blob',
+      }),
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `cartes-${schoolClass.name}.pdf`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
 }

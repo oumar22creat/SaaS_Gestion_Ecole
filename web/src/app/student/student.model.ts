@@ -13,6 +13,8 @@ export interface Student {
    * famille qui a perdu son mot de passe.
    */
   portalEmail: string | null;
+  /** Vrai si un portrait est enregistré : la carte d'identité s'imprime sans, mais avec un cadre vide. */
+  hasPhoto: boolean;
 }
 
 export interface StudentRequest {

@@ -12,6 +12,45 @@
       </p>
     }
 
+    @if (data.student) {
+      <section class="portrait">
+        <div class="portrait-cadre">
+          @if (photoPreview(); as preview) {
+            <img [src]="preview" alt="Portrait de l'élève" />
+          } @else {
+            <span class="portrait-vide">Aucune photo</span>
+          }
+        </div>
+        <div class="portrait-actions">
+          <p class="portrait-aide">
+            Portrait de la carte d'identité scolaire. PNG ou JPEG, 3 Mo maximum.
+            Un cadrage vertical rend mieux.
+          </p>
+          <input
+            #photoInput
+            type="file"
+            accept="image/png,image/jpeg"
+            hidden
+            (change)="onPhotoChosen($event)"
+          />
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="photoBusy()"
+            (click)="photoInput.click()"
+          >
+            <mat-icon>photo_camera</mat-icon>
+            {{ photoPreview() ? 'Remplacer' : 'Ajouter une photo' }}
+          </button>
+          @if (photoPreview()) {
+            <button mat-button type="button" [disabled]="photoBusy()" (click)="removePhoto()">
+              Retirer
+            </button>
+          }
+        </div>
+      </section>
+    }
+
     <mat-form-field appearance="outline">
       <mat-label>Prénom</mat-label>
       <input matInput formControlName="firstName" />

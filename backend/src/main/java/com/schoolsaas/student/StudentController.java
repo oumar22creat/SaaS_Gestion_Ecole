@@ -11,6 +11,8 @@ import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,10 +38,15 @@ import org.springframework.web.multipart.MultipartFile;
 public class StudentController {
 
     private final StudentService studentService;
+    private final StudentPhotoService studentPhotoService;
     private final FamilyAccountLookup familyAccountLookup;
 
-    public StudentController(StudentService studentService, FamilyAccountLookup familyAccountLookup) {
+    public StudentController(
+            StudentService studentService,
+            StudentPhotoService studentPhotoService,
+            FamilyAccountLookup familyAccountLookup) {
         this.studentService = studentService;
+        this.studentPhotoService = studentPhotoService;
         this.familyAccountLookup = familyAccountLookup;
     }
 
@@ -52,6 +59,43 @@ public class StudentController {
     @PostMapping("/import")
     public ApiResponse<StudentImportResult> importCsv(@RequestParam("file") MultipartFile file) {
         return ApiResponse.of(studentService.importCsv(file));
+    }
+
+    /**
+     * Portrait de l'élève, pour sa carte d'identité scolaire.
+     *
+     * <p>Réservé à l'administration et au secrétariat, comme la création d'un élève : une
+     * photo d'enfant n'a pas à être modifiable par toute personne qui accède au dossier.
+     */
+    @PostMapping(value = "/{id}/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'SECRETARY')")
+    public ApiResponse<StudentResponse> uploadPhoto(
+            @PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        return ApiResponse.of(withPortalEmail(studentPhotoService.televerser(id, file)));
+    }
+
+    @DeleteMapping("/{id}/photo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'SECRETARY')")
+    public ApiResponse<StudentResponse> deletePhoto(@PathVariable Long id) {
+        return ApiResponse.of(withPortalEmail(studentPhotoService.retirer(id)));
+    }
+
+    /**
+     * Le portrait lui-même. Visible par tous ceux qui consultent un dossier d'élève : le
+     * surveillant qui fait l'appel a besoin de mettre un visage sur un nom.
+     */
+    @GetMapping(value = "/{id}/photo", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
+    public ResponseEntity<byte[]> photo(@PathVariable Long id) {
+        return studentPhotoService.contenu(studentService.getById(id))
+                .map(contenu -> ResponseEntity.ok()
+                        .contentType(estPng(contenu) ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG)
+                        .body(contenu))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    private static boolean estPng(byte[] contenu) {
+        return contenu.length > 4 && (contenu[0] & 0xFF) == 0x89 && contenu[1] == 'P';
     }
 
     @GetMapping("/{id}")

@@ -28,6 +28,15 @@
         >
           <mat-icon>menu_book</mat-icon>
         </a>
+        <button
+          mat-icon-button
+          [disabled]="printingCards() === schoolClass.id"
+          (click)="printIdCards(schoolClass)"
+          [attr.aria-label]="'Cartes d\'identité de ' + schoolClass.name"
+          matTooltip="Imprimer les cartes d'identité de la classe"
+        >
+          <mat-icon>badge</mat-icon>
+        </button>
         <button mat-icon-button (click)="openEditDialog(schoolClass)" aria-label="Modifier">
           <mat-icon>edit</mat-icon>
         </button>

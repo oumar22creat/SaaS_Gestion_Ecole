@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
 import { SchoolClassFormDialog } from './school-class-form.dialog';
@@ -21,6 +22,8 @@ export class SchoolClassListPage {
 
   protected readonly classes = signal<SchoolClass[]>([]);
   protected readonly loading = signal(false);
+  /** Identifiant de la classe dont la planche se prépare : une classe de cinquante prend quelques secondes. */
+  protected readonly printingCards = signal<number | null>(null);
   protected readonly columns = ['name', 'headTeacherId', 'actions'];
 
   constructor() {
@@ -60,5 +63,18 @@ export class SchoolClassListPage {
     }
     await this.schoolClassService.remove(schoolClass.id);
     await this.refresh();
+  }
+
+  /** Les cartes d'identité de la classe, en un seul PDF prêt à découper. */
+  protected async printIdCards(schoolClass: SchoolClass): Promise<void> {
+    this.errorMessage.set(null);
+    this.printingCards.set(schoolClass.id);
+    try {
+      await this.schoolClassService.downloadIdCards(schoolClass);
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    } finally {
+      this.printingCards.set(null);
+    }
   }
 }

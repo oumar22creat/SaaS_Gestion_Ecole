@@ -2,6 +2,7 @@ package com.schoolsaas.schoolfees;
 
 import com.schoolsaas.auth.AuthenticatedPrincipal;
 import com.schoolsaas.common.ApiResponse;
+import com.schoolsaas.common.PagedList;
 import com.schoolsaas.schoolfees.dto.FeeOutstandingEntry;
 import com.schoolsaas.schoolfees.dto.FeePaymentCreateRequest;
 import com.schoolsaas.schoolfees.dto.FeePaymentJournalEntry;
@@ -14,6 +15,7 @@ import com.schoolsaas.schoolfees.dto.StudentFeeInvoiceResponse;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -97,9 +99,10 @@ public class SchoolFeesController {
      */
     @GetMapping("/outstanding")
     public ApiResponse<List<FeeOutstandingEntry>> outstanding(
+            Pageable pageable,
             @RequestParam(required = false) Long schoolClassId,
             @RequestParam(defaultValue = "false") boolean onlyOverdue) {
-        return ApiResponse.of(schoolFeesService.outstanding(schoolClassId, onlyOverdue));
+        return PagedList.response(schoolFeesService.outstanding(schoolClassId, onlyOverdue, pageable));
     }
 
     /** Indicateurs de recouvrement, tout l'établissement par défaut. */
@@ -111,9 +114,10 @@ public class SchoolFeesController {
     /** Journal des encaissements d'une période, pour le rapprochement de caisse. */
     @GetMapping("/payments")
     public ApiResponse<List<FeePaymentJournalEntry>> paymentJournal(
+            Pageable pageable,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return ApiResponse.of(schoolFeesService.paymentJournal(from, to));
+        return PagedList.response(schoolFeesService.paymentJournal(from, to, pageable));
     }
 
     /**

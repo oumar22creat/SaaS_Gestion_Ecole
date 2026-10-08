@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { PARAMS_LISTE_COMPLETE } from '../core/referentiel.params';
 import { ApiResponse } from '../core/api-response.model';
 
 export interface Book {
@@ -67,7 +68,9 @@ export class LibraryService {
 
   async overdue(): Promise<BookLoan[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<BookLoan[]>>(`${environment.apiUrl}/library/loans/overdue`),
+      this.http.get<ApiResponse<BookLoan[]>>(`${environment.apiUrl}/library/loans/overdue`, {
+        params: PARAMS_LISTE_COMPLETE,
+      }),
     );
     return response.data;
   }

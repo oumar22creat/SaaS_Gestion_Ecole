@@ -83,6 +83,11 @@ public class CanteenService {
     }
 
     /** Suivi des impayés (cahier §19.1) : toutes les factures non réglées et non annulées, tous élèves. */
+    public org.springframework.data.domain.Page<CanteenInvoice> listUnpaidInvoices(
+            org.springframework.data.domain.Pageable pageable) {
+        return invoiceRepository.findAllByStatusNot(CanteenInvoiceStatus.PAID, pageable);
+    }
+
     public List<CanteenInvoice> listUnpaidInvoices() {
         return invoiceRepository.findAllByStatusNot(CanteenInvoiceStatus.PAID).stream()
                 .filter(invoice -> invoice.getStatus() != CanteenInvoiceStatus.CANCELLED)

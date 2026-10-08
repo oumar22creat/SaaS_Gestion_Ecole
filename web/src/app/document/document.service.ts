@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { PARAMS_LISTE_COMPLETE } from '../core/referentiel.params';
 import { withReadableBody } from '../core/http-error.util';
 import { ApiResponse } from '../core/api-response.model';
 
@@ -30,7 +31,7 @@ export class DocumentService {
 
   async listByClass(schoolClassId: number): Promise<SchoolDocument[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<SchoolDocument[]>>(BASE_URL, { params: { schoolClassId } }),
+      this.http.get<ApiResponse<SchoolDocument[]>>(BASE_URL, { params: { schoolClassId, ...PARAMS_LISTE_COMPLETE } }),
     );
     return response.data;
   }

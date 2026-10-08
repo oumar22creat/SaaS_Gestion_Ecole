@@ -1,5 +1,6 @@
 package com.schoolsaas.library;
 
+import com.schoolsaas.common.PagedList;
 import com.schoolsaas.common.ApiResponse;
 import com.schoolsaas.library.dto.BookCreateRequest;
 import com.schoolsaas.library.dto.BookLoanCreateRequest;
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -79,13 +81,17 @@ public class LibraryController {
     }
 
     @GetMapping("/loans/overdue")
-    public ApiResponse<List<BookLoanResponse>> overdueLoans() {
+    public ApiResponse<List<BookLoanResponse>> overdueLoans(Pageable pageable) {
         LocalDate today = LocalDate.now();
-        List<BookLoanResponse> data = libraryService.listActiveLoans().stream()
-                .map(loan -> BookLoanResponse.from(loan, today))
-                .filter(BookLoanResponse::overdue)
-                .toList();
-        return ApiResponse.of(data);
+        // Le retard se déduit de la date d'échéance comparée à aujourd'hui : un filtre qui
+        // dépend de l'heure d'appel ne se fige pas dans une requête. La découpe se fait donc
+        // après calcul, sur les seuls prêts encore en cours — jamais sur tout l'historique.
+        return PagedList.response(PagedList.of(
+                libraryService.listActiveLoans().stream()
+                        .map(loan -> BookLoanResponse.from(loan, today))
+                        .filter(BookLoanResponse::overdue)
+                        .toList(),
+                pageable));
     }
 
     @PostMapping("/books/{id}/reservations")

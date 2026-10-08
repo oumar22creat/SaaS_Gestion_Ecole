@@ -1,11 +1,13 @@
 package com.schoolsaas.timetable;
 
+import com.schoolsaas.common.PagedList;
 import com.schoolsaas.common.ApiResponse;
 import com.schoolsaas.timetable.dto.TimetableEntryRequest;
 import com.schoolsaas.timetable.dto.TimetableEntryResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,7 +52,9 @@ public class TimetableEntryController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER')")
     public ApiResponse<List<TimetableEntryResponse>> list(
-            @RequestParam(required = false) Long schoolClassId, @RequestParam(required = false) Long teacherId) {
+            Pageable pageable,
+            @RequestParam(required = false) Long schoolClassId,
+            @RequestParam(required = false) Long teacherId) {
         List<TimetableEntry> entries;
         if (schoolClassId != null) {
             entries = timetableEntryService.listForClass(schoolClassId);
@@ -59,7 +63,11 @@ public class TimetableEntryController {
         } else {
             entries = timetableEntryService.listAll();
         }
-        return ApiResponse.of(entries.stream().map(TimetableEntryResponse::from).toList());
+        // Filtré par classe ou par enseignant, le résultat tient dans une poignée de lignes.
+        // Sans filtre, c'est toute la grille de l'établissement : trente classes font deux
+        // cent quarante créneaux, qu'aucun écran n'affiche d'un bloc.
+        return PagedList.response(
+                PagedList.of(entries.stream().map(TimetableEntryResponse::from).toList(), pageable));
     }
 
     @PutMapping("/{id}")

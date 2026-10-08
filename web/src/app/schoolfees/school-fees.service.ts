@@ -145,7 +145,10 @@ export class SchoolFeesService {
 
   /** Sans `schoolClassId`, la vue porte sur tout l'établissement. */
   async outstanding(schoolClassId: number | null, onlyOverdue: boolean): Promise<FeeOutstanding[]> {
-    const params: Record<string, string> = { onlyOverdue: String(onlyOverdue) };
+    // size explicite : l'écran affiche le total à recouvrer en sommant ces lignes. Lui
+    // servir une page le ferait afficher le total de la page, ce qui est pire qu'un
+    // tableau long — c'est un chiffre faux sur un écran comptable.
+    const params: Record<string, string> = { onlyOverdue: String(onlyOverdue), size: '500' };
     if (schoolClassId !== null) {
       params['schoolClassId'] = String(schoolClassId);
     }
@@ -177,7 +180,9 @@ export class SchoolFeesService {
   async paymentJournal(from: string, to: string): Promise<FeePaymentJournalEntry[]> {
     const response = await firstValueFrom(
       this.http.get<ApiResponse<FeePaymentJournalEntry[]>>(`${BASE_URL}/payments`, {
-        params: { from, to },
+        // Comme les impayés : l'écran somme ces lignes pour afficher le total encaissé sur
+        // la période. Une page lui ferait afficher le total de la page.
+        params: { from, to, size: '500' },
       }),
     );
     return response.data;

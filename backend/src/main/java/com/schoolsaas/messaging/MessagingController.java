@@ -2,6 +2,7 @@ package com.schoolsaas.messaging;
 
 import com.schoolsaas.auth.AuthenticatedPrincipal;
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.common.PagedList;
 import com.schoolsaas.common.ApiResponse;
 import com.schoolsaas.messaging.dto.ConversationCreateRequest;
 import com.schoolsaas.messaging.dto.ConversationResponse;
@@ -44,9 +45,11 @@ public class MessagingController {
     }
 
     @GetMapping
-    public ApiResponse<List<ConversationResponse>> list() {
-        List<ConversationResponse> data = messagingService.listForUser(currentUserId()).stream().map(this::toResponse).toList();
-        return ApiResponse.of(data);
+    public ApiResponse<List<ConversationResponse>> list(Pageable pageable) {
+        // Les fils s'accumulent année après année sans que rien ne les archive.
+        return PagedList.response(PagedList.of(
+                messagingService.listForUser(currentUserId()).stream().map(this::toResponse).toList(),
+                pageable));
     }
 
     @GetMapping("/{id}")

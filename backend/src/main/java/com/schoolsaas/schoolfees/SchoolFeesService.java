@@ -18,6 +18,7 @@ import com.schoolsaas.sms.SmsService;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
 import java.text.NumberFormat;
+import com.schoolsaas.common.PagedList;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -27,6 +28,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -195,6 +198,19 @@ public class SchoolFeesService {
     // ------------------------------------------------------------------------------------
 
     /** Factures non soldées, les plus en retard d'abord. {@code onlyOverdue} restreint aux échéances dépassées. */
+    /**
+     * Les impayés, page par page.
+     *
+     * <p>La découpe se fait après calcul, et c'est assumé : « impayé » se définit par la
+     * somme des règlements rapportée au montant dû, ce qui ne s'exprime pas en un filtre SQL
+     * sans joindre et agréger. Ce qui pouvait partir en base y est parti — les factures
+     * soldées et annulées ne sont plus chargées du tout, et elles sont la majorité en fin
+     * d'année. Le reste est borné par l'échéancier de la classe demandée.
+     */
+    public Page<FeeOutstandingEntry> outstanding(Long schoolClassId, boolean onlyOverdue, Pageable pageable) {
+        return PagedList.of(outstanding(schoolClassId, onlyOverdue), pageable);
+    }
+
     public List<FeeOutstandingEntry> outstanding(Long schoolClassId, boolean onlyOverdue) {
         List<FeeSchedule> schedules = schedulesFor(schoolClassId);
         if (schedules.isEmpty()) {
@@ -203,10 +219,11 @@ public class SchoolFeesService {
         Map<Long, FeeSchedule> schedulesById = schedules.stream()
                 .collect(Collectors.toMap(FeeSchedule::getId, Function.identity()));
 
-        List<StudentFeeInvoice> invoices = invoiceRepository.findAllByFeeScheduleIdIn(List.copyOf(schedulesById.keySet())).stream()
-                .filter(invoice -> invoice.getStatus() != FeeInvoiceStatus.PAID)
-                .filter(invoice -> invoice.getStatus() != FeeInvoiceStatus.CANCELLED)
-                .toList();
+        // Le tri des soldées et annulées part en base : en fin d'année elles sont la
+        // majorité, et les charger pour les écarter ensuite est du travail pur perte.
+        List<StudentFeeInvoice> invoices = invoiceRepository.findAllByFeeScheduleIdInAndStatusNotIn(
+                List.copyOf(schedulesById.keySet()),
+                List.of(FeeInvoiceStatus.PAID, FeeInvoiceStatus.CANCELLED));
         if (invoices.isEmpty()) {
             return List.of();
         }
@@ -275,10 +292,28 @@ public class SchoolFeesService {
     }
 
     /** Journal des encaissements d'une période, le plus récent d'abord. */
-    public List<FeePaymentJournalEntry> paymentJournal(LocalDate from, LocalDate to) {
-        List<FeePayment> payments = paymentRepository.findAllByPaidAtBetweenOrderByPaidAtDesc(
+    /**
+     * Le journal des encaissements, paginé en base. Une école de mille élèves enregistre
+     * plusieurs milliers de règlements par trimestre ; seuls ceux de la page demandée sont
+     * lus, et les recherches d'élève et d'échéance qui suivent ne portent que sur eux.
+     */
+    public Page<FeePaymentJournalEntry> paymentJournal(LocalDate from, LocalDate to, Pageable pageable) {
+        Page<FeePayment> page = paymentRepository.findAllByPaidAtBetweenOrderByPaidAtDesc(
                 from.atStartOfDay(ZoneOffset.UTC).toInstant(),
-                to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant());
+                to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant(),
+                pageable);
+        return new org.springframework.data.domain.PageImpl<>(
+                enrichir(page.getContent()), pageable, page.getTotalElements());
+    }
+
+    public List<FeePaymentJournalEntry> paymentJournal(LocalDate from, LocalDate to) {
+        return enrichir(paymentRepository.findAllByPaidAtBetweenOrderByPaidAtDesc(
+                from.atStartOfDay(ZoneOffset.UTC).toInstant(),
+                to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    }
+
+    /** Remplace les identifiants par les noms que lit le comptable : élève, classe, échéance. */
+    private List<FeePaymentJournalEntry> enrichir(List<FeePayment> payments) {
         if (payments.isEmpty()) {
             return List.of();
         }

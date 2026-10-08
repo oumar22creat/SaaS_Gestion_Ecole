@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { PARAMS_LISTE_COMPLETE } from '../core/referentiel.params';
 import { ApiResponse } from '../core/api-response.model';
 import { TimetableEntry, TimetableEntryRequest } from './timetable-entry.model';
 
@@ -12,7 +13,12 @@ export class TimetableEntryService {
   private readonly http = inject(HttpClient);
 
   async list(): Promise<TimetableEntry[]> {
-    const response = await firstValueFrom(this.http.get<ApiResponse<TimetableEntry[]>>(BASE_URL));
+    // La grille hebdomadaire se dessine d'un bloc : une page de vingt créneaux donnerait
+    // une semaine trouée. L'écran propose aussi une vue « toutes classes », d'où la liste
+    // entière plutôt qu'un filtre serveur par classe.
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<TimetableEntry[]>>(BASE_URL, { params: PARAMS_LISTE_COMPLETE }),
+    );
     return response.data;
   }
 

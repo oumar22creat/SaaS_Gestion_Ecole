@@ -9,12 +9,14 @@ import com.schoolsaas.canteen.dto.MealReservationCreateRequest;
 import com.schoolsaas.canteen.dto.MealReservationResponse;
 import com.schoolsaas.canteen.dto.MenuCreateRequest;
 import com.schoolsaas.canteen.dto.MenuResponse;
+import com.schoolsaas.common.PagedList;
 import com.schoolsaas.common.ApiResponse;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -93,11 +95,12 @@ public class CanteenController {
 
     @GetMapping("/invoices/unpaid")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'ACCOUNTANT')")
-    public ApiResponse<List<CanteenInvoiceResponse>> unpaidInvoices() {
-        List<CanteenInvoiceResponse> data = canteenService.listUnpaidInvoices().stream()
-                .map(invoice -> CanteenInvoiceResponse.from(invoice, canteenService.paidAmountForInvoice(invoice.getId())))
-                .toList();
-        return ApiResponse.of(data);
+    public ApiResponse<List<CanteenInvoiceResponse>> unpaidInvoices(Pageable pageable) {
+        // Une facture de cantine par élève et par semaine : chez une école de mille élèves,
+        // la liste des impayés se compte en milliers de lignes au bout d'un trimestre.
+        return PagedList.response(canteenService.listUnpaidInvoices(pageable)
+                .map(invoice -> CanteenInvoiceResponse.from(
+                        invoice, canteenService.paidAmountForInvoice(invoice.getId()))));
     }
 
     @PostMapping("/invoices/{id}/payments")

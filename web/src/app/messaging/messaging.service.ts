@@ -38,7 +38,9 @@ export class MessagingService {
 
   async list(): Promise<Conversation[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<Conversation[]>>(`${environment.apiUrl}/conversations`),
+      this.http.get<ApiResponse<Conversation[]>>(`${environment.apiUrl}/conversations`, {
+        params: PARAMS_LISTE_COMPLETE,
+      }),
     );
     return response.data;
   }

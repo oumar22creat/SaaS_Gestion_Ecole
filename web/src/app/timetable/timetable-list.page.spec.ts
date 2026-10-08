@@ -28,7 +28,7 @@ describe('TimetableListPage', () => {
   /** Rend la page avec l'emploi du temps passé en argument et renvoie les bandes calculées. */
   async function render(entries: unknown[]): Promise<{ genre: string; debut: string; fin: string }[]> {
     fixture = TestBed.createComponent(TimetableListPage);
-    httpMock.expectOne(`${environment.apiUrl}/timetable-entries`).flush({ data: entries });
+    httpMock.expectOne((r) => r.url === `${environment.apiUrl}/timetable-entries`).flush({ data: entries });
     httpMock.expectOne((r) => r.url === `${environment.apiUrl}/classes`).flush({ data: [{ id: 1, name: '6e A' }] });
     httpMock.expectOne((r) => r.url === `${environment.apiUrl}/subjects`).flush({ data: [{ id: 1, name: 'Maths' }] });
     httpMock.expectOne((r) => r.url === `${environment.apiUrl}/teachers`).flush({ data: [] });

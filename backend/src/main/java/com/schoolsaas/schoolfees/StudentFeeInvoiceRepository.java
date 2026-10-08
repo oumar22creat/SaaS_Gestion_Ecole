@@ -15,4 +15,12 @@ public interface StudentFeeInvoiceRepository extends JpaRepository<StudentFeeInv
     List<StudentFeeInvoice> findAllByStatusNot(FeeInvoiceStatus status);
 
     List<StudentFeeInvoice> findAllByFeeScheduleIdIn(List<Long> feeScheduleIds);
+
+    /**
+     * Les factures d'un échéancier hors certains statuts. Écarter les soldées et les
+     * annulées en base plutôt qu'en mémoire : en fin d'année elles sont la majorité, et les
+     * charger pour les jeter ensuite fait travailler la base pour rien.
+     */
+    List<StudentFeeInvoice> findAllByFeeScheduleIdInAndStatusNotIn(
+            List<Long> feeScheduleIds, List<FeeInvoiceStatus> statuses);
 }

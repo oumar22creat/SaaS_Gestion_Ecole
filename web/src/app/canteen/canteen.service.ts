@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { PARAMS_LISTE_COMPLETE } from '../core/referentiel.params';
 import { ApiResponse } from '../core/api-response.model';
 
 export interface Menu {
@@ -59,7 +60,9 @@ export class CanteenService {
 
   async unpaid(): Promise<CanteenInvoice[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<CanteenInvoice[]>>(`${environment.apiUrl}/canteen/invoices/unpaid`),
+      this.http.get<ApiResponse<CanteenInvoice[]>>(`${environment.apiUrl}/canteen/invoices/unpaid`, {
+        params: PARAMS_LISTE_COMPLETE,
+      }),
     );
     return response.data;
   }

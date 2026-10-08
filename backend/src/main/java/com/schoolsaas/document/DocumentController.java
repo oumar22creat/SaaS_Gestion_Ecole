@@ -3,6 +3,7 @@ package com.schoolsaas.document;
 import com.schoolsaas.auth.AuthenticatedPrincipal;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.common.PagedList;
 import com.schoolsaas.common.ApiResponse;
 import com.schoolsaas.document.dto.DocumentResponse;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -69,6 +71,7 @@ public class DocumentController {
 
     @GetMapping
     public ApiResponse<List<DocumentResponse>> list(
+            Pageable pageable,
             @RequestParam(required = false) Long subjectId,
             @RequestParam(required = false) Long schoolClassId,
             @RequestParam(required = false) String serviceLabel) {
@@ -83,7 +86,7 @@ public class DocumentController {
         } else {
             throw ApiException.badRequest("MISSING_FILTER", "Fournir subjectId, schoolClassId ou serviceLabel", List.of());
         }
-        return ApiResponse.of(documents.stream().map(this::toResponse).toList());
+        return PagedList.response(PagedList.of(documents.stream().map(this::toResponse).toList(), pageable));
     }
 
     @DeleteMapping("/{id}")

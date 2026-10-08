@@ -10,4 +10,7 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, Long> {
     List<BookLoan> findAllByStudentIdOrderByBorrowedAtDesc(Long studentId);
 
     List<BookLoan> findAllByReturnedAtIsNull();
+
+    org.springframework.data.domain.Page<BookLoan> findAllByReturnedAtIsNull(
+            org.springframework.data.domain.Pageable pageable);
 }

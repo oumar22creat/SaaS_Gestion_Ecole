@@ -146,6 +146,11 @@ class TermReportTest extends AbstractIntegrationTest {
                     .contains("RAPPORT TRIMESTRIEL")
                     .contains("RÉPUBLIQUE DU MALI")
                     .contains("6ème année A")
+                    // Le même réglage porte le même nom partout : l'écran de classe dit
+                    // « Professeur principal », le rapport le disait « TITULAIRE », et
+                    // personne ne faisait le rapprochement.
+                    .contains("PROFESSEUR PRINCIPAL")
+                    .doesNotContain("TITULAIRE")
                     .contains("RÉSULTATS PAR DISCIPLINE")
                     .contains("RÉPARTITION DES MOYENNES")
                     // La signature porte le nom du directeur, pas un intitulé seul.

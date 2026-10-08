@@ -75,7 +75,7 @@ public class TermReportPdfExporter {
             throws IOException {
         float colonneDroite = largeur / 2 + 20;
         paire(c, gras, normal, MARGE, y, "CLASSE :", rapport.className());
-        paire(c, gras, normal, colonneDroite, y, "TITULAIRE :", rapport.headTeacherName());
+        paire(c, gras, normal, colonneDroite, y, "PROFESSEUR PRINCIPAL :", rapport.headTeacherName());
         paire(c, gras, normal, MARGE, y - HAUTEUR_LIGNE, "PÉRIODE :",
                 rapport.periodFrom().format(OfficialDocumentLayout.JOUR) + " au "
                         + rapport.periodTo().format(OfficialDocumentLayout.JOUR));

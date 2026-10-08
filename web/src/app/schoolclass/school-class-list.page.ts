@@ -6,6 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTableModule } from '@angular/material/table';
 import { confirmAction } from '../core/confirm-dialog.component';
+import { Teacher } from '../teacher/teacher.model';
+import { TeacherService } from '../teacher/teacher.service';
 import { SchoolClassFormDialog } from './school-class-form.dialog';
 import { SchoolClass } from './school-class.model';
 import { SchoolClassService } from './school-class.service';
@@ -19,15 +21,31 @@ import { SchoolClassService } from './school-class.service';
 export class SchoolClassListPage {
   private readonly schoolClassService = inject(SchoolClassService);
   private readonly dialog = inject(MatDialog);
+  private readonly teacherService = inject(TeacherService);
 
   protected readonly classes = signal<SchoolClass[]>([]);
+  protected readonly teachers = signal<Teacher[]>([]);
   protected readonly loading = signal(false);
   /** Identifiant de la classe dont la planche se prépare : une classe de cinquante prend quelques secondes. */
   protected readonly printingCards = signal<number | null>(null);
   protected readonly columns = ['name', 'headTeacherId', 'actions'];
 
+  /**
+   * Nom du professeur principal. La colonne affichait l'identifiant brut : le secrétariat
+   * y lisait « 3 », ce qui ne désigne personne et rendait ce réglage invisible — alors
+   * qu'il se retrouve imprimé en tête du rapport trimestriel de la classe.
+   */
+  protected headTeacherName(schoolClass: SchoolClass): string {
+    if (schoolClass.headTeacherId === null) {
+      return '—';
+    }
+    const teacher = this.teachers().find((item) => item.id === schoolClass.headTeacherId);
+    return teacher ? `${teacher.firstName} ${teacher.lastName}` : '—';
+  }
+
   constructor() {
     void this.refresh();
+    void this.teacherService.list().then((teachers) => this.teachers.set(teachers));
   }
 
   async refresh(): Promise<void> {

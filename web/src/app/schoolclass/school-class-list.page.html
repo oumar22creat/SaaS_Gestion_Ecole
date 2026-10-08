@@ -15,7 +15,7 @@
 
     <ng-container matColumnDef="headTeacherId">
       <th mat-header-cell *matHeaderCellDef>Professeur principal</th>
-      <td mat-cell *matCellDef="let schoolClass">{{ schoolClass.headTeacherId ?? '—' }}</td>
+      <td mat-cell *matCellDef="let schoolClass">{{ headTeacherName(schoolClass) }}</td>
     </ng-container>
 
     <ng-container matColumnDef="actions">

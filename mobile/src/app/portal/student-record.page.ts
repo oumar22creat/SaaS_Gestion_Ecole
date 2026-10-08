@@ -17,6 +17,7 @@ import { formatMoney } from '../core/money.util';
 import {
   PortalAttendance,
   PortalFeeSummary,
+  PortalReceipt,
   PortalGrade,
   PortalService,
   PortalTimetableSlot,
@@ -64,6 +65,7 @@ function schoolYearRange(): { from: string; to: string } {
         <ion-segment-button value="grades">Notes</ion-segment-button>
         <ion-segment-button value="attendance">Absences</ion-segment-button>
         <ion-segment-button value="fees">Frais</ion-segment-button>
+        <ion-segment-button value="receipts">Reçus</ion-segment-button>
         <ion-segment-button value="timetable">Emploi du temps</ion-segment-button>
       </ion-segment>
 
@@ -171,6 +173,34 @@ function schoolYearRange(): { from: string; to: string } {
             </p>
           }
         }
+      } @else if (tab() === 'receipts') {
+        @if (receipts().length === 0) {
+          <p class="empty-state">
+            Aucun règlement enregistré. Les reçus apparaissent ici dès qu'un versement est
+            encaissé par l'établissement.
+          </p>
+        } @else {
+          <div class="record-list">
+            @for (receipt of receipts(); track receipt.paymentId) {
+              <button class="receipt-row" type="button" (click)="openReceipt(receipt)">
+                <span class="record-text">
+                  <span class="record-label">{{ receipt.label }}</span>
+                  <span class="record-meta">
+                    {{ receipt.paidOn | date: 'dd/MM/yyyy' }} · {{ methodLabel(receipt.method) }}
+                    @if (receipt.reference) {
+                      · {{ receipt.reference }}
+                    }
+                  </span>
+                </span>
+                <span class="record-value">{{ money(receipt.amountCents) }}</span>
+              </button>
+            }
+          </div>
+          <p class="fee-note">
+            Touchez un règlement pour ouvrir son reçu. C'est le même document que celui
+            délivré au guichet.
+          </p>
+        }
       } @else {
         @if (timetable().length === 0) {
           <p class="empty-state">Aucun cours planifié pour cette classe.</p>
@@ -194,6 +224,22 @@ function schoolYearRange(): { from: string; to: string } {
     </ion-content>
   `,
   styles: `
+    /* Une ligne de reçu ouvre le PDF : c'est un bouton, pour le clavier et le lecteur
+       d'écran, mais elle garde l'allure d'une ligne de liste. */
+    .receipt-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0.7rem 0;
+      border: 0;
+      border-bottom: 1px solid var(--ion-color-step-150, #e4e4e4);
+      background: none;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
     ion-segment {
       margin-bottom: var(--space-4);
     }
@@ -296,7 +342,9 @@ export class PortalStudentRecordPage {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly money = formatMoney;
-  protected readonly tab = signal<'grades' | 'attendance' | 'fees' | 'timetable'>('grades');
+  protected readonly tab = signal<
+    'grades' | 'attendance' | 'fees' | 'receipts' | 'timetable'
+  >('grades');
   protected readonly grades = signal<PortalGrade[]>([]);
   protected readonly attendance = signal<PortalAttendance[]>([]);
 
@@ -313,6 +361,7 @@ export class PortalStudentRecordPage {
   );
   protected readonly timetable = signal<PortalTimetableSlot[]>([]);
   protected readonly fees = signal<PortalFeeSummary | null>(null);
+  protected readonly receipts = signal<PortalReceipt[]>([]);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
 
@@ -338,6 +387,27 @@ export class PortalStudentRecordPage {
     return days[day] ?? day;
   }
 
+  /** « MOBILE_MONEY » n'est pas un mot : la famille lit « Mobile Money ». */
+  protected methodLabel(method: string): string {
+    const labels: Record<string, string> = {
+      CASH: 'Espèces',
+      BANK_TRANSFER: 'Virement bancaire',
+      MOBILE_MONEY: 'Mobile Money',
+      OTHER: 'Autre',
+    };
+    return labels[method] ?? method;
+  }
+
+  /** Ouvre le reçu dans le lecteur PDF du téléphone. */
+  protected async openReceipt(receipt: PortalReceipt): Promise<void> {
+    this.errorMessage.set(null);
+    try {
+      await this.portalService.openReceipt(receipt.paymentId);
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    }
+  }
+
   protected statusLabel(status: string): string {
     const labels: Record<string, string> = {
       PRESENT: 'Présent',
@@ -352,15 +422,17 @@ export class PortalStudentRecordPage {
     const studentId = Number(this.route.snapshot.paramMap.get('studentId'));
     const range = schoolYearRange();
     try {
-      const [grades, attendance, timetable, fees] = await Promise.all([
+      const [grades, attendance, timetable, fees, receipts] = await Promise.all([
         this.portalService.grades(studentId),
         this.portalService.attendance(studentId, range.from, range.to),
         this.portalService.timetable(studentId),
         this.portalService.fees(studentId),
+        this.portalService.receipts(studentId),
       ]);
       this.grades.set(grades);
       this.timetable.set(timetable);
       this.fees.set(fees);
+      this.receipts.set(receipts);
       // Une famille consulte d'abord les absences récentes : on présente l'ordre inverse.
       this.attendance.set([...attendance].reverse());
     } catch (error) {

@@ -44,6 +44,23 @@ public final class PortalResponse {
             boolean overdue) {
     }
 
+    /**
+     * Un règlement encaissé, tel que la famille le lit dans l'application.
+     *
+     * <p>Le libellé de l'échéance est résolu ici : « Reçu n° 412 » ne dit rien, « Scolarité
+     * 1er trimestre » dit tout. Le reçu PDF lui-même se télécharge à part — l'embarquer dans
+     * la liste ferait transiter des centaines de kilo-octets pour un écran que la famille
+     * ouvre pour vérifier un montant.
+     */
+    public record ReceiptLine(
+            Long paymentId,
+            LocalDate paidOn,
+            String label,
+            long amountCents,
+            String method,
+            String reference) {
+    }
+
     /** Ce que la famille doit au total pour cet élève, tous frais confondus. */
     public record FeeSummary(
             long totalDueCents,

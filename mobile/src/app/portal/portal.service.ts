@@ -52,6 +52,20 @@ export interface PortalFeeSummary {
   lines: PortalFeeLine[];
 }
 
+/**
+ * Un règlement encaissé. La scolarité se paie souvent en espèces au guichet, parfois par un
+ * proche : le parent qui ne s'est pas déplacé n'avait aucune trace de ce qui a été versé en
+ * son nom, ni de ce qui restait dû.
+ */
+export interface PortalReceipt {
+  paymentId: number;
+  paidOn: string;
+  label: string;
+  amountCents: number;
+  method: string;
+  reference: string | null;
+}
+
 export interface PortalTimetableSlot {
   dayOfWeek: string;
   startTime: string;
@@ -103,5 +117,30 @@ export class PortalService {
       ),
     );
     return response.data;
+  }
+
+  async receipts(studentId: number): Promise<PortalReceipt[]> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<PortalReceipt[]>>(`${BASE_URL}/students/${studentId}/receipts`),
+    );
+    return response.data;
+  }
+
+  /**
+   * Ouvre le reçu dans le lecteur PDF du téléphone.
+   *
+   * <p>Le fichier est récupéré avec le jeton d'authentification puis ouvert depuis la
+   * mémoire : donner l'URL directement au navigateur ferait une requête sans en-tête
+   * Authorization, donc un refus — et la famille verrait une page de connexion à la place
+   * de son reçu.
+   */
+  async openReceipt(paymentId: number): Promise<void> {
+    const blob = await firstValueFrom(
+      this.http.get(`${BASE_URL}/payments/${paymentId}/receipt.pdf`, { responseType: 'blob' }),
+    );
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    // Révocation différée : révoquer tout de suite couperait le chargement du lecteur PDF.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 }

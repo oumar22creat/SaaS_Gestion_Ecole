@@ -1,11 +1,13 @@
 package com.schoolsaas.portal;
 
 import com.schoolsaas.attendance.AttendanceService;
+import com.schoolsaas.common.ApiException;
 import com.schoolsaas.common.ApiResponse;
 import com.schoolsaas.grade.Exam;
 import com.schoolsaas.grade.ExamRepository;
 import com.schoolsaas.grade.Grade;
 import com.schoolsaas.grade.GradeRepository;
+import com.schoolsaas.paperwork.PaperworkService;
 import com.schoolsaas.portal.dto.PortalResponse;
 import com.schoolsaas.schoolfees.FeeInvoiceStatus;
 import com.schoolsaas.schoolfees.FeePayment;
@@ -24,11 +26,16 @@ import com.schoolsaas.timetable.RoomRepository;
 import com.schoolsaas.timetable.TimetableEntry;
 import com.schoolsaas.timetable.TimetableEntryRepository;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -62,6 +69,7 @@ public class PortalController {
     private final StudentFeeInvoiceRepository invoiceRepository;
     private final FeeScheduleRepository feeScheduleRepository;
     private final FeePaymentRepository feePaymentRepository;
+    private final PaperworkService paperworkService;
 
     public PortalController(
             PortalService portalService,
@@ -74,7 +82,8 @@ public class PortalController {
             RoomRepository roomRepository,
             StudentFeeInvoiceRepository invoiceRepository,
             FeeScheduleRepository feeScheduleRepository,
-            FeePaymentRepository feePaymentRepository) {
+            FeePaymentRepository feePaymentRepository,
+            PaperworkService paperworkService) {
         this.portalService = portalService;
         this.attendanceService = attendanceService;
         this.gradeRepository = gradeRepository;
@@ -86,6 +95,7 @@ public class PortalController {
         this.invoiceRepository = invoiceRepository;
         this.feeScheduleRepository = feeScheduleRepository;
         this.feePaymentRepository = feePaymentRepository;
+        this.paperworkService = paperworkService;
     }
 
     /** Enfants du parent connecté, ou l'élève lui-même s'il consulte son propre portail. */
@@ -203,6 +213,64 @@ public class PortalController {
      * temps »). Les noms de matière, d'enseignant et de salle sont résolus ici : une famille
      * ne peut rien faire d'un identifiant technique.
      */
+    /**
+     * Les règlements encaissés pour cet élève, du plus récent au plus ancien.
+     *
+     * <p>La scolarité se paie souvent en espèces au guichet, parfois par un proche. Sans
+     * cette liste, le parent qui ne s'est pas déplacé n'a aucune trace de ce qui a été versé
+     * en son nom, et doit rappeler le secrétariat pour le savoir.
+     */
+    @GetMapping("/students/{studentId}/receipts")
+    public ApiResponse<List<PortalResponse.ReceiptLine>> receipts(@PathVariable Long studentId) {
+        portalService.requireAccessibleStudent(studentId);
+
+        List<StudentFeeInvoice> factures = invoiceRepository.findAllByStudentIdOrderByIssuedAtDesc(studentId);
+        Map<Long, String> libelles = libellesParFacture(factures);
+        return ApiResponse.of(feePaymentRepository
+                .findAllByInvoiceIdIn(factures.stream().map(StudentFeeInvoice::getId).toList()).stream()
+                .sorted(Comparator.comparing(FeePayment::getPaidAt).reversed())
+                .map(reglement -> new PortalResponse.ReceiptLine(
+                        reglement.getId(),
+                        reglement.getPaidAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate(),
+                        libelles.getOrDefault(reglement.getInvoiceId(), "Frais de scolarité"),
+                        reglement.getAmountCents(),
+                        reglement.getMethod().name(),
+                        reglement.getReference()))
+                .toList());
+    }
+
+    /**
+     * Le reçu lui-même, en PDF — le même document que celui délivré au guichet.
+     *
+     * <p>L'accès est vérifié en remontant du règlement à l'élève, et non en faisant confiance
+     * à l'identifiant reçu : sans ce contrôle, un parent connecté pourrait télécharger le
+     * reçu de n'importe quel élève de l'établissement en changeant un numéro dans l'URL.
+     */
+    @GetMapping("/payments/{paymentId}/receipt.pdf")
+    public ResponseEntity<byte[]> receiptPdf(@PathVariable Long paymentId) {
+        FeePayment reglement = feePaymentRepository.findById(paymentId)
+                .orElseThrow(() -> ApiException.notFound("PAYMENT_NOT_FOUND", "Règlement introuvable"));
+        StudentFeeInvoice facture = invoiceRepository.findById(reglement.getInvoiceId())
+                .orElseThrow(() -> ApiException.notFound("PAYMENT_NOT_FOUND", "Règlement introuvable"));
+        portalService.requireAccessibleStudent(facture.getStudentId());
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.inline().filename("recu-" + paymentId + ".pdf").build().toString())
+                .body(paperworkService.paymentReceipt(paymentId));
+    }
+
+    private Map<Long, String> libellesParFacture(List<StudentFeeInvoice> factures) {
+        Map<Long, String> parEcheance = feeScheduleRepository
+                .findAllById(factures.stream().map(StudentFeeInvoice::getFeeScheduleId).distinct().toList()).stream()
+                .collect(Collectors.toMap(FeeSchedule::getId, FeeSchedule::getLabel, (a, b) -> a));
+        return factures.stream().collect(Collectors.toMap(
+                StudentFeeInvoice::getId,
+                facture -> parEcheance.getOrDefault(facture.getFeeScheduleId(), "Frais de scolarité"),
+                (a, b) -> a));
+    }
+
     @GetMapping("/students/{studentId}/timetable")
     public ApiResponse<List<PortalResponse.TimetableSlot>> timetable(@PathVariable Long studentId) {
         Student student = portalService.requireAccessibleStudent(studentId);

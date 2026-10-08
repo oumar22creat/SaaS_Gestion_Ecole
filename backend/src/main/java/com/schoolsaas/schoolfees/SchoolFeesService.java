@@ -12,6 +12,8 @@ import com.schoolsaas.schoolfees.dto.FeeReportingResponse;
 import com.schoolsaas.schoolfees.dto.FeeScheduleCreateRequest;
 import com.schoolsaas.schoolfees.dto.FeeSummaryResponse;
 import com.schoolsaas.schoolfees.dto.StudentFeeInvoiceResponse;
+import com.schoolsaas.notification.FamilyRecipients;
+import com.schoolsaas.notification.NotificationDispatcher;
 import com.schoolsaas.sms.SmsService;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
@@ -41,6 +43,8 @@ public class SchoolFeesService {
     private final SchoolClassRepository schoolClassRepository;
     private final StudentRepository studentRepository;
     private final SmsService smsService;
+    private final FamilyRecipients familyRecipients;
+    private final NotificationDispatcher notificationDispatcher;
 
     public SchoolFeesService(
             FeeScheduleRepository feeScheduleRepository,
@@ -48,13 +52,17 @@ public class SchoolFeesService {
             FeePaymentRepository paymentRepository,
             SchoolClassRepository schoolClassRepository,
             StudentRepository studentRepository,
-            SmsService smsService) {
+            SmsService smsService,
+            FamilyRecipients familyRecipients,
+            NotificationDispatcher notificationDispatcher) {
         this.feeScheduleRepository = feeScheduleRepository;
         this.invoiceRepository = invoiceRepository;
         this.paymentRepository = paymentRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.studentRepository = studentRepository;
         this.smsService = smsService;
+        this.familyRecipients = familyRecipients;
+        this.notificationDispatcher = notificationDispatcher;
     }
 
     @Transactional
@@ -127,7 +135,36 @@ public class SchoolFeesService {
         invoice.setStatus(
                 totalPaid >= invoice.getAmountDueCents() ? FeeInvoiceStatus.PAID
                         : totalPaid > 0 ? FeeInvoiceStatus.PARTIALLY_PAID : FeeInvoiceStatus.PENDING);
+        notifierLaFamille(invoice, payment, totalPaid);
         return payment;
+    }
+
+    /**
+     * Prévient la famille qu'un règlement a été encaissé, et que son reçu est consultable.
+     *
+     * <p>La scolarité se règle souvent en espèces au guichet, parfois par un proche. Le
+     * parent qui ne s'est pas déplacé n'avait aucune trace de ce qui avait été versé en son
+     * nom, ni de ce qui restait dû. Le montant figure dans le message : c'est précisément
+     * l'information qu'on veut pouvoir vérifier sans rappeler le secrétariat.
+     *
+     * <p>Silencieux si la famille n'a pas de compte : ouvrir un accès au portail n'est pas un
+     * préalable à l'encaissement d'un paiement.
+     */
+    private void notifierLaFamille(StudentFeeInvoice invoice, FeePayment payment, long totalVerse) {
+        List<Long> destinataires = familyRecipients.familleDe(invoice.getStudentId());
+        if (destinataires.isEmpty()) {
+            return;
+        }
+        long reste = invoice.getAmountDueCents() - totalVerse;
+        String corps = "Règlement de " + montant(payment.getAmountCents()) + " enregistré. "
+                + (reste > 0 ? "Reste à payer : " + montant(reste) + "." : "Échéance soldée.")
+                + " Le reçu est disponible dans l'application.";
+        notificationDispatcher.dispatch(
+                NotificationType.PAYMENT_RECEIPT, destinataires, "Reçu de règlement", corps);
+    }
+
+    private static String montant(long centimes) {
+        return centimes + " " + DEFAULT_CURRENCY;
     }
 
     public FeeReportingResponse reporting(Long schoolClassId, LocalDate from, LocalDate to) {

@@ -44,6 +44,7 @@ describe('PortalStudentRecordPage', () => {
     httpMock.expectOne((r) => r.url === `${base}/attendance`).flush({ data: assiduite });
     httpMock.expectOne(`${base}/timetable`).flush({ data: [] });
     httpMock.expectOne(`${base}/fees`).flush({ data: null });
+    httpMock.expectOne(`${base}/receipts`).flush({ data: [] });
     await fixture.whenStable();
     fixture.detectChanges();
   });
@@ -96,6 +97,7 @@ describe('PortalStudentRecordPage', () => {
       .flush({ data: [{ date: '2026-10-01', status: 'PRESENT', reason: null, justified: false }] });
     mock.expectOne(`${base}/timetable`).flush({ data: [] });
     mock.expectOne(`${base}/fees`).flush({ data: null });
+    mock.expectOne(`${base}/receipts`).flush({ data: [] });
     await fixture.whenStable();
     fixture.detectChanges();
 

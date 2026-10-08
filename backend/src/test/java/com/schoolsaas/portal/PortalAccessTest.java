@@ -46,6 +46,10 @@ class PortalAccessTest extends AbstractIntegrationTest {
     @Autowired private StudentParentRepository studentParentRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private ObjectMapper objectMapper;
+    @Autowired private com.schoolsaas.schoolclass.SchoolClassRepository schoolClassRepository;
+    @Autowired private com.schoolsaas.schoolfees.FeeScheduleRepository feeScheduleRepository;
+    @Autowired private com.schoolsaas.schoolfees.StudentFeeInvoiceRepository invoiceRepository;
+    @Autowired private com.schoolsaas.schoolfees.FeePaymentRepository feePaymentRepository;
 
     private Tenant tenant;
 
@@ -100,6 +104,78 @@ class PortalAccessTest extends AbstractIntegrationTest {
                 .andReturn();
         return objectMapper.readTree(result.getResponse().getContentAsString())
                 .get("data").get("accessToken").asText();
+    }
+
+    /**
+     * Les reçus de règlement. Le contrôle d'accès ne peut pas se faire sur l'identifiant du
+     * reçu reçu de l'appelant : il faut remonter du règlement à la facture, puis à l'élève.
+     * Sans ce détour, un parent connecté télécharge le reçu de n'importe quel élève de
+     * l'établissement en changeant un numéro dans l'URL — et un reçu porte le nom de
+     * l'enfant, le montant versé et ce qui reste dû.
+     */
+    @Test
+    void aParentReadsTheirOwnReceiptsAndNeverThoseOfAnotherFamily() throws Exception {
+        User monCompte = account("recu-a@ecole.example", Role.PARENT, "Awa");
+        Student monEnfant = student("Fatou", null);
+        parentOf(monEnfant, monCompte, "Awa");
+
+        User autreCompte = account("recu-b@ecole.example", Role.PARENT, "Mariam");
+        Student autreEnfant = student("Sekou", null);
+        parentOf(autreEnfant, autreCompte, "Mariam");
+
+        long monReglement = reglementPour(monEnfant, 25000);
+        long autreReglement = reglementPour(autreEnfant, 40000);
+
+        String token = loginAs("recu-a@ecole.example");
+
+        mockMvc.perform(get("/api/v1/portal/students/" + monEnfant.getId() + "/receipts")
+                        .header("Authorization", "Bearer " + token)
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].amountCents").value(25000))
+                // Le libellé de l'échéance, pas « Reçu n° 412 » : c'est ce que la famille lit.
+                .andExpect(jsonPath("$.data[0].label").value("Scolarité 1er trimestre"));
+
+        mockMvc.perform(get("/api/v1/portal/payments/" + monReglement + "/receipt.pdf")
+                        .header("Authorization", "Bearer " + token)
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId()))
+                .andExpect(status().isOk())
+                .andExpect(result -> org.assertj.core.api.Assertions
+                        .assertThat(new String(result.getResponse().getContentAsByteArray(), 0, 4))
+                        .isEqualTo("%PDF"));
+
+        mockMvc.perform(get("/api/v1/portal/students/" + autreEnfant.getId() + "/receipts")
+                        .header("Authorization", "Bearer " + token)
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId()))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/portal/payments/" + autreReglement + "/receipt.pdf")
+                        .header("Authorization", "Bearer " + token)
+                        .header(TenantResolver.TENANT_HEADER, tenant().getId()))
+                .andExpect(status().isNotFound());
+    }
+
+    private long reglementPour(Student eleve, long montant) {
+        com.schoolsaas.schoolclass.SchoolClass classe =
+                new com.schoolsaas.schoolclass.SchoolClass("6ème " + UUID.randomUUID().toString().substring(0, 4), null);
+        classe.setSchoolId(tenant().getId());
+        classe = schoolClassRepository.save(classe);
+
+        com.schoolsaas.schoolfees.FeeSchedule echeance = new com.schoolsaas.schoolfees.FeeSchedule(
+                classe.getId(), "Scolarité 1er trimestre", 50000, "XOF", java.time.LocalDate.of(2026, 11, 30));
+        echeance.setSchoolId(tenant().getId());
+        echeance = feeScheduleRepository.save(echeance);
+
+        com.schoolsaas.schoolfees.StudentFeeInvoice facture =
+                new com.schoolsaas.schoolfees.StudentFeeInvoice(echeance.getId(), eleve.getId(), 50000);
+        facture.setSchoolId(tenant().getId());
+        facture = invoiceRepository.save(facture);
+
+        com.schoolsaas.schoolfees.FeePayment reglement = new com.schoolsaas.schoolfees.FeePayment(
+                facture.getId(), montant, com.schoolsaas.schoolfees.FeePaymentMethod.CASH, "REF-1", 1L);
+        reglement.setSchoolId(tenant().getId());
+        return feePaymentRepository.save(reglement).getId();
     }
 
     @Test

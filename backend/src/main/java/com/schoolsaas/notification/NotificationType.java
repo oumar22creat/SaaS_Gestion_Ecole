@@ -13,5 +13,11 @@ public enum NotificationType {
     NEW_MESSAGE,
     ANNOUNCEMENT,
     SUBSCRIPTION_ALERT,
+    /**
+     * Règlement encaissé : la famille est prévenue, et le reçu l'attend dans l'application.
+     * Au Mali, la scolarité se paie souvent en espèces au guichet ; le parent qui n'a pas pu
+     * se déplacer lui-même n'avait jusqu'ici aucune trace de ce qui a été versé en son nom.
+     */
+    PAYMENT_RECEIPT,
     LIBRARY_OVERDUE
 }

@@ -5,12 +5,15 @@ import com.schoolsaas.common.NumberUtils;
 import com.schoolsaas.grade.dto.ClassSubjectAverageResponse;
 import com.schoolsaas.grade.dto.ExamStatisticsResponse;
 import com.schoolsaas.grade.dto.GradeEntryRequest;
+import com.schoolsaas.grade.dto.SubjectPeriodResult;
 import com.schoolsaas.grade.dto.SubjectAverageResponse;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
 import com.schoolsaas.notification.FamilyRecipients;
 import com.schoolsaas.notification.NotificationDispatcher;
 import com.schoolsaas.notification.NotificationType;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -125,6 +128,64 @@ public class GradeService {
     }
 
     /** Moyenne pondérée par coefficient d'évaluation, normalisée sur 20, pour un élève dans une matière. */
+    /**
+     * Résultats d'un élève dans une matière sur une période, détaillés pour le bulletin.
+     *
+     * <p>Distinct de {@link #studentSubjectAverage} à dessein : celui-ci prend toutes les
+     * évaluations de la matière, toutes périodes confondues, ce qui convient à l'écran
+     * « moyenne de l'élève » mais fausserait un bulletin trimestriel — les notes du trimestre
+     * suivant s'y mêleraient.
+     *
+     * <p>Les deux premiers devoirs de la période alimentent les colonnes DEVOIR 1 et DEVOIR 2.
+     * Au-delà de deux, les suivants ne sont pas perdus : ils comptent dans la moyenne, qui est
+     * calculée sur l'ensemble des évaluations de la période, pondérée par leur coefficient.
+     * La maquette n'a que deux colonnes, ce n'est pas une raison pour effacer une note.
+     */
+    public SubjectPeriodResult studentSubjectResultForPeriod(
+            Long studentId, Long schoolClassId, Long subjectId, LocalDate from, LocalDate to) {
+        List<Exam> exams = examRepository.findAllBySchoolClassIdAndSubjectIdAndExamDateBetweenOrderByExamDateAsc(
+                schoolClassId, subjectId, from, to);
+        if (exams.isEmpty()) {
+            return SubjectPeriodResult.EMPTY;
+        }
+
+        Map<Long, Double> notesParExamen = gradeRepository
+                .findAllByExamIdInAndStudentId(exams.stream().map(Exam::getId).toList(), studentId).stream()
+                .filter(g -> !g.isAbsent() && g.getScore() != null)
+                .collect(Collectors.toMap(Grade::getExamId, Grade::getScore, (a, b) -> b));
+        if (notesParExamen.isEmpty()) {
+            return SubjectPeriodResult.EMPTY;
+        }
+
+        List<Double> devoirs = new ArrayList<>();
+        Double composition = null;
+        double sommePonderee = 0;
+        double sommeCoefficients = 0;
+        for (Exam exam : exams) {
+            Double brute = notesParExamen.get(exam.getId());
+            if (brute == null) {
+                continue;
+            }
+            double sur20 = normalize(brute, exam.getMaxScore());
+            if (exam.getExamType() == ExamType.COMPOSITION) {
+                // La dernière composition de la période l'emporte : c'est celle qui clôt le
+                // trimestre, et une école qui en a saisi deux a corrigé la première.
+                composition = sur20;
+            } else {
+                devoirs.add(sur20);
+            }
+            sommePonderee += sur20 * exam.getCoefficient();
+            sommeCoefficients += exam.getCoefficient();
+        }
+
+        return new SubjectPeriodResult(
+                devoirs.isEmpty() ? null : devoirs.get(0),
+                devoirs.size() < 2 ? null : devoirs.get(1),
+                composition,
+                sommeCoefficients == 0 ? null : NumberUtils.round2(sommePonderee / sommeCoefficients),
+                notesParExamen.size());
+    }
+
     public SubjectAverageResponse studentSubjectAverage(Long studentId, Long subjectId) {
         List<Exam> exams = examRepository.findAllBySubjectId(subjectId);
         if (exams.isEmpty()) {

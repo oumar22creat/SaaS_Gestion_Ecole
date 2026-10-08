@@ -18,6 +18,22 @@ public class ReportCardEntry extends TenantScopedEntity {
     @Column(name = "subject_id", nullable = false, updatable = false)
     private Long subjectId;
 
+    /**
+     * Le détail que lit la famille, figé comme la moyenne l'est déjà : le bulletin réédité
+     * six mois plus tard doit rendre le même document, même si une note a été corrigée
+     * depuis. Null quand l'évaluation n'a pas eu lieu — une case vide se lit mieux qu'un
+     * zéro, qui serait compris comme une note.
+     */
+    @Column(name = "assignment_one_score")
+    private Double assignmentOneScore;
+
+    @Column(name = "assignment_two_score")
+    private Double assignmentTwoScore;
+
+    /** Composition de fin de période. */
+    @Column(name = "exam_score")
+    private Double examScore;
+
     @Column
     private Double average;
 
@@ -43,6 +59,24 @@ public class ReportCardEntry extends TenantScopedEntity {
 
     public Long getSubjectId() {
         return subjectId;
+    }
+
+    public Double getAssignmentOneScore() {
+        return assignmentOneScore;
+    }
+
+    public Double getAssignmentTwoScore() {
+        return assignmentTwoScore;
+    }
+
+    public Double getExamScore() {
+        return examScore;
+    }
+
+    public void setScores(Double assignmentOne, Double assignmentTwo, Double examScore) {
+        this.assignmentOneScore = assignmentOne;
+        this.assignmentTwoScore = assignmentTwo;
+        this.examScore = examScore;
     }
 
     public Double getAverage() {

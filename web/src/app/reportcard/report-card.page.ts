@@ -54,6 +54,14 @@ import { ReportCard, ReportCardService } from './report-card.service';
       <button mat-flat-button (click)="generate()">
         <mat-icon>auto_awesome</mat-icon> Générer
       </button>
+      <button
+        mat-stroked-button
+        [disabled]="cards().length === 0 || printingAll()"
+        (click)="printAll()"
+      >
+        <mat-icon>print</mat-icon>
+        {{ printingAll() ? 'Préparation…' : 'Imprimer toute la classe' }}
+      </button>
     </div>
     @if (errorMessage()) {
       <p class="flash-error">{{ errorMessage() }}</p>
@@ -118,6 +126,8 @@ export class ReportCardPage {
   protected readonly cards = signal<ReportCard[]>([]);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
+  /** Une liasse de cent bulletins met quelques secondes : le bouton doit le montrer. */
+  protected readonly printingAll = signal(false);
   protected readonly columns = ['student', 'average', 'rank', 'absences', 'comment', 'actions'];
   protected schoolClassId: number | null = null;
   protected periodLabel = 'Trimestre 1';
@@ -182,5 +192,23 @@ export class ReportCardPage {
 
   async pdf(card: ReportCard): Promise<void> {
     await this.reportCardService.downloadPdf(card.id);
+  }
+
+  /** Un seul PDF pour la classe entière, un bulletin par page, en ordre alphabétique. */
+  async printAll(): Promise<void> {
+    if (this.schoolClassId === null) {
+      return;
+    }
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.printingAll.set(true);
+    try {
+      await this.reportCardService.downloadClassPdf(this.schoolClassId, this.periodLabel);
+      this.successMessage.set(`${this.cards().length} bulletins téléchargés en un fichier.`);
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    } finally {
+      this.printingAll.set(false);
+    }
   }
 }

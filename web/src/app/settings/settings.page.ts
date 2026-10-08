@@ -63,6 +63,51 @@ import { TenantSettingsService } from './tenant-settings.service';
       /></mat-form-field>
       <button mat-flat-button type="submit">Enregistrer</button>
     </form>
+
+    <section class="bulletin-section">
+      <h2 class="section-label">Modèle de bulletin</h2>
+      <p class="logo-hint">
+        Ces mentions s'impriment en tête du bulletin et du certificat de scolarité, et le
+        directeur en signe le bas. Saisissez-les telles qu'elles doivent paraître, libellé
+        compris. Laissez vide ce qui ne s'applique pas à votre établissement.
+      </p>
+      <form class="stack-form" (submit)="saveTemplate($event)">
+        <mat-form-field appearance="outline">
+          <mat-label>Mention de l'État</mat-label>
+          <input matInput [(ngModel)]="officialAuthority" name="officialAuthority" />
+          <mat-hint>Par exemple : RÉPUBLIQUE DU MALI</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Académie ou direction régionale</mat-label>
+          <input matInput [(ngModel)]="academyLabel" name="academyLabel" />
+          <mat-hint>Par exemple : AE : BAMAKO RIVE DROITE</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Inspection ou circonscription</mat-label>
+          <input matInput [(ngModel)]="inspectionLabel" name="inspectionLabel" />
+          <mat-hint>Par exemple : CAP : KALABAN COURA</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Nom du directeur</mat-label>
+          <input matInput [(ngModel)]="directorName" name="directorName" />
+          <mat-hint>Signataire du bulletin, imprimé sous « LE DIRECTEUR GÉNÉRAL »</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Ville de signature</mat-label>
+          <input matInput [(ngModel)]="headOfficeCity" name="headOfficeCity" />
+          <mat-hint>Apparaît en bas de page : « Bamako, le 08/10/2026 »</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Adresse de l'établissement</mat-label>
+          <input matInput [(ngModel)]="postalAddress" name="postalAddress" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Mentions légales</mat-label>
+          <input matInput [(ngModel)]="reportCardLegalMentions" name="reportCardLegalMentions" />
+        </mat-form-field>
+        <button mat-flat-button type="submit">Enregistrer le modèle</button>
+      </form>
+    </section>
     @if (errorMessage()) {
       <p class="flash-error">{{ errorMessage() }}</p>
     }
@@ -71,6 +116,10 @@ import { TenantSettingsService } from './tenant-settings.service';
     }
   `,
   styles: `
+    .bulletin-section {
+      margin-top: var(--space-5);
+    }
+
     .logo-section {
       margin-bottom: var(--space-5);
     }
@@ -112,6 +161,13 @@ export class SettingsPage {
   protected primaryColor = '#0f5c4c';
   protected secondaryColor = '#c9a227';
   protected customDomain = '';
+  protected officialAuthority = '';
+  protected academyLabel = '';
+  protected inspectionLabel = '';
+  protected directorName = '';
+  protected headOfficeCity = '';
+  protected reportCardLegalMentions = '';
+  protected postalAddress = '';
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly success = signal(false);
   protected readonly uploading = signal(false);
@@ -165,6 +221,40 @@ export class SettingsPage {
     this.secondaryColor = branding.secondaryColor;
     void this.settingsService.customDomain().then((domain) => (this.customDomain = domain ?? ''));
     void this.refreshLogoPreview();
+    void this.settingsService.reportCardTemplate().then((template) => {
+      this.officialAuthority = template.officialAuthority ?? '';
+      this.academyLabel = template.academyLabel ?? '';
+      this.inspectionLabel = template.inspectionLabel ?? '';
+      this.directorName = template.directorName ?? '';
+      this.headOfficeCity = template.headOfficeCity ?? '';
+      this.postalAddress = template.postalAddress ?? '';
+      this.reportCardLegalMentions = template.reportCardLegalMentions ?? '';
+      this.reportCardHeader = template.reportCardHeader;
+    });
+  }
+
+  /** Conservé tel quel : ce champ n'est pas éditable ici, mais l'écraser l'effacerait. */
+  private reportCardHeader: string | null = null;
+
+  async saveTemplate(event: Event): Promise<void> {
+    event.preventDefault();
+    this.errorMessage.set(null);
+    this.success.set(false);
+    try {
+      await this.settingsService.updateReportCardTemplate({
+        reportCardHeader: this.reportCardHeader,
+        reportCardLegalMentions: this.reportCardLegalMentions || null,
+        officialAuthority: this.officialAuthority || null,
+        academyLabel: this.academyLabel || null,
+        inspectionLabel: this.inspectionLabel || null,
+        directorName: this.directorName || null,
+        headOfficeCity: this.headOfficeCity || null,
+        postalAddress: this.postalAddress || null,
+      });
+      this.success.set(true);
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    }
   }
 
   async save(event: Event): Promise<void> {

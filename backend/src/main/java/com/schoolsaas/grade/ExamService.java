@@ -28,7 +28,7 @@ public class ExamService {
         validateReferences(request);
         return examRepository.save(new Exam(
                 request.schoolClassId(), request.subjectId(), request.label(), request.maxScore(), request.coefficient(),
-                request.examDate()));
+                request.examDate(), request.examTypeOrDefault()));
     }
 
     public Exam getById(Long id) {
@@ -47,6 +47,7 @@ public class ExamService {
         exam.setMaxScore(request.maxScore());
         exam.setCoefficient(request.coefficient());
         exam.setExamDate(request.examDate());
+        exam.setExamType(request.examTypeOrDefault());
         return exam;
     }
 

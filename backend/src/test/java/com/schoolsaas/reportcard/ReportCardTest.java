@@ -16,6 +16,7 @@ import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.UserRepository;
 import com.schoolsaas.grade.Exam;
 import com.schoolsaas.grade.ExamRepository;
+import com.schoolsaas.grade.ExamType;
 import com.schoolsaas.grade.Grade;
 import com.schoolsaas.grade.GradeRepository;
 import com.schoolsaas.schoolclass.ClassSubjectAssignment;
@@ -149,6 +150,121 @@ class ReportCardTest extends AbstractIntegrationTest {
                     org.assertj.core.api.Assertions.assertThat(body.length).isGreaterThan(100);
                     org.assertj.core.api.Assertions.assertThat(new String(body, 0, 4)).isEqualTo("%PDF");
                 });
+    }
+
+    /**
+     * La maquette du bulletin juxtapose DEVOIR 1, DEVOIR 2 et COMP. Ces trois colonnes sont
+     * figées à la génération, et bornées à la période : un bulletin du 1er trimestre ne doit
+     * pas se mettre à inclure les notes du 2ème dès qu'elles sont saisies.
+     */
+    @Test
+    void aReportCardLineCarriesTheTwoAssignmentsAndTheExamOfThePeriodOnly() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Colonnes");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "admin-colonnes@ecole.example", Role.ADMIN);
+        SchoolClass schoolClass = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("5ème A", null), tenant.getId()));
+        Subject maths = subjectRepository.save(
+                TestAuthSupport.withTenant(new Subject("Maths", "MATH-COL", 4), tenant.getId()));
+        Teacher teacher = teacherRepository.save(
+                TestAuthSupport.withTenant(new Teacher("Awa", "Sangaré", null, null), tenant.getId()));
+        assignmentRepository.save(TestAuthSupport.withTenant(
+                new ClassSubjectAssignment(schoolClass.getId(), maths.getId(), teacher.getId()), tenant.getId()));
+        Student student = studentRepository.save(TestAuthSupport.withTenant(
+                new Student("COL1", "Fanta", "Diallo", null, null, schoolClass.getId()), tenant.getId()));
+
+        // Devoir 1 noté sur 10 : le bulletin doit le ramener sur 20, sinon un 8/10 passerait
+        // pour un résultat médiocre à côté d'une composition sur 20.
+        noter(tenant, student, schoolClass, maths, "Devoir 1", 10, 1, LocalDate.of(2026, 10, 2), ExamType.DEVOIR, 8.0);
+        noter(tenant, student, schoolClass, maths, "Devoir 2", 20, 1, LocalDate.of(2026, 10, 9), ExamType.DEVOIR, 13.0);
+        noter(tenant, student, schoolClass, maths, "Composition", 20, 2, LocalDate.of(2026, 10, 20), ExamType.COMPOSITION, 15.0);
+        // Hors période : ne doit apparaître nulle part sur ce bulletin.
+        noter(tenant, student, schoolClass, maths, "Devoir du 2e trimestre", 20, 1, LocalDate.of(2027, 1, 15), ExamType.DEVOIR, 2.0);
+
+        mockMvc.perform(post("/api/v1/report-cards/generate")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"schoolClassId\":" + schoolClass.getId() + ",\"periodLabel\":\"1er trimestre\","
+                                + "\"periodFrom\":\"2026-09-01\",\"periodTo\":\"2026-12-20\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data[0].entries[0].assignmentOneScore").value(16.0))
+                .andExpect(jsonPath("$.data[0].entries[0].assignmentTwoScore").value(13.0))
+                .andExpect(jsonPath("$.data[0].entries[0].examScore").value(15.0))
+                // (16*1 + 13*1 + 15*2) / 4 = 14.75 — le 2/20 de janvier est exclu.
+                .andExpect(jsonPath("$.data[0].entries[0].average").value(14.75))
+                .andExpect(jsonPath("$.data[0].generalAverage").value(14.75));
+    }
+
+    /** Un PDF unique pour toute la classe, une page par élève : le secrétariat imprime une liasse. */
+    @Test
+    void theWholeClassPrintsAsOneDocumentWithOnePagePerStudent() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Liasse");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "admin-liasse@ecole.example", Role.ADMIN);
+        SchoolClass schoolClass = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("4ème A", null), tenant.getId()));
+        Subject svt = subjectRepository.save(
+                TestAuthSupport.withTenant(new Subject("SVT", "SVT-LIA", 2), tenant.getId()));
+        Teacher teacher = teacherRepository.save(
+                TestAuthSupport.withTenant(new Teacher("Modibo", "Keïta", null, null), tenant.getId()));
+        assignmentRepository.save(TestAuthSupport.withTenant(
+                new ClassSubjectAssignment(schoolClass.getId(), svt.getId(), teacher.getId()), tenant.getId()));
+        for (String[] eleve : new String[][] {{"LIA1", "Zacharie", "Zongo"}, {"LIA2", "Awa", "Ba"}, {"LIA3", "Moussa", "Cissé"}}) {
+            Student s = studentRepository.save(TestAuthSupport.withTenant(
+                    new Student(eleve[0], eleve[1], eleve[2], null, null, schoolClass.getId()), tenant.getId()));
+            noter(tenant, s, schoolClass, svt, "Composition", 20, 2, LocalDate.of(2026, 10, 20), ExamType.COMPOSITION, 12.0);
+        }
+
+        mockMvc.perform(post("/api/v1/report-cards/generate")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"schoolClassId\":" + schoolClass.getId() + ",\"periodLabel\":\"1er trimestre\","
+                                + "\"periodFrom\":\"2026-09-01\",\"periodTo\":\"2026-12-20\"}"))
+                .andExpect(status().isCreated());
+
+        byte[] pdf = mockMvc.perform(get("/api/v1/report-cards/class/" + schoolClass.getId() + "/pdf")
+                        .param("periodLabel", "1er trimestre")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        try (org.apache.pdfbox.pdmodel.PDDocument document =
+                org.apache.pdfbox.Loader.loadPDF(pdf)) {
+            org.assertj.core.api.Assertions.assertThat(document.getNumberOfPages()).isEqualTo(3);
+            String texte = new org.apache.pdfbox.text.PDFTextStripper().getText(document);
+            org.assertj.core.api.Assertions.assertThat(texte)
+                    .contains("BULLETIN DE NOTES")
+                    .contains("DEVOIR 1")
+                    .contains("Zongo")
+                    .contains("Cissé");
+            // Ordre alphabétique : Ba avant Cissé avant Zongo, c'est celui du registre.
+            org.assertj.core.api.Assertions.assertThat(texte.indexOf("Ba")).isLessThan(texte.indexOf("Zongo"));
+        }
+    }
+
+    /** Une classe sans bulletin généré doit le dire, pas rendre un PDF vide de zéro page. */
+    @Test
+    void printingAClassWithoutGeneratedReportCardsIsRefusedWithAClearMessage() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Liasse Vide");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "admin-vide@ecole.example", Role.ADMIN);
+        SchoolClass schoolClass = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("3ème A", null), tenant.getId()));
+
+        mockMvc.perform(get("/api/v1/report-cards/class/" + schoolClass.getId() + "/pdf")
+                        .param("periodLabel", "1er trimestre")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("NO_REPORT_CARD_TO_PRINT"));
+    }
+
+    private void noter(
+            Tenant tenant, Student student, SchoolClass schoolClass, Subject subject, String libelle, double bareme,
+            int coefficient, LocalDate date, ExamType type, double note) {
+        Exam exam = examRepository.save(TestAuthSupport.withTenant(
+                new Exam(schoolClass.getId(), subject.getId(), libelle, bareme, coefficient, date, type), tenant.getId()));
+        gradeRepository.save(TestAuthSupport.withTenant(
+                new Grade(exam.getId(), student.getId(), note, false, null), tenant.getId()));
     }
 
     @Test

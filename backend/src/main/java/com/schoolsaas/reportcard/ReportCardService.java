@@ -6,7 +6,7 @@ import com.schoolsaas.attendance.AttendanceStatus;
 import com.schoolsaas.common.ApiException;
 import com.schoolsaas.common.NumberUtils;
 import com.schoolsaas.grade.GradeService;
-import com.schoolsaas.grade.dto.SubjectAverageResponse;
+import com.schoolsaas.grade.dto.SubjectPeriodResult;
 import com.schoolsaas.reportcard.dto.GenerateReportCardsRequest;
 import com.schoolsaas.reportcard.dto.ReportCardEntryUpdateRequest;
 import com.schoolsaas.reportcard.dto.ReportCardUpdateRequest;
@@ -132,10 +132,15 @@ public class ReportCardService {
         double coefficientSum = 0;
         for (Long subjectId : subjectIds) {
             int coefficient = coefficients.getOrDefault(subjectId, 1);
-            SubjectAverageResponse subjectAverage = gradeService.studentSubjectAverage(student.getId(), subjectId);
-            entryRepository.save(new ReportCardEntry(reportCard.getId(), subjectId, subjectAverage.average(), coefficient));
-            if (subjectAverage.average() != null) {
-                weightedSum += subjectAverage.average() * coefficient;
+            // Borné à la période du bulletin : sans cela, un bulletin du 1er trimestre
+            // intégrerait les notes du 2ème dès qu'elles seraient saisies.
+            SubjectPeriodResult resultat = gradeService.studentSubjectResultForPeriod(
+                    student.getId(), request.schoolClassId(), subjectId, request.periodFrom(), request.periodTo());
+            ReportCardEntry entry = new ReportCardEntry(reportCard.getId(), subjectId, resultat.average(), coefficient);
+            entry.setScores(resultat.assignmentOne(), resultat.assignmentTwo(), resultat.examScore());
+            entryRepository.save(entry);
+            if (resultat.average() != null) {
+                weightedSum += resultat.average() * coefficient;
                 coefficientSum += coefficient;
             }
         }

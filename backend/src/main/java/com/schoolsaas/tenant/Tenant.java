@@ -60,6 +60,33 @@ public class Tenant {
     @Column(name = "report_card_legal_mentions")
     private String reportCardLegalMentions;
 
+    /**
+     * Mentions officielles du haut de bulletin, saisies en entier par l'établissement :
+     * « REPUBLIQUE DU SENEGAL », « IA : PIKINE GUEDIAWAYE », « IEF : THIAROYE ». Le découpage
+     * administratif n'est pas le même d'un pays à l'autre — académie et inspection au
+     * Sénégal, académie d'enseignement et CAP au Mali — et le figer dans le code reviendrait
+     * à ne servir qu'un seul pays.
+     */
+    @Column(name = "official_authority")
+    private String officialAuthority;
+
+    @Column(name = "academy_label")
+    private String academyLabel;
+
+    @Column(name = "inspection_label")
+    private String inspectionLabel;
+
+    /** Signataire du bulletin et du certificat : sans lui, le document n'est pas opposable. */
+    @Column(name = "director_name")
+    private String directorName;
+
+    /** Ville de signature : « Dakar, le 30/03/2021 ». */
+    @Column(name = "head_office_city")
+    private String headOfficeCity;
+
+    @Column(name = "postal_address")
+    private String postalAddress;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -151,5 +178,53 @@ public class Tenant {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public String getOfficialAuthority() {
+        return officialAuthority;
+    }
+
+    public void setOfficialAuthority(String officialAuthority) {
+        this.officialAuthority = officialAuthority;
+    }
+
+    public String getAcademyLabel() {
+        return academyLabel;
+    }
+
+    public void setAcademyLabel(String academyLabel) {
+        this.academyLabel = academyLabel;
+    }
+
+    public String getInspectionLabel() {
+        return inspectionLabel;
+    }
+
+    public void setInspectionLabel(String inspectionLabel) {
+        this.inspectionLabel = inspectionLabel;
+    }
+
+    public String getDirectorName() {
+        return directorName;
+    }
+
+    public void setDirectorName(String directorName) {
+        this.directorName = directorName;
+    }
+
+    public String getHeadOfficeCity() {
+        return headOfficeCity;
+    }
+
+    public void setHeadOfficeCity(String headOfficeCity) {
+        this.headOfficeCity = headOfficeCity;
+    }
+
+    public String getPostalAddress() {
+        return postalAddress;
+    }
+
+    public void setPostalAddress(String postalAddress) {
+        this.postalAddress = postalAddress;
     }
 }

@@ -7,6 +7,10 @@ import { ApiResponse } from '../core/api-response.model';
 
 export interface ReportCardEntry {
   subjectId: number;
+  /** Notes de la période, ramenées sur 20 — les colonnes DEVOIR 1, DEVOIR 2 et COMP du bulletin. */
+  assignmentOneScore: number | null;
+  assignmentTwoScore: number | null;
+  examScore: number | null;
   average: number | null;
   coefficient: number;
   teacherComment: string | null;
@@ -70,17 +74,32 @@ export class ReportCardService {
   }
 
   async downloadPdf(id: number): Promise<void> {
+    await this.telecharger(`${BASE_URL}/${id}/pdf`, `bulletin-${id}.pdf`);
+  }
+
+  /**
+   * Toute la classe en un seul fichier, un bulletin par page.
+   *
+   * <p>Le secrétariat imprime la liasse, la coupe et la distribue. Télécharger cent fichiers
+   * pour les ouvrir un à un la veille du conseil de classe n'est pas une option.
+   */
+  async downloadClassPdf(schoolClassId: number, periodLabel: string): Promise<void> {
+    const url = `${BASE_URL}/class/${schoolClassId}/pdf?periodLabel=${encodeURIComponent(periodLabel)}`;
+    await this.telecharger(url, `bulletins-${schoolClassId}.pdf`);
+  }
+
+  private async telecharger(url: string, nomFichier: string): Promise<void> {
     let blob: Blob;
     try {
-      blob = await firstValueFrom(this.http.get(`${BASE_URL}/${id}/pdf`, { responseType: 'blob' }));
+      blob = await firstValueFrom(this.http.get(url, { responseType: 'blob' }));
     } catch (error) {
       throw await withReadableBody(error);
     }
-    const url = URL.createObjectURL(blob);
+    const objectUrl = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `bulletin-${id}.pdf`;
+    anchor.href = objectUrl;
+    anchor.download = nomFichier;
     anchor.click();
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(objectUrl);
   }
 }

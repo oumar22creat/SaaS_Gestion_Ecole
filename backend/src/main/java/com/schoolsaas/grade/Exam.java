@@ -3,6 +3,8 @@ package com.schoolsaas.grade;
 import com.schoolsaas.common.TenantScopedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -29,6 +31,14 @@ public class Exam extends TenantScopedEntity {
     @Column(nullable = false)
     private int coefficient;
 
+    /**
+     * DEVOIR par défaut : c'est la majorité des évaluations, et une école qui ne distingue
+     * pas les deux obtient un bulletin cohérent sans rien paramétrer.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "exam_type", nullable = false)
+    private ExamType examType = ExamType.DEVOIR;
+
     @Column(name = "exam_date", nullable = false)
     private LocalDate examDate;
 
@@ -39,6 +49,13 @@ public class Exam extends TenantScopedEntity {
     }
 
     public Exam(Long schoolClassId, Long subjectId, String label, double maxScore, int coefficient, LocalDate examDate) {
+        this(schoolClassId, subjectId, label, maxScore, coefficient, examDate, ExamType.DEVOIR);
+    }
+
+    public Exam(
+            Long schoolClassId, Long subjectId, String label, double maxScore, int coefficient, LocalDate examDate,
+            ExamType examType) {
+        this.examType = examType;
         this.schoolClassId = schoolClassId;
         this.subjectId = subjectId;
         this.label = label;
@@ -46,6 +63,14 @@ public class Exam extends TenantScopedEntity {
         this.coefficient = coefficient;
         this.examDate = examDate;
         this.createdAt = Instant.now();
+    }
+
+    public ExamType getExamType() {
+        return examType;
+    }
+
+    public void setExamType(ExamType examType) {
+        this.examType = examType;
     }
 
     public Long getSchoolClassId() {

@@ -7,6 +7,7 @@ import com.schoolsaas.reportcard.dto.ReportCardEntryResponse;
 import com.schoolsaas.reportcard.dto.ReportCardEntryUpdateRequest;
 import com.schoolsaas.reportcard.dto.ReportCardResponse;
 import com.schoolsaas.reportcard.dto.ReportCardUpdateRequest;
+import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.schoolclass.SchoolClassService;
 import com.schoolsaas.student.StudentService;
 import com.schoolsaas.subject.Subject;
@@ -16,6 +17,7 @@ import com.schoolsaas.tenant.TenantContext;
 import com.schoolsaas.tenant.TenantLogoService;
 import com.schoolsaas.tenant.TenantRepository;
 import jakarta.validation.Valid;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -131,6 +133,58 @@ public class ReportCardController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.attachment().filename("bulletin-" + id + ".pdf").build().toString())
                 .body(pdf);
+    }
+
+    /**
+     * Toute une classe en un PDF, un bulletin par page, dans l'ordre alphabétique.
+     *
+     * <p>Les bulletins doivent avoir été générés au préalable : cet appel imprime, il ne
+     * calcule pas. Le séparer de la génération est délibéré — un chef d'établissement
+     * réimprime une liasse égarée sans vouloir que les moyennes bougent entre-temps parce
+     * qu'un enseignant a saisi une note depuis.
+     */
+    @GetMapping("/class/{schoolClassId}/pdf")
+    public ResponseEntity<byte[]> exportClassPdf(
+            @PathVariable Long schoolClassId, @RequestParam String periodLabel) {
+        List<ReportCard> reportCards = reportCardService.listForClassAndPeriod(schoolClassId, periodLabel);
+        Map<Long, Subject> subjectsById = subjectRepository.findAll().stream()
+                .collect(Collectors.toMap(Subject::getId, s -> s));
+
+        List<ReportCardPdfExporter.Bulletin> bulletins = reportCards.stream()
+                .map(card -> new ReportCardPdfExporter.Bulletin(
+                        card,
+                        reportCardService.listEntries(card.getId()),
+                        studentService.getById(card.getStudentId()),
+                        subjectsById))
+                // Ordre alphabétique : c'est celui de l'appel et du registre, donc celui dans
+                // lequel le secrétariat distribue la liasse une fois coupée.
+                .sorted(Comparator
+                        .comparing((ReportCardPdfExporter.Bulletin b) -> b.student().getLastName(),
+                                String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(b -> b.student().getFirstName(), String.CASE_INSENSITIVE_ORDER))
+                .toList();
+
+        Tenant tenant = tenantRepository.findById(TenantContext.get())
+                .orElseThrow(() -> ApiException.notFound("TENANT_NOT_FOUND", "Établissement introuvable"));
+        SchoolClass schoolClass = schoolClassService.getById(schoolClassId);
+        byte[] pdf = pdfExporter.exportBatch(
+                bulletins, schoolClass, tenant, tenantLogoService.content(tenant).orElse(null));
+
+        String nomFichier = "bulletins-" + assainir(schoolClass.getName()) + "-" + assainir(periodLabel) + ".pdf";
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(nomFichier).build().toString())
+                .body(pdf);
+    }
+
+    /** « 6ème année A » devient « 6eme-annee-a » : un nom de fichier qui survit à tous les systèmes. */
+    private static String assainir(String valeur) {
+        return java.text.Normalizer.normalize(valeur, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(java.util.Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
     }
 
     private ReportCardResponse toResponse(ReportCard reportCard) {

@@ -52,6 +52,12 @@ public class TenantSettingsService {
         Tenant tenant = currentTenant();
         tenant.setReportCardHeader(request.reportCardHeader());
         tenant.setReportCardLegalMentions(request.reportCardLegalMentions());
+        tenant.setOfficialAuthority(request.officialAuthority());
+        tenant.setAcademyLabel(request.academyLabel());
+        tenant.setInspectionLabel(request.inspectionLabel());
+        tenant.setDirectorName(request.directorName());
+        tenant.setHeadOfficeCity(request.headOfficeCity());
+        tenant.setPostalAddress(request.postalAddress());
         return tenantRepository.save(tenant);
     }
 

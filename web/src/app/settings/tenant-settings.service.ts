@@ -5,6 +5,23 @@ import { environment } from '../../environments/environment';
 import { ApiResponse } from '../core/api-response.model';
 import { TenantBranding } from '../branding/tenant-branding.model';
 
+/**
+ * Mentions imprimées en tête des documents officiels. Saisies en entier, libellé compris :
+ * « IA : PIKINE GUEDIAWAYE » au Sénégal, « AE : BAMAKO RIVE DROITE » au Mali. Le découpage
+ * administratif n'est pas le même d'un pays à l'autre, et une liste fermée reviendrait à ne
+ * servir qu'un seul système scolaire.
+ */
+export interface ReportCardTemplate {
+  reportCardHeader: string | null;
+  reportCardLegalMentions: string | null;
+  officialAuthority: string | null;
+  academyLabel: string | null;
+  inspectionLabel: string | null;
+  directorName: string | null;
+  headOfficeCity: string | null;
+  postalAddress: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TenantSettingsService {
   private readonly http = inject(HttpClient);
@@ -28,6 +45,21 @@ export class TenantSettingsService {
       }),
     );
     return response.data;
+  }
+
+  async reportCardTemplate(): Promise<ReportCardTemplate> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<ReportCardTemplate>>(
+        `${environment.apiUrl}/tenants/current/report-card-template`,
+      ),
+    );
+    return response.data;
+  }
+
+  async updateReportCardTemplate(template: ReportCardTemplate): Promise<void> {
+    await firstValueFrom(
+      this.http.put(`${environment.apiUrl}/tenants/current/report-card-template`, template),
+    );
   }
 
   async customDomain(): Promise<string | null> {

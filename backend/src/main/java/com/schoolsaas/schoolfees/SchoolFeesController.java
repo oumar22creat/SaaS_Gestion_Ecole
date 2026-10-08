@@ -102,7 +102,8 @@ public class SchoolFeesController {
             Pageable pageable,
             @RequestParam(required = false) Long schoolClassId,
             @RequestParam(defaultValue = "false") boolean onlyOverdue) {
-        return PagedList.response(schoolFeesService.outstanding(schoolClassId, onlyOverdue, pageable));
+        var resultat = schoolFeesService.outstanding(schoolClassId, onlyOverdue, pageable);
+        return PagedList.response(resultat.page(), resultat.total());
     }
 
     /** Indicateurs de recouvrement, tout l'établissement par défaut. */
@@ -117,7 +118,8 @@ public class SchoolFeesController {
             Pageable pageable,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return PagedList.response(schoolFeesService.paymentJournal(from, to, pageable));
+        var resultat = schoolFeesService.paymentJournal(from, to, pageable);
+        return PagedList.response(resultat.page(), resultat.total());
     }
 
     /**

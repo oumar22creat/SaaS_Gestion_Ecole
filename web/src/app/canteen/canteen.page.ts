@@ -4,6 +4,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { FRENCH_PAGINATOR } from '../core/paginator-intl.provider';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { extractErrorMessage } from '../core/http-error.util';
@@ -22,8 +24,10 @@ import { CanteenInvoice, CanteenService, Menu } from './canteen.service';
     MatSelectModule,
     MatButtonModule,
     MatTableModule,
+    MatPaginatorModule,
     MatIconModule,
   ],
+  providers: [FRENCH_PAGINATOR],
   template: `
     <div class="page-header">
       <h1><mat-icon class="page-icon" aria-hidden="true">restaurant</mat-icon>Cantine</h1>
@@ -87,6 +91,14 @@ import { CanteenInvoice, CanteenService, Menu } from './canteen.service';
         <tr mat-row *matRowDef="let row; columns: unpaidColumns"></tr>
       </table>
     </div>
+    <mat-paginator
+      [length]="unpaidTotal()"
+      [pageIndex]="unpaidPage()"
+      [pageSize]="unpaidSize()"
+      [pageSizeOptions]="[25, 50, 100]"
+      (page)="onUnpaidPage($event)"
+      aria-label="Pages d'impayés de cantine"
+    />
   `,
 })
 export class CanteenPage {
@@ -96,6 +108,9 @@ export class CanteenPage {
   protected readonly students = signal<Student[]>([]);
   protected readonly menus = signal<Menu[]>([]);
   protected readonly unpaid = signal<CanteenInvoice[]>([]);
+  protected readonly unpaidTotal = signal(0);
+  protected readonly unpaidPage = signal(0);
+  protected readonly unpaidSize = signal(25);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly money = formatMoney;
   protected readonly menuColumns = ['date', 'desc'];
@@ -114,9 +129,12 @@ export class CanteenPage {
     const to = toIsoDate(new Date(Date.now() + 7 * 86400000));
     this.menus.set(await this.canteenService.listMenus(from, to));
     try {
-      this.unpaid.set(await this.canteenService.unpaid());
+      const page = await this.canteenService.unpaid(this.unpaidPage(), this.unpaidSize());
+      this.unpaid.set(page.items);
+      this.unpaidTotal.set(page.total);
     } catch {
       this.unpaid.set([]);
+      this.unpaidTotal.set(0);
     }
   }
 
@@ -141,5 +159,11 @@ export class CanteenPage {
     } catch (error) {
       this.errorMessage.set(extractErrorMessage(error));
     }
+  }
+
+  protected onUnpaidPage(event: PageEvent): void {
+    this.unpaidPage.set(event.pageIndex);
+    this.unpaidSize.set(event.pageSize);
+    void this.load();
   }
 }

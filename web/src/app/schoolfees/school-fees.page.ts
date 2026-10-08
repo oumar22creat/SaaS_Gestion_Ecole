@@ -7,6 +7,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
@@ -14,7 +15,9 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { FRENCH_DATE_LOCALE } from '../core/date-locale.provider';
 import { confirmAction } from '../core/confirm-dialog.component';
 import { fieldError } from '../core/form-error.util';
+import { PagedTotal } from '../core/api-response.model';
 import { extractErrorMessage } from '../core/http-error.util';
+import { FRENCH_PAGINATOR } from '../core/paginator-intl.provider';
 import { toIsoDate } from '../core/iso-date.util';
 import { formatMoney } from '../core/money.util';
 import { SchoolClass } from '../schoolclass/school-class.model';
@@ -53,9 +56,10 @@ import {
     MatButtonModule,
     MatTableModule,
     MatIconModule,
+    MatPaginatorModule,
     MatDialogModule,
   ],
-  providers: [FRENCH_DATE_LOCALE],
+  providers: [FRENCH_DATE_LOCALE, FRENCH_PAGINATOR],
   templateUrl: './school-fees.page.html',
   styleUrl: './school-fees.page.scss',
 })
@@ -102,12 +106,20 @@ export class SchoolFeesPage {
   protected journalFrom = startOfMonth();
   protected journalTo = new Date();
 
-  protected readonly outstandingTotal = computed(() =>
-    this.outstanding().reduce((total, entry) => total + entry.amountRemainingCents, 0),
-  );
-  protected readonly journalTotal = computed(() =>
-    this.journal().reduce((total, line) => total + line.amountCents, 0),
-  );
+  /**
+   * Totaux renvoyés par le serveur, portant sur tout le filtre et non sur la page affichée.
+   * Les sommer ici reviendrait, depuis que ces listes sont paginées, à présenter le total
+   * de vingt lignes comme celui de la période — l'erreur qu'on ne découvre qu'en
+   * justifiant une caisse.
+   */
+  protected readonly outstandingTotal = signal(0);
+  protected readonly journalTotal = signal(0);
+  protected readonly outstandingCount = signal(0);
+  protected readonly journalCount = signal(0);
+  protected readonly outstandingPage = signal(0);
+  protected readonly outstandingSize = signal(25);
+  protected readonly journalPage = signal(0);
+  protected readonly journalSize = signal(25);
 
   /** Traduction du filtre d'écran vers le paramètre d'API, qui lui attend null. */
   private get classFilter(): number | null {
@@ -132,15 +144,20 @@ export class SchoolFeesPage {
     try {
       const [summary, outstanding] = await Promise.all([
         this.schoolFeesService.summary(this.classFilter),
-        this.schoolFeesService.outstanding(this.classFilter, this.onlyOverdue),
+        this.schoolFeesService.outstanding(
+          this.classFilter,
+          this.onlyOverdue,
+          this.outstandingPage(),
+          this.outstandingSize(),
+        ),
       ]);
       this.summary.set(summary);
-      this.outstanding.set(outstanding);
+      this.applyOutstanding(outstanding);
       const classId = this.classFilter;
       this.schedules.set(classId === null ? [] : await this.schoolFeesService.listSchedules(classId));
     } catch (error) {
       // Une liste vide se lirait comme « aucun impayé », c'est-à-dire l'inverse du problème.
-      this.outstanding.set([]);
+      this.resetOutstanding();
       this.summary.set(null);
       this.errorMessage.set(extractErrorMessage(error));
     } finally {
@@ -151,11 +168,16 @@ export class SchoolFeesPage {
   async loadOutstanding(): Promise<void> {
     this.loading.set(true);
     try {
-      this.outstanding.set(
-        await this.schoolFeesService.outstanding(this.classFilter, this.onlyOverdue),
+      this.applyOutstanding(
+        await this.schoolFeesService.outstanding(
+          this.classFilter,
+          this.onlyOverdue,
+          this.outstandingPage(),
+          this.outstandingSize(),
+        ),
       );
     } catch (error) {
-      this.outstanding.set([]);
+      this.resetOutstanding();
       this.errorMessage.set(extractErrorMessage(error));
     } finally {
       this.loading.set(false);
@@ -164,16 +186,57 @@ export class SchoolFeesPage {
 
   async loadJournal(): Promise<void> {
     try {
-      this.journal.set(
-        await this.schoolFeesService.paymentJournal(
-          toIsoDate(this.journalFrom),
-          toIsoDate(this.journalTo),
-        ),
+      const page = await this.schoolFeesService.paymentJournal(
+        toIsoDate(this.journalFrom),
+        toIsoDate(this.journalTo),
+        this.journalPage(),
+        this.journalSize(),
       );
+      this.journal.set(page.items);
+      this.journalCount.set(page.total);
+      this.journalTotal.set(page.totalSum);
     } catch (error) {
       this.journal.set([]);
+      this.journalCount.set(0);
+      this.journalTotal.set(0);
       this.errorMessage.set(extractErrorMessage(error));
     }
+  }
+
+  private applyOutstanding(page: PagedTotal<FeeOutstanding>): void {
+    this.outstanding.set(page.items);
+    this.outstandingCount.set(page.total);
+    this.outstandingTotal.set(page.totalSum);
+  }
+
+  /** Une liste vide se lirait comme « aucun impayé », c'est-à-dire l'inverse du problème. */
+  private resetOutstanding(): void {
+    this.outstanding.set([]);
+    this.outstandingCount.set(0);
+    this.outstandingTotal.set(0);
+  }
+
+  /** Changer de filtre repart de la première page : rester en page 4 n'aurait aucun sens. */
+  protected onOutstandingFilterChange(): void {
+    this.outstandingPage.set(0);
+    void this.loadOutstanding();
+  }
+
+  protected onOutstandingPage(event: PageEvent): void {
+    this.outstandingPage.set(event.pageIndex);
+    this.outstandingSize.set(event.pageSize);
+    void this.loadOutstanding();
+  }
+
+  protected onJournalFilterChange(): void {
+    this.journalPage.set(0);
+    void this.loadJournal();
+  }
+
+  protected onJournalPage(event: PageEvent): void {
+    this.journalPage.set(event.pageIndex);
+    this.journalSize.set(event.pageSize);
+    void this.loadJournal();
   }
 
   async createSchedule(): Promise<void> {

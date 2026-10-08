@@ -51,6 +51,12 @@ class SchoolFeesTest extends AbstractIntegrationTest {
     @Autowired
     private FeeScheduleRepository feeScheduleRepository;
 
+    @Autowired
+    private StudentFeeInvoiceRepository invoiceRepository;
+
+    @Autowired
+    private FeePaymentRepository feePaymentRepository;
+
     @Test
     void generatesInvoicesForActiveStudentsAndTracksPaymentsToFullSettlement() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Frais Scolaires");
@@ -367,5 +373,74 @@ class SchoolFeesTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.data.lines.length()").value(1))
                 .andExpect(jsonPath("$.data.lines[0].label").value("Trimestre 1"))
                 .andExpect(jsonPath("$.data.lines[0].overdue").value(true));
+    }
+
+    /**
+     * Le piège de la pagination sur un écran comptable : la page ne contient qu'une partie
+     * des lignes, mais le total affiché doit porter sur toute la période. S'il se calculait
+     * sur les lignes reçues, le comptable lirait le total d'une page en croyant lire celui
+     * du trimestre — et ne s'en apercevrait qu'en justifiant sa caisse.
+     */
+    @Test
+    void aPaginatedPaymentJournalCarriesTheTotalOfThePeriodAndNotOfThePage() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Journal Paginé");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "compta-page@ecole.example",
+                Role.ACCOUNTANT);
+        SchoolClass classe = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("6ème Journal", null), tenant.getId()));
+        FeeSchedule echeance = feeScheduleRepository.save(TestAuthSupport.withTenant(
+                new FeeSchedule(classe.getId(), "Scolarité", 100000, "XOF", LocalDate.of(2026, 11, 30)),
+                tenant.getId()));
+
+        // Cinq règlements de 10 000 : 50 000 au total, quelle que soit la taille de la page.
+        for (int i = 0; i < 5; i++) {
+            Student eleve = studentRepository.save(TestAuthSupport.withTenant(
+                    new Student("JP-" + i, "Élève" + i, "Nom" + i, null, null, classe.getId()), tenant.getId()));
+            StudentFeeInvoice facture = invoiceRepository.save(TestAuthSupport.withTenant(
+                    new StudentFeeInvoice(echeance.getId(), eleve.getId(), 100000), tenant.getId()));
+            feePaymentRepository.save(TestAuthSupport.withTenant(
+                    new FeePayment(facture.getId(), 10000, FeePaymentMethod.CASH, "R" + i, 1L), tenant.getId()));
+        }
+
+        mockMvc.perform(get("/api/v1/school-fees/payments")
+                        .param("from", "2020-01-01").param("to", "2030-12-31")
+                        .param("page", "0").param("size", "2")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.meta.total").value(5))
+                // 50 000 et non 20 000 : le total de la période, pas celui de la page.
+                .andExpect(jsonPath("$.meta.totalSum").value(50000));
+    }
+
+    /** Même exigence sur les impayés : le reste à recouvrer porte sur tout le filtre. */
+    @Test
+    void aPaginatedOutstandingListCarriesTheTotalStillOwedAcrossEveryPage() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Impayés Paginés");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "compta-imp@ecole.example",
+                Role.ACCOUNTANT);
+        SchoolClass classe = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("6ème Impayés", null), tenant.getId()));
+        FeeSchedule echeance = feeScheduleRepository.save(TestAuthSupport.withTenant(
+                new FeeSchedule(classe.getId(), "Scolarité", 30000, "XOF", LocalDate.of(2026, 11, 30)),
+                tenant.getId()));
+
+        for (int i = 0; i < 4; i++) {
+            Student eleve = studentRepository.save(TestAuthSupport.withTenant(
+                    new Student("IM-" + i, "Élève" + i, "Nom" + i, null, null, classe.getId()), tenant.getId()));
+            invoiceRepository.save(TestAuthSupport.withTenant(
+                    new StudentFeeInvoice(echeance.getId(), eleve.getId(), 30000), tenant.getId()));
+        }
+
+        mockMvc.perform(get("/api/v1/school-fees/outstanding")
+                        .param("page", "0").param("size", "2")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.meta.total").value(4))
+                // 4 × 30 000 = 120 000, et non 60 000 pour les deux lignes affichées.
+                .andExpect(jsonPath("$.meta.totalSum").value(120000));
     }
 }

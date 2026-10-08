@@ -37,4 +37,19 @@ public final class PagedList {
                 page.getContent(),
                 new ApiResponse.PageMeta(page.getNumber() + 1, page.getSize(), page.getTotalElements()));
     }
+
+    /**
+     * Même chose, avec la somme d'un montant sur l'ensemble du filtre.
+     *
+     * <p>À utiliser dès qu'un écran affiche un total : il ne peut pas le calculer sur les
+     * lignes qu'il reçoit, puisqu'il n'en reçoit qu'une page. Lui laisser faire la somme
+     * reviendrait à afficher le total de vingt lignes en le présentant comme celui de la
+     * période.
+     */
+    public static <T> ApiResponse<List<T>> response(Page<T> page, long sommeTotale) {
+        return ApiResponse.of(
+                page.getContent(),
+                new ApiResponse.PageMeta(
+                        page.getNumber() + 1, page.getSize(), page.getTotalElements(), sommeTotale));
+    }
 }

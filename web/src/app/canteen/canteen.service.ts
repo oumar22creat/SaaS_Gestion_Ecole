@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { Paged } from '../core/paged.model';
 import { environment } from '../../environments/environment';
-import { PARAMS_LISTE_COMPLETE } from '../core/referentiel.params';
 import { ApiResponse } from '../core/api-response.model';
 
 export interface Menu {
@@ -58,12 +58,17 @@ export class CanteenService {
     );
   }
 
-  async unpaid(): Promise<CanteenInvoice[]> {
+  /**
+   * Les impayés de cantine, page par page. C'est la liste qui grossit le plus vite de
+   * l'application : une facture par élève et par semaine, soit plusieurs milliers de lignes
+   * par trimestre dans une école de mille élèves.
+   */
+  async unpaid(page: number, pageSize: number): Promise<Paged<CanteenInvoice>> {
     const response = await firstValueFrom(
       this.http.get<ApiResponse<CanteenInvoice[]>>(`${environment.apiUrl}/canteen/invoices/unpaid`, {
-        params: PARAMS_LISTE_COMPLETE,
+        params: { page: String(page), size: String(pageSize) },
       }),
     );
-    return response.data;
+    return { items: response.data, total: response.meta?.total ?? response.data.length };
   }
 }

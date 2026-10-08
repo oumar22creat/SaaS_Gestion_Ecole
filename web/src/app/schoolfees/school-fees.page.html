@@ -67,11 +67,11 @@
   <mat-tab label="Recouvrement">
     <div class="tab-body">
       <div class="filters-row">
-        <mat-checkbox [(ngModel)]="onlyOverdue" (ngModelChange)="loadOutstanding()">
+        <mat-checkbox [(ngModel)]="onlyOverdue" (ngModelChange)="onOutstandingFilterChange()">
           N'afficher que les retards
         </mat-checkbox>
         <span class="filters-summary">
-          {{ outstanding().length }} ligne(s) · {{ money(outstandingTotal()) }} à recouvrer
+          {{ outstandingCount() }} ligne(s) · {{ money(outstandingTotal()) }} à recouvrer
         </span>
         @if (summary(); as stats) {
           @if (stats.lateStudentCount > 0) {
@@ -166,6 +166,14 @@
             <tr mat-row *matRowDef="let row; columns: outstandingColumns"></tr>
           </table>
         </div>
+        <mat-paginator
+          [length]="outstandingCount()"
+          [pageIndex]="outstandingPage()"
+          [pageSize]="outstandingSize()"
+          [pageSizeOptions]="[25, 50, 100]"
+          (page)="onOutstandingPage($event)"
+          aria-label="Pages d'impayés"
+        />
       }
     </div>
   </mat-tab>
@@ -258,18 +266,18 @@
       <div class="filters-row">
         <mat-form-field appearance="outline" class="date-filter">
           <mat-label>Du</mat-label>
-          <input matInput [matDatepicker]="fromPicker" [(ngModel)]="journalFrom" (ngModelChange)="loadJournal()" />
+          <input matInput [matDatepicker]="fromPicker" [(ngModel)]="journalFrom" (ngModelChange)="onJournalFilterChange()" />
           <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
           <mat-datepicker #fromPicker />
         </mat-form-field>
         <mat-form-field appearance="outline" class="date-filter">
           <mat-label>Au</mat-label>
-          <input matInput [matDatepicker]="toPicker" [(ngModel)]="journalTo" (ngModelChange)="loadJournal()" />
+          <input matInput [matDatepicker]="toPicker" [(ngModel)]="journalTo" (ngModelChange)="onJournalFilterChange()" />
           <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
           <mat-datepicker #toPicker />
         </mat-form-field>
         <span class="filters-summary">
-          {{ journal().length }} règlement(s) · {{ money(journalTotal()) }} encaissé(s)
+          {{ journalCount() }} règlement(s) · {{ money(journalTotal()) }} encaissé(s)
         </span>
       </div>
 
@@ -324,6 +332,14 @@
             <tr mat-row *matRowDef="let row; columns: journalColumns"></tr>
           </table>
         </div>
+        <mat-paginator
+          [length]="journalCount()"
+          [pageIndex]="journalPage()"
+          [pageSize]="journalSize()"
+          [pageSizeOptions]="[25, 50, 100]"
+          (page)="onJournalPage($event)"
+          aria-label="Pages du journal des règlements"
+        />
       }
     </div>
   </mat-tab>

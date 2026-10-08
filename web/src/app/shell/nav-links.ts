@@ -90,6 +90,14 @@ export const NAV_LINKS: NavLink[] = [
     section: 'Pédagogie',
   },
   {
+    icon: 'assignment',
+    label: 'Rapport trimestriel',
+    path: '/term-reports',
+    // Direction seule : ce rapport part au ministère et engage l'établissement.
+    roles: ['ADMIN', 'DIRECTION'],
+    section: 'Pédagogie',
+  },
+  {
     icon: 'history_edu',
     label: 'Cahier de textes',
     path: '/lessons',

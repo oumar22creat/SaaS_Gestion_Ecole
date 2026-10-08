@@ -30,6 +30,11 @@ public final class TexteImprimable {
                 case '‐', '‑', '‒', '–', '—' -> propre.append('-');
                 case ' ', ' ', ' ' -> propre.append(' ');
                 case '…' -> propre.append("...");
+                // Les comparateurs sont absents de WinAnsi : « MOYENNE ≥ 10 » sortait
+                // « MOYENNE ? 10 » en plein intitulé de colonne.
+                case '≥' -> propre.append(">=");
+                case '≤' -> propre.append("<=");
+                case '×' -> propre.append('x');
                 case 'Œ' -> propre.append("OE");
                 case 'œ' -> propre.append("oe");
                 case '€' -> propre.append("EUR");

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ApiResponse } from '../core/api-response.model';
+import { ApiResponse, PagedTotal } from '../core/api-response.model';
 
 const BASE_URL = `${environment.apiUrl}/school-fees`;
 
@@ -144,18 +144,32 @@ export class SchoolFeesService {
   }
 
   /** Sans `schoolClassId`, la vue porte sur tout l'établissement. */
-  async outstanding(schoolClassId: number | null, onlyOverdue: boolean): Promise<FeeOutstanding[]> {
-    // size explicite : l'écran affiche le total à recouvrer en sommant ces lignes. Lui
-    // servir une page le ferait afficher le total de la page, ce qui est pire qu'un
-    // tableau long — c'est un chiffre faux sur un écran comptable.
-    const params: Record<string, string> = { onlyOverdue: String(onlyOverdue), size: '500' };
+  /**
+   * Les impayés, page par page. Le reste à recouvrer vient de `meta.totalSum` et porte sur
+   * tout le filtre : l'écran ne peut pas le calculer, il ne reçoit qu'une page.
+   */
+  async outstanding(
+    schoolClassId: number | null,
+    onlyOverdue: boolean,
+    page: number,
+    pageSize: number,
+  ): Promise<PagedTotal<FeeOutstanding>> {
+    const params: Record<string, string> = {
+      onlyOverdue: String(onlyOverdue),
+      page: String(page),
+      size: String(pageSize),
+    };
     if (schoolClassId !== null) {
       params['schoolClassId'] = String(schoolClassId);
     }
     const response = await firstValueFrom(
       this.http.get<ApiResponse<FeeOutstanding[]>>(`${BASE_URL}/outstanding`, { params }),
     );
-    return response.data;
+    return {
+      items: response.data,
+      total: response.meta?.total ?? response.data.length,
+      totalSum: response.meta?.totalSum ?? 0,
+    };
   }
 
   /** Relance par SMS ; renvoie le nombre de familles réellement notifiées. */
@@ -177,14 +191,22 @@ export class SchoolFeesService {
     return response.data;
   }
 
-  async paymentJournal(from: string, to: string): Promise<FeePaymentJournalEntry[]> {
+  /** Le journal, page par page ; le total encaissé sur la période vient du serveur. */
+  async paymentJournal(
+    from: string,
+    to: string,
+    page: number,
+    pageSize: number,
+  ): Promise<PagedTotal<FeePaymentJournalEntry>> {
     const response = await firstValueFrom(
       this.http.get<ApiResponse<FeePaymentJournalEntry[]>>(`${BASE_URL}/payments`, {
-        // Comme les impayés : l'écran somme ces lignes pour afficher le total encaissé sur
-        // la période. Une page lui ferait afficher le total de la page.
-        params: { from, to, size: '500' },
+        params: { from, to, page: String(page), size: String(pageSize) },
       }),
     );
-    return response.data;
+    return {
+      items: response.data,
+      total: response.meta?.total ?? response.data.length,
+      totalSum: response.meta?.totalSum ?? 0,
+    };
   }
 }

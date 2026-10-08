@@ -1,7 +1,7 @@
 package com.schoolsaas.reportcard;
 
 import com.schoolsaas.common.ApiException;
-import com.schoolsaas.common.TexteImprimable;
+import com.schoolsaas.officialdoc.OfficialDocumentLayout;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.subject.Subject;
@@ -42,8 +42,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ReportCardPdfExporter {
 
-    private static final float MARGE = 40;
-    private static final float HAUTEUR_LIGNE = 16;
+    private static final float MARGE = OfficialDocumentLayout.MARGE;
+    private static final float HAUTEUR_LIGNE = OfficialDocumentLayout.HAUTEUR_LIGNE;
     private static final DateTimeFormatter JOUR = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     /** Largeurs des colonnes du tableau, dans l'ordre de la maquette. */
@@ -112,75 +112,19 @@ public class ReportCardPdfExporter {
         PDType1Font gras = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
 
         try (PDPageContentStream c = new PDPageContentStream(document, page)) {
-            float y = enTeteAdministratif(document, c, tenant, logo, normal, gras, largeur, hauteur);
-            y = titre(c, reportCard, gras, normal, largeur, y);
+            float y = OfficialDocumentLayout.enTete(document, c, tenant, logo, largeur, hauteur);
+            y = OfficialDocumentLayout.titre(
+                    c,
+                    "BULLETIN DE NOTES - " + reportCard.getPeriodLabel().toUpperCase(Locale.FRENCH),
+                    "ANNÉE SCOLAIRE : " + anneeScolaire(reportCard),
+                    largeur,
+                    y);
             y = identiteEleve(c, student, schoolClass, normal, gras, largeur, y);
             y = tableauDisciplines(c, entries, subjectsById, normal, gras, largeur, y - 6);
             y = recapitulatif(c, reportCard, entries, normal, gras, largeur, y - 10);
-            signature(c, tenant, normal, gras, largeur, y - 24);
-            piedDePage(c, tenant, normal, largeur);
+            OfficialDocumentLayout.signature(c, tenant, largeur, y - 24);
+            OfficialDocumentLayout.piedDePage(c, tenant, largeur);
         }
-    }
-
-    /**
-     * État, académie, inspection et nom de l'établissement à gauche ; logo et raison sociale
-     * à droite, comme sur la maquette.
-     */
-    private float enTeteAdministratif(
-            PDDocument document, PDPageContentStream c, Tenant tenant, byte[] logo, PDType1Font normal,
-            PDType1Font gras, float largeur, float hauteur) throws IOException {
-        float y = hauteur - MARGE;
-        float basLogo = y;
-
-        if (logo != null) {
-            PDImageXObject image = PDImageXObject.createFromByteArray(document, logo, "logo");
-            float echelle = Math.min(LOGO_MAX / image.getWidth(), LOGO_MAX / image.getHeight());
-            float l = image.getWidth() * echelle;
-            float h = image.getHeight() * echelle;
-            float x = largeur - MARGE - Math.max(l, 150) / 2 - l / 2;
-            basLogo = y - h;
-            c.drawImage(image, x, basLogo, l, h);
-        }
-
-        float ligne = y - 12;
-        if (rempli(tenant.getOfficialAuthority())) {
-            ecrire(c, gras, 13, MARGE, ligne, tenant.getOfficialAuthority());
-            ligne -= HAUTEUR_LIGNE;
-        }
-        for (String mention : new String[] {tenant.getAcademyLabel(), tenant.getInspectionLabel()}) {
-            if (rempli(mention)) {
-                ecrire(c, gras, 9, MARGE, ligne, mention);
-                ligne -= HAUTEUR_LIGNE - 3;
-            }
-        }
-        ecrire(c, gras, 9, MARGE, ligne, tenant.getName().toUpperCase(Locale.FRENCH));
-        ligne -= HAUTEUR_LIGNE - 3;
-
-        // Raison sociale sous le logo, en couleur de l'établissement. Seulement s'il y a un
-        // logo : sans lui, elle ferait doublon avec la ligne de gauche et viendrait se poser
-        // sur le titre, qui est centré.
-        float basColonneDroite = basLogo;
-        if (logo != null) {
-            c.setNonStrokingColor(couleur(tenant.getPrimaryColor()));
-            String nom = tenant.getName().toUpperCase(Locale.FRENCH);
-            basColonneDroite = basLogo - 16;
-            ecrire(c, gras, 13, largeur - MARGE - largeurTexte(gras, 13, nom), basColonneDroite, nom);
-            c.setNonStrokingColor(Color.BLACK);
-        }
-
-        // Le titre commence sous le plus bas des deux blocs, jamais à une hauteur fixée
-        // d'avance : une école avec trois mentions officielles et un logo haut déborderait.
-        return Math.min(ligne, basColonneDroite) - 14;
-    }
-
-    private float titre(
-            PDPageContentStream c, ReportCard reportCard, PDType1Font gras, PDType1Font normal, float largeur, float y)
-            throws IOException {
-        String titre = "BULLETIN DE NOTES — " + reportCard.getPeriodLabel().toUpperCase(Locale.FRENCH);
-        ecrire(c, gras, 15, centre(gras, 15, titre, largeur), y, titre);
-        String annee = "ANNÉE SCOLAIRE : " + anneeScolaire(reportCard);
-        ecrire(c, normal, 11, centre(normal, 11, annee, largeur), y - HAUTEUR_LIGNE, annee);
-        return y - HAUTEUR_LIGNE * 2 - 8;
     }
 
     /**
@@ -209,8 +153,8 @@ public class ReportCardPdfExporter {
     private void paire(
             PDPageContentStream c, PDType1Font gras, PDType1Font normal, float x, float y, String libelle, String valeur)
             throws IOException {
-        ecrire(c, gras, 10, x, y, libelle);
-        ecrire(c, normal, 10, x + largeurTexte(gras, 10, libelle) + 6, y, valeur == null ? "—" : valeur);
+        OfficialDocumentLayout.ecrire(c, gras, 10, x, y, libelle);
+        OfficialDocumentLayout.ecrire(c, normal, 10, x + OfficialDocumentLayout.largeurTexte(gras, 10, libelle) + 6, y, valeur == null ? "—" : valeur);
     }
 
     private float tableauDisciplines(
@@ -231,28 +175,28 @@ public class ReportCardPdfExporter {
 
         float x = x0;
         c.setLineWidth(0.8f);
-        rectangle(c, x, basBandeau, colonnes[0], HAUTEUR_LIGNE * 2);
-        ecrireCentre(c, gras, 8.5f, x, colonnes[0], basBandeau + HAUTEUR_LIGNE / 2 + 1, "DISCIPLINES");
+        OfficialDocumentLayout.rectangle(c, x, basBandeau, colonnes[0], HAUTEUR_LIGNE * 2);
+        OfficialDocumentLayout.ecrireCentre(c, gras, 8.5f, x, colonnes[0], basBandeau + HAUTEUR_LIGNE / 2 + 1, "DISCIPLINES");
         x += colonnes[0];
-        rectangle(c, x, basBandeau, colonnes[1], HAUTEUR_LIGNE * 2);
-        ecrireCentre(c, gras, 8.5f, x, colonnes[1], basBandeau + HAUTEUR_LIGNE / 2 + 1, "COEF");
+        OfficialDocumentLayout.rectangle(c, x, basBandeau, colonnes[1], HAUTEUR_LIGNE * 2);
+        OfficialDocumentLayout.ecrireCentre(c, gras, 8.5f, x, colonnes[1], basBandeau + HAUTEUR_LIGNE / 2 + 1, "COEF");
         x += colonnes[1];
 
         float largeurNotes = colonnes[2] + colonnes[3] + colonnes[4];
-        rectangle(c, x, milieuBandeau, largeurNotes, HAUTEUR_LIGNE);
-        ecrireCentre(c, gras, 8.5f, x, largeurNotes, milieuBandeau + 5, "NOTES");
+        OfficialDocumentLayout.rectangle(c, x, milieuBandeau, largeurNotes, HAUTEUR_LIGNE);
+        OfficialDocumentLayout.ecrireCentre(c, gras, 8.5f, x, largeurNotes, milieuBandeau + 5, "NOTES");
         String[] intitulesNotes = {"DEVOIR 1", "DEVOIR 2", "COMP"};
         for (int i = 0; i < intitulesNotes.length; i++) {
             float l = colonnes[2 + i];
-            rectangle(c, x, basBandeau, l, HAUTEUR_LIGNE);
-            ecrireCentre(c, gras, 7.5f, x, l, basBandeau + 5, intitulesNotes[i]);
+            OfficialDocumentLayout.rectangle(c, x, basBandeau, l, HAUTEUR_LIGNE);
+            OfficialDocumentLayout.ecrireCentre(c, gras, 7.5f, x, l, basBandeau + 5, intitulesNotes[i]);
             x += l;
         }
-        rectangle(c, x, basBandeau, colonnes[5], HAUTEUR_LIGNE * 2);
-        ecrireCentre(c, gras, 8.5f, x, colonnes[5], basBandeau + HAUTEUR_LIGNE / 2 + 1, "MOYENNE");
+        OfficialDocumentLayout.rectangle(c, x, basBandeau, colonnes[5], HAUTEUR_LIGNE * 2);
+        OfficialDocumentLayout.ecrireCentre(c, gras, 8.5f, x, colonnes[5], basBandeau + HAUTEUR_LIGNE / 2 + 1, "MOYENNE");
         x += colonnes[5];
-        rectangle(c, x, basBandeau, colonnes[6], HAUTEUR_LIGNE * 2);
-        ecrireCentre(c, gras, 8.5f, x, colonnes[6], basBandeau + HAUTEUR_LIGNE / 2 + 1, "APPRÉCIATION");
+        OfficialDocumentLayout.rectangle(c, x, basBandeau, colonnes[6], HAUTEUR_LIGNE * 2);
+        OfficialDocumentLayout.ecrireCentre(c, gras, 8.5f, x, colonnes[6], basBandeau + HAUTEUR_LIGNE / 2 + 1, "APPRÉCIATION");
 
         float ligneY = basBandeau;
         for (ReportCardEntry entry : entries) {
@@ -260,20 +204,20 @@ public class ReportCardPdfExporter {
             Subject matiere = subjectsById.get(entry.getSubjectId());
             String nom = matiere != null ? matiere.getName() : "Matière #" + entry.getSubjectId();
             String[] cellules = {
-                tronquer(gras, 8.5f, nom.toUpperCase(Locale.FRENCH), colonnes[0]),
+                OfficialDocumentLayout.tronquer(gras, 8.5f, nom.toUpperCase(Locale.FRENCH), colonnes[0]),
                 String.valueOf(entry.getCoefficient()),
                 note(entry.getAssignmentOneScore()),
                 note(entry.getAssignmentTwoScore()),
                 note(entry.getExamScore()),
                 note(entry.getAverage()),
-                tronquer(normal, 8f, appreciation(entry), colonnes[6]),
+                OfficialDocumentLayout.tronquer(normal, 8f, appreciation(entry), colonnes[6]),
             };
             float cx = x0;
             for (int i = 0; i < colonnes.length; i++) {
-                rectangle(c, cx, ligneY, colonnes[i], HAUTEUR_LIGNE);
+                OfficialDocumentLayout.rectangle(c, cx, ligneY, colonnes[i], HAUTEUR_LIGNE);
                 PDType1Font police = i == 0 ? gras : normal;
                 float taille = i == 6 ? 7.5f : 8.5f;
-                ecrireCentre(c, police, taille, cx, colonnes[i], ligneY + 5, cellules[i]);
+                OfficialDocumentLayout.ecrireCentre(c, police, taille, cx, colonnes[i], ligneY + 5, cellules[i]);
                 cx += colonnes[i];
             }
         }
@@ -331,91 +275,13 @@ public class ReportCardPdfExporter {
         float ligneY = y;
         for (String[] ligne : lignes) {
             ligneY -= HAUTEUR_LIGNE;
-            rectangle(c, x0, ligneY, largeurLibelle, HAUTEUR_LIGNE);
-            ecrire(c, gras, 8.5f, x0 + 5, ligneY + 5, ligne[0]);
-            rectangle(c, x0 + largeurLibelle, ligneY, largeurValeur, HAUTEUR_LIGNE);
-            ecrire(c, normal, 8.5f, x0 + largeurLibelle + 5, ligneY + 5,
-                    tronquer(normal, 8.5f, ligne[1], largeurValeur - 10));
+            OfficialDocumentLayout.rectangle(c, x0, ligneY, largeurLibelle, HAUTEUR_LIGNE);
+            OfficialDocumentLayout.ecrire(c, gras, 8.5f, x0 + 5, ligneY + 5, ligne[0]);
+            OfficialDocumentLayout.rectangle(c, x0 + largeurLibelle, ligneY, largeurValeur, HAUTEUR_LIGNE);
+            OfficialDocumentLayout.ecrire(c, normal, 8.5f, x0 + largeurLibelle + 5, ligneY + 5,
+                    OfficialDocumentLayout.tronquer(normal, 8.5f, ligne[1], largeurValeur - 10));
         }
         return ligneY;
-    }
-
-    private void signature(
-            PDPageContentStream c, Tenant tenant, PDType1Font normal, PDType1Font gras, float largeur, float y)
-            throws IOException {
-        String fonction = "LE DIRECTEUR GÉNÉRAL";
-        float x = largeur - MARGE - largeurTexte(gras, 10, fonction);
-        ecrire(c, gras, 10, x, y, fonction);
-        if (rempli(tenant.getDirectorName())) {
-            // Trois interlignes de blanc : la signature manuscrite se pose là.
-            ecrire(c, gras, 10, largeur - MARGE - largeurTexte(gras, 10, tenant.getDirectorName()),
-                    y - HAUTEUR_LIGNE * 3, tenant.getDirectorName());
-        }
-    }
-
-    private void piedDePage(PDPageContentStream c, Tenant tenant, PDType1Font normal, float largeur)
-            throws IOException {
-        String ville = rempli(tenant.getHeadOfficeCity()) ? tenant.getHeadOfficeCity() : "";
-        String date = (ville.isEmpty() ? "Le " : ville + ", le ") + LocalDate.now().format(JOUR);
-        ecrire(c, normal, 8, MARGE, MARGE, date);
-        if (rempli(tenant.getPostalAddress())) {
-            ecrire(c, normal, 8, largeur - MARGE - largeurTexte(normal, 8, tenant.getPostalAddress()), MARGE,
-                    tenant.getPostalAddress());
-        }
-        if (rempli(tenant.getReportCardLegalMentions())) {
-            ecrire(c, normal, 7, MARGE, MARGE - 11, tenant.getReportCardLegalMentions());
-        }
-    }
-
-    // ------------------------------------------------------------------ primitives de dessin
-
-    private void rectangle(PDPageContentStream c, float x, float y, float largeur, float hauteur) throws IOException {
-        c.addRect(x, y, largeur, hauteur);
-        c.stroke();
-    }
-
-    private void ecrire(PDPageContentStream c, PDType1Font police, float taille, float x, float y, String texte)
-            throws IOException {
-        c.beginText();
-        c.setFont(police, taille);
-        c.newLineAtOffset(x, y);
-        c.showText(TexteImprimable.nettoyer(texte));
-        c.endText();
-    }
-
-    private void ecrireCentre(
-            PDPageContentStream c, PDType1Font police, float taille, float x, float largeurCellule, float y, String texte)
-            throws IOException {
-        String propre = TexteImprimable.nettoyer(texte);
-        ecrire(c, police, taille, x + (largeurCellule - largeurTexte(police, taille, propre)) / 2, y, propre);
-    }
-
-    private float centre(PDType1Font police, float taille, String texte, float largeurPage) {
-        return (largeurPage - largeurTexte(police, taille, texte)) / 2;
-    }
-
-    private float largeurTexte(PDType1Font police, float taille, String texte) {
-        try {
-            return police.getStringWidth(TexteImprimable.nettoyer(texte)) / 1000 * taille;
-        } catch (IOException e) {
-            // Mesure impossible : mieux vaut un texte mal centré qu'un bulletin non produit.
-            return texte.length() * taille * 0.5f;
-        }
-    }
-
-    private String tronquer(PDType1Font police, float taille, String texte, float largeurDisponible) {
-        String propre = TexteImprimable.nettoyer(texte);
-        if (largeurTexte(police, taille, propre) <= largeurDisponible - 6) {
-            return propre;
-        }
-        StringBuilder court = new StringBuilder();
-        for (char caractere : propre.toCharArray()) {
-            if (largeurTexte(police, taille, court.toString() + caractere + "...") > largeurDisponible - 6) {
-                break;
-            }
-            court.append(caractere);
-        }
-        return court + "…";
     }
 
     private String note(Double valeur) {
@@ -423,7 +289,7 @@ public class ReportCardPdfExporter {
     }
 
     private String valeurOuTiret(String valeur) {
-        return rempli(valeur) ? valeur : "—";
+        return OfficialDocumentLayout.rempli(valeur) ? valeur : "—";
     }
 
     /** « 3e sur 42 ». Un élève sans moyenne n'est pas classé : le dire évite le soupçon d'erreur. */

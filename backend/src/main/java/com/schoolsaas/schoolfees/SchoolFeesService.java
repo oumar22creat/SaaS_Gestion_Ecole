@@ -207,8 +207,22 @@ public class SchoolFeesService {
      * soldées et annulées ne sont plus chargées du tout, et elles sont la majorité en fin
      * d'année. Le reste est borné par l'échéancier de la classe demandée.
      */
-    public Page<FeeOutstandingEntry> outstanding(Long schoolClassId, boolean onlyOverdue, Pageable pageable) {
-        return PagedList.of(outstanding(schoolClassId, onlyOverdue), pageable);
+    public PageEtTotal<FeeOutstandingEntry> outstanding(
+            Long schoolClassId, boolean onlyOverdue, Pageable pageable) {
+        List<FeeOutstandingEntry> tout = outstanding(schoolClassId, onlyOverdue);
+        return new PageEtTotal<>(
+                PagedList.of(tout, pageable),
+                tout.stream().mapToLong(FeeOutstandingEntry::amountRemainingCents).sum());
+    }
+
+    /**
+     * Une page, et la somme portant sur l'ensemble du filtre — pas sur la page.
+     *
+     * <p>Les deux voyagent ensemble parce qu'elles répondent à deux questions que l'écran
+     * pose en même temps : « que montrer » et « combien cela fait-il en tout ». Les séparer
+     * en deux appels exposerait à les afficher désaccordés.
+     */
+    public record PageEtTotal<T>(Page<T> page, long total) {
     }
 
     public List<FeeOutstandingEntry> outstanding(Long schoolClassId, boolean onlyOverdue) {
@@ -297,13 +311,18 @@ public class SchoolFeesService {
      * plusieurs milliers de règlements par trimestre ; seuls ceux de la page demandée sont
      * lus, et les recherches d'élève et d'échéance qui suivent ne portent que sur eux.
      */
-    public Page<FeePaymentJournalEntry> paymentJournal(LocalDate from, LocalDate to, Pageable pageable) {
-        Page<FeePayment> page = paymentRepository.findAllByPaidAtBetweenOrderByPaidAtDesc(
-                from.atStartOfDay(ZoneOffset.UTC).toInstant(),
-                to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant(),
-                pageable);
-        return new org.springframework.data.domain.PageImpl<>(
-                enrichir(page.getContent()), pageable, page.getTotalElements());
+    public PageEtTotal<FeePaymentJournalEntry> paymentJournal(LocalDate from, LocalDate to, Pageable pageable) {
+        java.time.Instant debut = from.atStartOfDay(ZoneOffset.UTC).toInstant();
+        java.time.Instant fin = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        Page<FeePayment> page =
+                paymentRepository.findAllByPaidAtBetweenOrderByPaidAtDesc(debut, fin, pageable);
+        // La somme est calculée par la base sur toute la période, pas sur la page : c'est
+        // le total encaissé que le comptable rapproche de sa caisse.
+        Long encaisse = paymentRepository.sumAmountBetween(debut, fin);
+        return new PageEtTotal<>(
+                new org.springframework.data.domain.PageImpl<>(
+                        enrichir(page.getContent()), pageable, page.getTotalElements()),
+                encaisse == null ? 0L : encaisse);
     }
 
     public List<FeePaymentJournalEntry> paymentJournal(LocalDate from, LocalDate to) {

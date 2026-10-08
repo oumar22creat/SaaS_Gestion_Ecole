@@ -97,6 +97,9 @@ export const routes: Routes = [
       staffPage('report-cards', () =>
         import('./reportcard/report-card.page').then((m) => m.ReportCardPage),
       ),
+      staffPage('term-reports', () =>
+        import('./termreport/term-report.page').then((m) => m.TermReportPage),
+      ),
       staffPage('lessons', () => import('./homework/lesson.page').then((m) => m.LessonPage)),
       staffPage('documents', () => import('./document/document.page').then((m) => m.DocumentPage)),
       staffPage('messages', () =>

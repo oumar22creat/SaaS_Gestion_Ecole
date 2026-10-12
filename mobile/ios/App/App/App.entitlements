@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Capacité « Push Notifications ». Sans elle, Apple refuse d'émettre un jeton et
+	  l'enregistrement échoue silencieusement à l'exécution.
+
+	  « development » : les builds signées pour l'App Store sont automatiquement promues en
+	  « production » par Xcode à l'archivage. Mettre « production » ici casserait le test sur
+	  un appareil branché en développement, qui est le seul moyen de vérifier le push — le
+	  simulateur iOS ne reçoit pas de notification réelle.
+	-->
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

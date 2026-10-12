@@ -35,19 +35,33 @@ const STUDENT_TILES: HomeTile[] = [
   },
 ];
 
+/**
+ * Offerte à tous les rôles, et c'est le point : un parent qui ne peut pas couper ce qui
+ * l'importune coupe tout depuis les réglages du téléphone — et une permission refusée ne
+ * se redemande pas. L'établissement perd alors le canal entier faute d'un interrupteur.
+ */
+const NOTIFICATION_TILE: HomeTile = {
+  icon: 'notifications-outline',
+  label: 'Notifications',
+  hint: 'Choisir ce que vous recevez',
+  path: '/notifications',
+};
+
 const STAFF_PEDAGOGIE = ['ADMIN', 'DIRECTION', 'TEACHER', 'VIE_SCOLAIRE'];
 
 export function homeTilesForRole(role: string | null): HomeTile[] {
   if (role === 'PARENT') {
-    return PARENT_TILES;
+    return [...PARENT_TILES, NOTIFICATION_TILE];
   }
   if (role === 'STUDENT') {
-    return STUDENT_TILES;
+    return [...STUDENT_TILES, NOTIFICATION_TILE];
   }
   if (role && STAFF_PEDAGOGIE.includes(role)) {
-    return TEACHER_TILES;
+    return [...TEACHER_TILES, NOTIFICATION_TILE];
   }
-  return [];
+  // Même sans tuile métier, le réglage des notifications reste accessible : un comptable
+  // reçoit les alertes d'abonnement et doit pouvoir les couper.
+  return role ? [NOTIFICATION_TILE] : [];
 }
 
 export function homeEyebrowForRole(role: string | null): string {
@@ -65,6 +79,12 @@ export function homeEyebrowForRole(role: string | null): string {
 
 export function canAccessMobilePath(role: string | null, path: string): boolean {
   if (path === '/home' || path === '/' || path === '') {
+    return role !== null;
+  }
+  // Chacun règle ce qu'il reçoit, quel que soit son rôle. C'est précisément le manque qui
+  // faisait couper toutes les notifications depuis les réglages du téléphone — un refus
+  // système ne se redemande pas, et l'établissement perdait le canal entier.
+  if (path.startsWith('/notifications')) {
     return role !== null;
   }
   if (path.startsWith('/attendance')) {

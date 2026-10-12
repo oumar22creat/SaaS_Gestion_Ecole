@@ -12,8 +12,8 @@ describe('role-access', () => {
     const tiles = homeTilesForRole('PARENT');
     expect(homeEyebrowForRole('PARENT')).toBe('Espace parent');
     expect(tiles.map((tile) => tile.label)).toContain('Mes enfants');
-    // Les tuiles menaient auparavant nulle part (path null) : elles sont désormais actives.
-    expect(tiles.every((tile) => tile.path === '/portal')).toBe(true);
+    // Le portail, plus le réglage des notifications, offert à tous les rôles.
+    expect(tiles.map((tile) => tile.path)).toEqual(['/portal', '/notifications']);
     expect(canAccessMobilePath('PARENT', '/portal')).toBe(true);
     expect(canAccessMobilePath('PARENT', '/attendance')).toBe(false);
     expect(canAccessMobilePath('PARENT', '/home')).toBe(true);
@@ -22,7 +22,7 @@ describe('role-access', () => {
   it('sends students to their own record, without any staff capability', () => {
     const tiles = homeTilesForRole('STUDENT');
     expect(homeEyebrowForRole('STUDENT')).toBe('Espace élève');
-    expect(tiles.map((tile) => tile.path)).toEqual(['/portal']);
+    expect(tiles.map((tile) => tile.path)).toEqual(['/portal', '/notifications']);
     expect(tiles.map((tile) => tile.label)).not.toContain("Feuille d'appel");
     expect(canAccessMobilePath('STUDENT', '/portal')).toBe(true);
     // `/exams` est la saisie de notes du personnel, pas la consultation de l'élève.

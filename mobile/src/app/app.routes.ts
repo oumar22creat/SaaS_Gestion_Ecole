@@ -50,5 +50,13 @@ export const routes: Routes = [
       import('./portal/student-record.page').then((m) => m.PortalStudentRecordPage),
     canActivate: [authGuard, roleGuard],
   },
+  {
+    path: 'notifications',
+    loadComponent: () =>
+      import('./push/notification-preferences.page').then((m) => m.NotificationPreferencesPage),
+    // roleGuard comme partout ailleurs : il autorise tous les rôles connectés sur ce
+    // chemin. L'omettre marcherait aussi, mais l'écart se paierait au premier ajout.
+    canActivate: [authGuard, roleGuard],
+  },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 ];

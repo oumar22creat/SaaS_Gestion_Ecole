@@ -150,6 +150,11 @@ jobs:
           openssl pkey -in "$CHEMIN" -noout 2>/dev/null \
             && echo "  clé privée lisible par OpenSSL" \
             || echo "  ATTENTION : OpenSSL ne lit pas cette clé"
+          # Empreinte de la clé publique dérivée. Le .p8 ne contient pas son Key ID : rien
+          # n'empêche d'y coller une autre clé — celle d'APNs, par exemple, qui est aussi un
+          # .p8 valide qu'OpenSSL lit sans broncher. L'empreinte permet de vérifier de
+          # l'extérieur quelle clé a réellement été déposée, sans la divulguer.
+          echo "  empreinte publique : $(openssl pkey -in "$CHEMIN" -pubout -outform DER 2>/dev/null | openssl dgst -sha256 | awk '{print $2}' | cut -c1-32)"
 
           # Environnement isolé : le Python du runner est « externally managed » et
           # refuse toute installation globale (PEP 668).

@@ -150,6 +150,19 @@ export class StudentListPage {
    * Certificat de scolarité. Désactivé pour un élève inactif : le serveur le refuse — un
    * certificat atteste une situation présente — autant ne pas proposer un geste qui échouera.
    */
+  /** Fiche d'inscription à imprimer, faire signer et classer au dossier. */
+  protected async downloadEnrollmentForm(student: Student): Promise<void> {
+    this.errorMessage.set(null);
+    try {
+      await this.paperworkService.downloadEnrollmentForm(
+        student.id,
+        `${student.lastName} ${student.firstName}`,
+      );
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    }
+  }
+
   async downloadCertificate(student: Student): Promise<void> {
     this.errorMessage.set(null);
     try {

@@ -7,7 +7,8 @@ import { withReadableBody } from '../core/http-error.util';
 const BASE_URL = `${environment.apiUrl}/paperwork`;
 
 /**
- * Documents officiels remis au guichet : certificat de scolarité, reçu de règlement.
+ * Documents officiels remis au guichet : fiche d'inscription, certificat de scolarité,
+ * reçu de règlement.
  *
  * <p>Le téléchargement passe par HttpClient et non par un simple lien : les documents sont
  * derrière l'authentification, et un `<a href>` partirait sans le jeton.
@@ -15,6 +16,18 @@ const BASE_URL = `${environment.apiUrl}/paperwork`;
 @Injectable({ providedIn: 'root' })
 export class PaperworkService {
   private readonly http = inject(HttpClient);
+
+  /**
+   * Fiche d'inscription : la pièce que le guichet imprime, fait signer au responsable légal
+   * et classe au dossier. Distincte du certificat de scolarité, qui atteste après coup
+   * qu'un élève est inscrit — la fiche, elle, acte l'inscription et l'engagement financier.
+   */
+  async downloadEnrollmentForm(studentId: number, studentName: string): Promise<void> {
+    await this.download(
+      `${BASE_URL}/students/${studentId}/enrollment-form.pdf`,
+      `fiche-inscription-${slug(studentName)}.pdf`,
+    );
+  }
 
   async downloadEnrollmentCertificate(studentId: number, studentName: string): Promise<void> {
     await this.download(

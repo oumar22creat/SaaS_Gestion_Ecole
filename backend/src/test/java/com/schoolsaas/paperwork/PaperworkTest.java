@@ -172,4 +172,89 @@ class PaperworkTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk());
     }
+
+    /**
+     * La fiche d'inscription, telle que le guichet l'imprime et la fait signer.
+     *
+     * <p>Deux exigences qui ne vont pas de soi : elle doit porter le détail des frais de la
+     * classe avec leur total — c'est la seule trace écrite de ce que la famille s'engage à
+     * payer — et elle doit sortir même pour un élève sans photo ni responsable enregistré,
+     * puisque c'est précisément le cas d'une inscription qu'on est en train de faire.
+     */
+    @Test
+    void theEnrollmentFormCarriesTheFeesAndPrintsEvenForAStudentWithNoParentOnFile() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Fiche");
+        tenant.setDirectorName("Mme Fatoumata Sidibé");
+        tenant.setOfficialAuthority("RÉPUBLIQUE DU MALI");
+        tenantRepository.save(tenant);
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "secretariat-fiche@ecole.example",
+                Role.SECRETARY);
+        String adminToken = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "admin-fiche@ecole.example",
+                Role.ADMIN);
+        activateYear(adminToken);
+
+        SchoolClass classe = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("6ème année A", null), tenant.getId()));
+        Student eleve = studentRepository.save(TestAuthSupport.withTenant(
+                new Student("FI-001", "Fanta", "Diallo", LocalDate.of(2014, 3, 12), "F", classe.getId()),
+                tenant.getId()));
+
+        mockMvc.perform(post("/api/v1/school-fees/schedules")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"schoolClassId\":" + classe.getId() + ",\"label\":\"Frais d'inscription\","
+                                + "\"amountCents\":30000,\"dueDate\":\"2026-10-15\"}"))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/v1/school-fees/schedules")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"schoolClassId\":" + classe.getId() + ",\"label\":\"Scolarité 1er trimestre\","
+                                + "\"amountCents\":60000,\"dueDate\":\"2026-11-30\"}"))
+                .andExpect(status().isCreated());
+
+        byte[] pdf = mockMvc.perform(get("/api/v1/paperwork/students/" + eleve.getId() + "/enrollment-form.pdf")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        try (org.apache.pdfbox.pdmodel.PDDocument document = org.apache.pdfbox.Loader.loadPDF(pdf)) {
+            String texte = new org.apache.pdfbox.text.PDFTextStripper().getText(document);
+            assertThat(texte)
+                    .contains("FICHE D'INSCRIPTION")
+                    .contains("RÉPUBLIQUE DU MALI")
+                    .contains("Diallo")
+                    .contains("FI-001")
+                    .contains("6ème année A")
+                    .contains("Féminin")
+                    // Les lignes à remplir à la main doivent exister, sinon la fiche est refaite.
+                    .contains("Lieu de naissance")
+                    .contains("RESPONSABLES LÉGAUX")
+                    .contains("Frais d'inscription")
+                    .contains("Scolarité 1er trimestre")
+                    // 30 000 + 60 000 : l'engagement financier total, écrit noir sur blanc.
+                    .contains("TOTAL DÛ POUR L'ANNÉE")
+                    .contains("90 000 XOF")
+                    .contains("Le responsable légal")
+                    .contains("Mme Fatoumata Sidibé");
+        }
+    }
+
+    /** Un enseignant n'inscrit pas : la fiche engage l'établissement et la famille. */
+    @Test
+    void aTeacherCannotPrintAnEnrollmentForm() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Fiche Rôle");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "prof-fiche@ecole.example",
+                Role.TEACHER);
+        SchoolClass classe = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("5ème année A", null), tenant.getId()));
+        Student eleve = studentRepository.save(TestAuthSupport.withTenant(
+                new Student("FI-900", "Moussa", "Traoré", null, "M", classe.getId()), tenant.getId()));
+
+        mockMvc.perform(get("/api/v1/paperwork/students/" + eleve.getId() + "/enrollment-form.pdf")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
 }

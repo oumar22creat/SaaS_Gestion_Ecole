@@ -273,4 +273,97 @@ class SchoolYearTest extends AbstractIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).get("data").get("id").asLong();
     }
+
+    /**
+     * La rentrée, rejouée de bout en bout, dans l'ordre que l'interface impose : on prépare
+     * l'année suivante en juin, on y fait passer la promotion, on l'active en septembre.
+     *
+     * <p>C'est l'ordre qui échouait. La promotion n'écrivait que dans `enrollments`, parce
+     * que l'année cible n'était pas encore active ; l'activation ne rejouait rien. Au premier
+     * appel de la rentrée, tous les élèves étaient encore dans la classe de l'an dernier, et
+     * la 9ème contenait aussi les diplômés de l'an passé. Rien ne le signalait.
+     */
+    @Test
+    void activatingTheNewYearActuallyMovesStudentsIntoTheClassTheyWerePromotedTo() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Rentrée");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "direction-rentree@ecole.example",
+                Role.ADMIN);
+
+        SchoolClass cm1 = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("5ème année A", null), tenant.getId()));
+        SchoolClass cm2 = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("6ème année A", null), tenant.getId()));
+
+        long anneeEnCours = creerAnnee(token, "2026-2027", "2026-09-15", "2027-07-05");
+        mockMvc.perform(put("/api/v1/school-years/" + anneeEnCours + "/activate")
+                .header("Authorization", "Bearer " + token)).andExpect(status().isOk());
+
+        Student promu = creerEleve(token, "Fanta", "Diallo", cm1.getId());
+        Student redoublant = creerEleve(token, "Moussa", "Traoré", cm1.getId());
+        Student sortant = creerEleve(token, "Awa", "Keïta", cm1.getId());
+
+        long anneeSuivante = creerAnnee(token, "2027-2028", "2027-09-15", "2028-07-05");
+
+        mockMvc.perform(post("/api/v1/school-years/" + anneeSuivante + "/promotions")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"sourceYearId\":" + anneeEnCours + ",\"decisions\":["
+                                + "{\"studentId\":" + promu.getId() + ",\"outcome\":\"PROMOTED\",\"targetClassId\":" + cm2.getId() + "},"
+                                + "{\"studentId\":" + redoublant.getId() + ",\"outcome\":\"REPEATING\",\"targetClassId\":null},"
+                                + "{\"studentId\":" + sortant.getId() + ",\"outcome\":\"GRADUATED\",\"targetClassId\":null}]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.promotedCount").value(1))
+                .andExpect(jsonPath("$.data.repeatingCount").value(1))
+                .andExpect(jsonPath("$.data.leftCount").value(1));
+
+        // Avant activation, rien ne doit bouger : l'année en cours continue jusqu'à son terme.
+        org.assertj.core.api.Assertions.assertThat(
+                        studentRepository.findById(promu.getId()).orElseThrow().getSchoolClassId())
+                .as("l'élève reste dans sa classe tant que l'année suivante n'est pas ouverte")
+                .isEqualTo(cm1.getId());
+
+        mockMvc.perform(put("/api/v1/school-years/" + anneeSuivante + "/activate")
+                .header("Authorization", "Bearer " + token)).andExpect(status().isOk());
+
+        Student apresPromotion = studentRepository.findById(promu.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(apresPromotion.getSchoolClassId())
+                .as("le promu est passé en classe supérieure")
+                .isEqualTo(cm2.getId());
+        org.assertj.core.api.Assertions.assertThat(apresPromotion.isActive()).isTrue();
+
+        Student apresRedoublement = studentRepository.findById(redoublant.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(apresRedoublement.getSchoolClassId())
+                .as("le redoublant reste dans la même classe")
+                .isEqualTo(cm1.getId());
+        org.assertj.core.api.Assertions.assertThat(apresRedoublement.isActive()).isTrue();
+
+        Student apresSortie = studentRepository.findById(sortant.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(apresSortie.isActive())
+                .as("un élève en fin de cycle sort des effectifs, sinon il figure à l'appel d'une classe qu'il a quittée")
+                .isFalse();
+    }
+
+    private long creerAnnee(String token, String libelle, String debut, String fin) throws Exception {
+        String reponse = mockMvc.perform(post("/api/v1/school-years")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"label\":\"" + libelle + "\",\"startDate\":\"" + debut
+                                + "\",\"endDate\":\"" + fin + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(reponse).path("data").path("id").asLong();
+    }
+
+    private Student creerEleve(String token, String prenom, String nom, Long classeId) throws Exception {
+        String reponse = mockMvc.perform(post("/api/v1/students")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"" + prenom + "\",\"lastName\":\"" + nom
+                                + "\",\"birthDate\":null,\"gender\":null,\"schoolClassId\":" + classeId + "}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return studentRepository.findById(
+                objectMapper.readTree(reponse).path("data").path("id").asLong()).orElseThrow();
+    }
 }

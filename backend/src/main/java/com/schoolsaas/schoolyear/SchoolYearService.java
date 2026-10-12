@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,8 +105,70 @@ public class SchoolYearService {
             schoolYearRepository.saveAndFlush(current);
         });
         target.setStatus(SchoolYearStatus.ACTIVE);
-        return schoolYearRepository.save(target);
+        SchoolYear ouverte = schoolYearRepository.save(target);
+        appliquerLesInscriptions(ouverte);
+        return ouverte;
     }
+
+    /**
+     * Reporte les inscriptions de l'année qu'on ouvre sur la classe courante des élèves, et
+     * sort des effectifs ceux qui ont quitté l'établissement.
+     *
+     * <p>Sans cela, le passage en classe supérieure n'en était pas un. La promotion se
+     * prépare sur l'année suivante, donc pas encore active ; {@link #enrollInto} ne touche
+     * {@code students.school_class_id} que sur l'année active, et l'activation ne faisait que
+     * basculer des statuts. Le directeur préparait sa promotion en juin, activait l'année en
+     * septembre, et retrouvait tous ses élèves dans la classe de l'an dernier — l'appel, les
+     * notes, l'emploi du temps et les frais lisent cette colonne, pas la table des
+     * inscriptions. Aucune erreur nulle part, découvert au premier appel de la rentrée.
+     *
+     * <p>Les sortants comptent autant que les promus : un élève marqué « transféré », « fin
+     * de cycle » ou « a quitté » gardait sa classe et restait actif. La 9ème année aurait
+     * donc contenu, à la rentrée, les promus de la 8ème <em>et</em> les diplômés de l'an
+     * dernier. Ils sont désactivés ici et non au moment de la décision : en juin, un élève
+     * qui finira son cycle est encore un élève de l'établissement.
+     *
+     * <p>Seule une décision explicite de sortie désactive. Un élève simplement absent de la
+     * nouvelle année — créé avant l'ouverture, oublié dans la promotion — est laissé tel
+     * quel : le silence n'est pas une décision, et le radier serait pire que de l'oublier.
+     */
+    private void appliquerLesInscriptions(SchoolYear annee) {
+        Map<Long, Long> classeParEleve = enrollmentRepository.findAllBySchoolYearId(annee.getId()).stream()
+                .filter(inscription -> inscription.getStatus() == EnrollmentStatus.ENROLLED)
+                .filter(inscription -> inscription.getSchoolClassId() != null)
+                .collect(Collectors.toMap(
+                        Enrollment::getStudentId, Enrollment::getSchoolClassId, (a, b) -> b));
+
+        List<Long> sortants = enrollmentRepository.findAll().stream()
+                .filter(inscription -> !annee.getId().equals(inscription.getSchoolYearId()))
+                .filter(inscription -> SORTIES.contains(inscription.getStatus()))
+                .map(Enrollment::getStudentId)
+                .filter(studentId -> !classeParEleve.containsKey(studentId))
+                .distinct()
+                .toList();
+
+        List<Student> aEnregistrer = new ArrayList<>();
+        for (Student eleve : studentRepository.findAllById(classeParEleve.keySet())) {
+            Long classe = classeParEleve.get(eleve.getId());
+            if (!classe.equals(eleve.getSchoolClassId())) {
+                eleve.setSchoolClassId(classe);
+                aEnregistrer.add(eleve);
+            }
+        }
+        for (Student eleve : studentRepository.findAllById(sortants)) {
+            if (eleve.isActive()) {
+                eleve.setActive(false);
+                aEnregistrer.add(eleve);
+            }
+        }
+        if (!aEnregistrer.isEmpty()) {
+            studentRepository.saveAll(aEnregistrer);
+        }
+    }
+
+    /** Décisions de fin d'année qui font sortir l'élève des effectifs. */
+    private static final Set<EnrollmentStatus> SORTIES = Set.of(
+            EnrollmentStatus.TRANSFERRED, EnrollmentStatus.GRADUATED, EnrollmentStatus.WITHDRAWN);
 
     @Transactional
     public SchoolYear close(Long id) {

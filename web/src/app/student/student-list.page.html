@@ -92,6 +92,14 @@
         }
         <button
           mat-icon-button
+          (click)="downloadEnrollmentForm(student)"
+          [attr.aria-label]="'Fiche d\'inscription de ' + student.firstName + ' ' + student.lastName"
+          matTooltip="Fiche d'inscription à faire signer"
+        >
+          <mat-icon>assignment_ind</mat-icon>
+        </button>
+        <button
+          mat-icon-button
           (click)="downloadCertificate(student)"
           [attr.aria-label]="'Certificat de scolarité de ' + student.firstName + ' ' + student.lastName"
           matTooltip="Certificat de scolarité"

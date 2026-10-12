@@ -117,6 +117,10 @@ jobs:
           CLE_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
           mkdir -p ~/private_keys
+          # Élagage défensif : un retour à la ligne collé par mégarde dans un secret se
+          # retrouve dans le « kid » du jeton, et Apple répond 401 sans dire pourquoi.
+          CLE_ID="$(printf '%s' "$CLE_ID" | tr -d '[:space:]')"
+          echo "ASC_KEY_ID=$CLE_ID" >> "$GITHUB_ENV"
           printf '%s' "$CLE" > ~/private_keys/AuthKey_${CLE_ID}.p8
 
       # Un 401 d'Apple pendant l'archivage ne dit pas si la clé est mal formée, mal
@@ -127,7 +131,18 @@ jobs:
           CLE_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           EMETTEUR: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
+          CLE_ID="$(printf '%s' "$CLE_ID" | tr -d '[:space:]')"
+          EMETTEUR="$(printf '%s' "$EMETTEUR" | tr -d '[:space:]')"
           CHEMIN=~/private_keys/AuthKey_${CLE_ID}.p8
+
+          # Longueur et forme seulement : de quoi repérer un blanc parasite ou une valeur
+          # recopiée depuis la mauvaise colonne, sans rien divulguer.
+          echo "Forme des identifiants :"
+          printf '  Key ID    : %s caractères, attendu 10 — conforme : %s\n' \
+            "${#CLE_ID}" "$(printf '%s' "$CLE_ID" | grep -qE '^[A-Z0-9]{10}$' && echo oui || echo NON)"
+          printf '  Issuer ID : %s caractères, attendu 36 — conforme : %s\n' \
+            "${#EMETTEUR}" "$(printf '%s' "$EMETTEUR" | grep -qE '^[0-9a-f-]{36}$' && echo oui || echo NON)"
+
           echo "Forme de la clé :"
           head -c 27 "$CHEMIN" | grep -q "BEGIN PRIVATE KEY" \
             && echo "  en-tête PEM présent" \
@@ -145,7 +160,8 @@ jobs:
           from cryptography.hazmat.primitives import hashes, serialization
           from cryptography.hazmat.primitives.asymmetric import ec, utils
 
-          cle_id, emetteur = os.environ["CLE_ID"], os.environ["EMETTEUR"]
+          cle_id = os.environ["CLE_ID"].strip()
+          emetteur = os.environ["EMETTEUR"].strip()
           chemin = os.path.expanduser(f"~/private_keys/AuthKey_{cle_id}.p8")
           b64 = lambda d: base64.urlsafe_b64encode(d).rstrip(b"=").decode()
 
@@ -193,8 +209,8 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_${CLE_ID}.p8 \
-            -authenticationKeyID "$CLE_ID" \
+            -authenticationKeyPath ~/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$EMETTEUR" \
             archive
 
@@ -224,8 +240,8 @@ jobs:
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
             -exportPath "$RUNNER_TEMP/export" \
             -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_${CLE_ID}.p8 \
-            -authenticationKeyID "$CLE_ID" \
+            -authenticationKeyPath ~/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$EMETTEUR"
 
       # Conservée même en cas d'échec de l'envoi : si Apple refuse, on veut pouvoir

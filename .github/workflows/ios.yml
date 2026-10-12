@@ -119,6 +119,60 @@ jobs:
           mkdir -p ~/private_keys
           printf '%s' "$CLE" > ~/private_keys/AuthKey_${CLE_ID}.p8
 
+      # Un 401 d'Apple pendant l'archivage ne dit pas si la clé est mal formée, mal
+      # recopiée ou simplement pas assez habilitée. Ce contrôle pose la question
+      # directement à l'API et ne rapporte que le code de réponse — jamais la clé.
+      - name: Contrôler la clé App Store Connect
+        env:
+          CLE_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          EMETTEUR: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          CHEMIN=~/private_keys/AuthKey_${CLE_ID}.p8
+          echo "Forme de la clé :"
+          head -c 27 "$CHEMIN" | grep -q "BEGIN PRIVATE KEY" \
+            && echo "  en-tête PEM présent" \
+            || echo "  ATTENTION : en-tête PEM absent — la clé a-t-elle été recopiée en entier ?"
+          openssl pkey -in "$CHEMIN" -noout 2>/dev/null \
+            && echo "  clé privée lisible par OpenSSL" \
+            || echo "  ATTENTION : OpenSSL ne lit pas cette clé"
+
+          python3 - <<'PY' > /tmp/jeton.txt
+          import os, time, json, base64, hashlib, subprocess
+          cle_id, emetteur = os.environ["CLE_ID"], os.environ["EMETTEUR"]
+          chemin = os.path.expanduser(f"~/private_keys/AuthKey_{cle_id}.p8")
+          b64 = lambda d: base64.urlsafe_b64encode(d).rstrip(b"=").decode()
+          entete = b64(json.dumps({"alg": "ES256", "kid": cle_id, "typ": "JWT"}).encode())
+          charge = b64(json.dumps({
+              "iss": emetteur, "iat": int(time.time()), "exp": int(time.time()) + 600,
+              "aud": "appstoreconnect-v1"}).encode())
+          message = f"{entete}.{charge}".encode()
+          der = subprocess.run(["openssl", "dgst", "-sha256", "-sign", chemin],
+                               input=message, capture_output=True).stdout
+          # DER -> R||S, ce qu'attend ES256
+          i = 4 if der[3] != 0x21 else 5
+          lr = der[3]
+          r = der[4:4 + lr][-32:].rjust(32, b"\0")
+          reste = der[4 + lr:]
+          s = reste[2:2 + reste[1]][-32:].rjust(32, b"\0")
+          print(f"{entete}.{charge}.{b64(r + s)}")
+          PY
+
+          CODE=$(curl -s -o /tmp/reponse.json -w "%{http_code}" \
+            -H "Authorization: Bearer $(cat /tmp/jeton.txt)" \
+            "https://api.appstoreconnect.apple.com/v1/apps?limit=1")
+          echo "Réponse d'Apple : HTTP $CODE"
+          if [ "$CODE" = "200" ]; then
+            echo "  clé acceptée. Fiches d'application visibles :"
+            python3 -c "import json;d=json.load(open('/tmp/reponse.json'));print('   ', len(d.get('data',[])), 'application(s)'); [print('    -', a['attributes'].get('bundleId')) for a in d.get('data',[])]"
+          else
+            echo "  clé REFUSÉE. Causes habituelles, par fréquence :"
+            echo "   1. rôle insuffisant — il faut « Admin » ou « App Manager », pas « Developer »"
+            echo "   2. Issuer ID recopié depuis la mauvaise ligne de la page des clés"
+            echo "   3. contenu du .p8 tronqué dans le secret GitHub"
+            python3 -c "import json;d=json.load(open('/tmp/reponse.json'));[print('   détail Apple :', e.get('title'), '-', e.get('detail')) for e in d.get('errors',[])]" 2>/dev/null || true
+            exit 1
+          fi
+
       - name: Archiver
         working-directory: mobile/ios/App
         env:

@@ -1,0 +1,188 @@
+# Construction iOS sur machine distante.
+#
+# Pourquoi : le Mac de développement est un MacBook Pro 2017, bloqué sur macOS 13 Ventura,
+# donc sur Xcode 15.2 et le SDK iOS 17.2. Apple impose un SDK minimum qui monte chaque année
+# pour accepter une soumission, et un framework binaire récent — Capacitor 8 — n'est pas
+# entièrement lisible par un compilateur Swift de 2024. Les deux problèmes disparaissent sur
+# un runner macOS à jour, sans changer de machine.
+#
+# Deux travaux séparés à dessein. « build » ne demande aucun secret et tourne à chaque
+# poussée : il dit si le code iOS compile. « release » signe, archive et téléverse vers
+# TestFlight ; il se déclenche à la main, parce qu'envoyer une version à Apple n'est pas
+# quelque chose qui doit arriver tout seul au détour d'un commit.
+name: iOS
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/ios.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+  workflow_dispatch:
+    inputs:
+      publier:
+        description: "Signer, archiver et téléverser vers TestFlight"
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: Compilation iOS (non signée)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Utiliser le Xcode le plus récent
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      # Tracé dans le journal : c'est l'information qu'on vient chercher ici, et elle
+      # permet de comparer avec la machine de développement quand une erreur ne se
+      # reproduit que d'un côté.
+      - name: Versions de la chaîne
+        run: |
+          xcodebuild -version
+          swift --version
+          xcodebuild -showsdks | grep -i iphoneos || true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Dépendances
+        working-directory: mobile
+        run: npm ci
+
+      - name: Construire l'application web
+        working-directory: mobile
+        run: npm run build
+
+      - name: Synchroniser Capacitor
+        working-directory: mobile
+        run: npx cap sync ios
+
+      # Sans signature : on vérifie que le code compile, pas qu'il est distribuable. La
+      # signature demande des secrets, et ce travail doit rester utile sur une
+      # contribution extérieure qui n'y a pas accès.
+      - name: Compiler
+        working-directory: mobile/ios/App
+        run: |
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+  release:
+    name: Archive signée et envoi TestFlight
+    runs-on: macos-latest
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.publier
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Dépendances et construction web
+        working-directory: mobile
+        run: |
+          npm ci
+          npm run build
+          npx cap sync ios
+
+      # La clé d'API App Store Connect remplace le couple certificat + profil : Xcode crée
+      # et renouvelle lui-même ce qu'il faut. Un secret au lieu de quatre, et rien à
+      # réexporter quand un certificat expire.
+      - name: Déposer la clé App Store Connect
+        env:
+          CLE: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          CLE_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          mkdir -p ~/private_keys
+          printf '%s' "$CLE" > ~/private_keys/AuthKey_${CLE_ID}.p8
+
+      - name: Archiver
+        working-directory: mobile/ios/App
+        env:
+          CLE_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          EMETTEUR: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${CLE_ID}.p8 \
+            -authenticationKeyID "$CLE_ID" \
+            -authenticationKeyIssuerID "$EMETTEUR" \
+            archive
+
+      - name: Options d'export
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <!-- « app-store » et non « app-store-connect » : le second est refusé par xcodebuild. -->
+            <key>method</key><string>app-store</string>
+            <key>teamID</key><string>253HSP874T</string>
+            <key>uploadSymbols</key><true/>
+            <key>signingStyle</key><string>automatic</string>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Exporter l'IPA
+        env:
+          CLE_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          EMETTEUR: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${CLE_ID}.p8 \
+            -authenticationKeyID "$CLE_ID" \
+            -authenticationKeyIssuerID "$EMETTEUR"
+
+      # Conservée même en cas d'échec de l'envoi : si Apple refuse, on veut pouvoir
+      # récupérer l'IPA et la soumettre à la main avec Transporter.
+      - name: Conserver l'IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipa
+          path: ${{ runner.temp }}/export/*.ipa
+          retention-days: 14
+
+      - name: Téléverser vers TestFlight
+        env:
+          CLE_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          EMETTEUR: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$(ls "$RUNNER_TEMP"/export/*.ipa)" \
+            --apiKey "$CLE_ID" \
+            --apiIssuer "$EMETTEUR"

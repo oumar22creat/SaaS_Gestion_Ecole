@@ -229,6 +229,13 @@
           </button>
         </form>
 
+        @if (schedules().length > 0) {
+          <button mat-stroked-button class="copy-button" (click)="openScheduleCopy()">
+            <mat-icon>content_copy</mat-icon>
+            Recopier cet échéancier vers d'autres classes
+          </button>
+        }
+
         @if (schedules().length === 0) {
           <div class="empty-state">
             <span class="empty-title">Aucune échéance pour cette classe</span>

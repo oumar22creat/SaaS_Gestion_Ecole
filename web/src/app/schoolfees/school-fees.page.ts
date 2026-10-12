@@ -25,6 +25,7 @@ import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
 import { PaperworkService } from '../paperwork/paperwork.service';
 import { DiscountDialog } from './discount.dialog';
+import { ScheduleCopyDialog } from './schedule-copy.dialog';
 import { ScheduleEditDialog } from './schedule-edit.dialog';
 import { PaymentDialog } from './payment.dialog';
 import {
@@ -329,6 +330,25 @@ export class SchoolFeesPage {
         if (recorded) {
           void this.load();
           void this.loadJournal();
+        }
+      });
+  }
+
+  /** Recopie l'échéancier de la classe affichée vers d'autres classes. */
+  openScheduleCopy(): void {
+    const sourceClass = this.classes().find((item) => item.id === this.classFilter);
+    if (!sourceClass) {
+      return;
+    }
+    this.dialog
+      .open(ScheduleCopyDialog, {
+        data: { sourceClass, schedules: this.schedules(), classes: this.classes() },
+        width: '520px',
+      })
+      .afterClosed()
+      .subscribe((copied) => {
+        if (copied) {
+          void this.load();
         }
       });
   }

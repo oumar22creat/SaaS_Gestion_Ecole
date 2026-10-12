@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import com.schoolsaas.schoolfees.dto.FeeScheduleUpdateRequest;
 import com.schoolsaas.schoolfees.dto.FeeScheduleUpdateResult;
+import com.schoolsaas.schoolfees.dto.FeeScheduleCopyRequest;
+import com.schoolsaas.schoolfees.dto.FeeScheduleCopyResult;
 import com.schoolsaas.schoolfees.dto.FeeDiscountRequest;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,6 +59,17 @@ public class SchoolFeesController {
         List<FeeScheduleResponse> data =
                 schoolFeesService.listSchedulesForClass(schoolClassId).stream().map(FeeScheduleResponse::from).toList();
         return ApiResponse.of(data);
+    }
+
+    /**
+     * Recopie l'échéancier d'une classe vers d'autres. Ne facture personne : définir ce qui
+     * est dû et le facturer sont deux gestes distincts.
+     */
+    @PostMapping("/schedules/copy")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCOUNTANT')")
+    public ApiResponse<FeeScheduleCopyResult> copySchedules(
+            @Valid @RequestBody FeeScheduleCopyRequest request) {
+        return ApiResponse.of(schoolFeesService.copySchedules(request));
     }
 
     /**

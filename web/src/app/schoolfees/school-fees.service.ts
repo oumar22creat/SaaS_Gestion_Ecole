@@ -25,6 +25,12 @@ export interface FeeInvoice {
 }
 
 /** Une facture non soldée, telle que l'écran la présente : un élève nommé, une dette datée. */
+/** Ce qu'a produit une recopie d'échéancier vers d'autres classes. */
+export interface FeeScheduleCopyResult {
+  created: FeeSchedule[];
+  skipped: string[];
+}
+
 /** Ce qu'a produit la correction d'une échéance : les factures suivies, et celles qui ne l'ont pas pu. */
 export interface FeeScheduleUpdateResult {
   schedule: FeeSchedule;
@@ -246,6 +252,23 @@ export class SchoolFeesService {
         label,
         amountCents,
         dueDate,
+      }),
+    );
+    return response.data;
+  }
+
+  /**
+   * Recopie l'échéancier d'une classe vers d'autres. Ne facture personne : définir ce qui
+   * est dû et le facturer sont deux gestes distincts, et le second engage les familles.
+   */
+  async copySchedules(
+    sourceClassId: number,
+    targetClassIds: number[],
+  ): Promise<FeeScheduleCopyResult> {
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<FeeScheduleCopyResult>>(`${BASE_URL}/schedules/copy`, {
+        sourceClassId,
+        targetClassIds,
       }),
     );
     return response.data;

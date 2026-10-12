@@ -679,4 +679,95 @@ class SchoolFeesTest extends AbstractIntegrationTest {
                 new StudentFeeInvoice(echeance.getId(), eleve.getId(), echeance.getAmountCents()),
                 tenant.getId()));
     }
+
+    /**
+     * Recopier l'échéancier d'une classe vers les autres, à la rentrée.
+     *
+     * <p>Deux exigences. Une échéance du même intitulé déjà présente n'est pas recopiée :
+     * deux « Scolarité 1er trimestre » feraient deux factures par élève, donc une dette
+     * doublée que personne ne comprendrait avant la relance. Et aucune facture n'est
+     * générée : recopier vers huit classes ne doit pas engager quatre cents familles sans
+     * que personne l'ait demandé.
+     */
+    @Test
+    void copyingASchedulePlanSkipsDuplicateLabelsAndInvoicesNobody() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Recopie");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "compta-copie@ecole.example",
+                Role.ACCOUNTANT);
+
+        SchoolClass source = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("6ème année A", null), tenant.getId()));
+        SchoolClass vierge = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("5ème année A", null), tenant.getId()));
+        SchoolClass dejaServie = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("4ème année A", null), tenant.getId()));
+
+        feeScheduleRepository.save(TestAuthSupport.withTenant(
+                new FeeSchedule(source.getId(), "Frais d'inscription", 30000, "XOF",
+                        LocalDate.of(2026, 10, 15)), tenant.getId()));
+        feeScheduleRepository.save(TestAuthSupport.withTenant(
+                new FeeSchedule(source.getId(), "Scolarité 1er trimestre", 60000, "XOF",
+                        LocalDate.of(2026, 11, 30)), tenant.getId()));
+        // La 4ème a déjà son inscription, saisie à la main : elle ne doit pas être doublée.
+        feeScheduleRepository.save(TestAuthSupport.withTenant(
+                new FeeSchedule(dejaServie.getId(), "Frais d'inscription", 25000, "XOF",
+                        LocalDate.of(2026, 10, 15)), tenant.getId()));
+
+        // Un élève dans la classe vierge : la recopie ne doit lui créer aucune facture.
+        Student eleve = studentRepository.save(TestAuthSupport.withTenant(
+                new Student("CP-1", "Fanta", "Diallo", null, "F", vierge.getId()), tenant.getId()));
+
+        mockMvc.perform(post("/api/v1/school-fees/schedules/copy")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"sourceClassId\":" + source.getId() + ",\"targetClassIds\":["
+                                + vierge.getId() + "," + dejaServie.getId() + "," + source.getId() + "]}"))
+                .andExpect(status().isOk())
+                // 2 pour la classe vierge, 1 pour la 4ème (son inscription existe déjà).
+                .andExpect(jsonPath("$.data.created.length()").value(3))
+                .andExpect(jsonPath("$.data.skipped.length()").value(1))
+                .andExpect(jsonPath("$.data.skipped[0]").value(
+                        org.hamcrest.Matchers.containsString("Frais d'inscription")));
+
+        org.assertj.core.api.Assertions.assertThat(
+                        feeScheduleRepository.findAllBySchoolClassId(vierge.getId()))
+                .as("la classe vierge reçoit les deux échéances, montants repris tels quels")
+                .extracting(FeeSchedule::getLabel, FeeSchedule::getAmountCents)
+                .containsExactlyInAnyOrder(
+                        org.assertj.core.groups.Tuple.tuple("Frais d'inscription", 30000L),
+                        org.assertj.core.groups.Tuple.tuple("Scolarité 1er trimestre", 60000L));
+
+        org.assertj.core.api.Assertions.assertThat(
+                        feeScheduleRepository.findAllBySchoolClassId(dejaServie.getId()))
+                .as("l'inscription déjà saisie garde son montant, elle n'est pas écrasée")
+                .extracting(FeeSchedule::getAmountCents)
+                .containsExactlyInAnyOrder(25000L, 60000L);
+
+        org.assertj.core.api.Assertions.assertThat(
+                        invoiceRepository.findAllByStudentIdOrderByIssuedAtDesc(eleve.getId()))
+                .as("recopier un échéancier n'engage aucune famille")
+                .isEmpty();
+    }
+
+    /** Recopier depuis une classe sans échéancier n'a pas de sens : le dire plutôt que ne rien faire. */
+    @Test
+    void copyingFromAClassWithNoSchedulesIsRefusedWithAClearMessage() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Recopie Vide");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "compta-vide@ecole.example",
+                Role.ACCOUNTANT);
+        SchoolClass source = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("3ème année A", null), tenant.getId()));
+        SchoolClass cible = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("2ème année A", null), tenant.getId()));
+
+        mockMvc.perform(post("/api/v1/school-fees/schedules/copy")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"sourceClassId\":" + source.getId() + ",\"targetClassIds\":["
+                                + cible.getId() + "]}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("NO_SCHEDULE_TO_COPY"));
+    }
 }

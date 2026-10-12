@@ -23,6 +23,9 @@ import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
 import java.text.NumberFormat;
 import com.schoolsaas.common.PagedList;
+import com.schoolsaas.schoolfees.dto.FeeScheduleCopyRequest;
+import com.schoolsaas.schoolfees.dto.FeeScheduleCopyResult;
+import java.util.Set;
 import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -118,6 +121,58 @@ public class SchoolFeesService {
 
     public List<FeePayment> paymentsForInvoice(Long invoiceId) {
         return paymentRepository.findAllByInvoiceId(invoiceId);
+    }
+
+    /**
+     * Recopie l'échéancier d'une classe vers d'autres.
+     *
+     * <p>Neuf classes et quatre échéances font trente-six saisies à la rentrée, pour des
+     * lignes qui ne diffèrent le plus souvent que par le montant. On recopie, puis on
+     * corrige les montants classe par classe.
+     *
+     * <p>Les factures ne sont pas générées : définir ce qui est dû et le facturer sont deux
+     * gestes distincts, et le second engage les familles. Recopier un échéancier vers neuf
+     * classes ne doit pas créer quatre cents factures sans que personne l'ait demandé.
+     *
+     * <p>Une échéance du même intitulé déjà présente sur la classe cible n'est pas recopiée.
+     * En créer une seconde ferait deux factures « Scolarité 1er trimestre » par élève, donc
+     * une dette doublée que personne ne comprendrait avant la relance.
+     */
+    @Transactional
+    public FeeScheduleCopyResult copySchedules(FeeScheduleCopyRequest request) {
+        List<FeeSchedule> modele = feeScheduleRepository.findAllBySchoolClassId(request.sourceClassId());
+        if (modele.isEmpty()) {
+            throw ApiException.unprocessable(
+                    "NO_SCHEDULE_TO_COPY", "Cette classe n'a aucune échéance à recopier");
+        }
+        Map<Long, String> nomsDeClasse = classNames();
+
+        List<FeeScheduleResponse> creees = new ArrayList<>();
+        List<String> ignorees = new ArrayList<>();
+        for (Long cible : request.targetClassIds().stream().distinct().toList()) {
+            if (cible.equals(request.sourceClassId())) {
+                continue;
+            }
+            if (schoolClassRepository.findById(cible).isEmpty()) {
+                ignorees.add("Classe #" + cible + " : introuvable");
+                continue;
+            }
+            String nomCible = nomsDeClasse.getOrDefault(cible, "Classe #" + cible);
+            Set<String> dejaPresents = feeScheduleRepository.findAllBySchoolClassId(cible).stream()
+                    .map(echeance -> echeance.getLabel().trim().toLowerCase(Locale.FRENCH))
+                    .collect(Collectors.toSet());
+
+            for (FeeSchedule source : modele) {
+                if (dejaPresents.contains(source.getLabel().trim().toLowerCase(Locale.FRENCH))) {
+                    ignorees.add(nomCible + " : « " + source.getLabel() + " » existe déjà");
+                    continue;
+                }
+                creees.add(FeeScheduleResponse.from(feeScheduleRepository.save(new FeeSchedule(
+                        cible, source.getLabel(), source.getAmountCents(), source.getCurrency(),
+                        source.getDueDate()))));
+            }
+        }
+        return new FeeScheduleCopyResult(creees, ignorees);
     }
 
     /**

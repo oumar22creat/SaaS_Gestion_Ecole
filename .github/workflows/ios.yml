@@ -198,6 +198,15 @@ jobs:
           if [ "$CODE" = "200" ]; then
             echo "  clé acceptée. Fiches d'application visibles :"
             python3 -c "import json;d=json.load(open('/tmp/reponse.json'));print('   ', len(d.get('data',[])), 'application(s)'); [print('    -', a['attributes'].get('bundleId')) for a in d.get('data',[])]"
+            # Arrêt immédiat plutôt que huit minutes d'archivage pour échouer à l'export :
+            # sans fiche d'application, Apple n'émet aucun profil de distribution pour ce
+            # bundle, et le message d'Xcode à ce moment-là ne désigne pas la cause.
+            if ! grep -q "com.schoolsaas.mobile" /tmp/reponse.json; then
+              echo "  ARRÊT : aucune fiche d'application pour com.schoolsaas.mobile."
+              echo "    Créez-la dans App Store Connect > Apps > +, avec ce bundle ID exact."
+              echo "    Sans elle, Apple refuse d'émettre un profil de distribution."
+              exit 1
+            fi
           else
             echo "  clé REFUSÉE. Causes habituelles, par fréquence :"
             echo "   1. rôle insuffisant — il faut « Admin » ou « App Manager », pas « Developer »"

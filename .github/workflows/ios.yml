@@ -136,8 +136,11 @@ jobs:
             && echo "  clé privée lisible par OpenSSL" \
             || echo "  ATTENTION : OpenSSL ne lit pas cette clé"
 
-          pip3 install --quiet cryptography
-          python3 - <<'PY' > /tmp/jeton.txt
+          # Environnement isolé : le Python du runner est « externally managed » et
+          # refuse toute installation globale (PEP 668).
+          python3 -m venv /tmp/venv-asc
+          /tmp/venv-asc/bin/pip install --quiet cryptography
+          /tmp/venv-asc/bin/python - <<'PY' > /tmp/jeton.txt
           import os, time, json, base64
           from cryptography.hazmat.primitives import hashes, serialization
           from cryptography.hazmat.primitives.asymmetric import ec, utils

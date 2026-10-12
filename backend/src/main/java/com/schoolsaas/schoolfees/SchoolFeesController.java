@@ -23,6 +23,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import com.schoolsaas.schoolfees.dto.FeeDiscountRequest;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -77,6 +79,21 @@ public class SchoolFeesController {
                 .map(invoice -> StudentFeeInvoiceResponse.from(invoice, schoolFeesService.paidAmountForInvoice(invoice.getId())))
                 .toList();
         return ApiResponse.of(data);
+    }
+
+    /**
+     * Remise sur une facture : bourse, tarif fratrie, exonération.
+     *
+     * <p>Réservé à l'administration et à la comptabilité, pas au secrétariat : accorder une
+     * réduction est une décision financière, pas un geste de guichet.
+     */
+    @PutMapping("/invoices/{id}/discount")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCOUNTANT')")
+    public ApiResponse<StudentFeeInvoiceResponse> applyDiscount(
+            @PathVariable Long id, @Valid @RequestBody FeeDiscountRequest request) {
+        StudentFeeInvoice invoice = schoolFeesService.applyDiscount(id, request);
+        return ApiResponse.of(
+                StudentFeeInvoiceResponse.from(invoice, schoolFeesService.paidAmountForInvoice(id)));
     }
 
     @PostMapping("/invoices/{id}/payments")

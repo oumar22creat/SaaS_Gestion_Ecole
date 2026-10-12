@@ -23,6 +23,7 @@ import { formatMoney } from '../core/money.util';
 import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
 import { PaperworkService } from '../paperwork/paperwork.service';
+import { DiscountDialog } from './discount.dialog';
 import { PaymentDialog } from './payment.dialog';
 import {
   FeeOutstanding,
@@ -325,6 +326,18 @@ export class SchoolFeesPage {
         if (recorded) {
           void this.load();
           void this.loadJournal();
+        }
+      });
+  }
+
+  /** Remise sur une facture : bourse, tarif fratrie, exonération. */
+  openDiscount(entry: FeeOutstanding): void {
+    this.dialog
+      .open(DiscountDialog, { data: { entry }, width: '460px' })
+      .afterClosed()
+      .subscribe((applied) => {
+        if (applied) {
+          void this.load();
         }
       });
   }

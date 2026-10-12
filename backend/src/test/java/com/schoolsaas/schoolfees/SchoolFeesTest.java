@@ -2,6 +2,7 @@ package com.schoolsaas.schoolfees;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -442,5 +443,146 @@ class SchoolFeesTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.meta.total").value(4))
                 // 4 × 30 000 = 120 000, et non 60 000 pour les deux lignes affichées.
                 .andExpect(jsonPath("$.meta.totalSum").value(120000));
+    }
+
+    /**
+     * Une remise individuelle — bourse, tarif fratrie — et ce qu'elle doit entraîner.
+     *
+     * <p>Le point qui compte : la facture doit sortir des impayés. Sans remise, le
+     * secrétariat encaissait le montant réduit et laissait la facture « partiellement
+     * payée » à vie, ce qui faussait le taux de recouvrement et faisait relancer par SMS
+     * des familles parfaitement en règle.
+     */
+    @Test
+    void aDiscountReducesWhatIsOwedAndTakesTheInvoiceOutOfTheUnpaidList() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Remise");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "compta-remise@ecole.example",
+                Role.ACCOUNTANT);
+        SchoolClass classe = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("6ème Remise", null), tenant.getId()));
+        FeeSchedule echeance = feeScheduleRepository.save(TestAuthSupport.withTenant(
+                new FeeSchedule(classe.getId(), "Scolarité", 60000, "XOF", LocalDate.of(2026, 11, 30)),
+                tenant.getId()));
+        Student eleve = studentRepository.save(TestAuthSupport.withTenant(
+                new Student("REM-1", "Fanta", "Diallo", null, "F", classe.getId()), tenant.getId()));
+        StudentFeeInvoice facture = invoiceRepository.save(TestAuthSupport.withTenant(
+                new StudentFeeInvoice(echeance.getId(), eleve.getId(), 60000), tenant.getId()));
+
+        mockMvc.perform(put("/api/v1/school-fees/invoices/" + facture.getId() + "/discount")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountCents\":20000,\"reason\":\"Tarif fratrie, 2e enfant\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.amountDueCents").value(40000))
+                .andExpect(jsonPath("$.data.discountCents").value(20000))
+                .andExpect(jsonPath("$.data.discountReason").value("Tarif fratrie, 2e enfant"));
+
+        // Rejouer la remise la corrige, ne l'empile pas : 60 000 - 25 000, pas 40 000 - 25 000.
+        mockMvc.perform(put("/api/v1/school-fees/invoices/" + facture.getId() + "/discount")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountCents\":25000,\"reason\":\"Bourse accordée par le conseil\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.amountDueCents").value(35000));
+
+        // La famille règle le net : la facture est soldée et quitte les impayés.
+        mockMvc.perform(post("/api/v1/school-fees/invoices/" + facture.getId() + "/payments")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountCents\":35000,\"method\":\"CASH\",\"reference\":\"R-1\"}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/school-fees/outstanding")
+                        .param("schoolClassId", String.valueOf(classe.getId()))
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+
+        // La remise voyage jusqu'à l'écran des impayés : c'est là que le comptable en accorde
+        // une, et sans elle il ne saurait pas qu'il en existe déjà une ni quel est le tarif.
+        StudentFeeInvoice autre = factureSimple(tenant, "REM-2", 60000);
+        mockMvc.perform(put("/api/v1/school-fees/invoices/" + autre.getId() + "/discount")
+                .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"amountCents\":20000,\"reason\":\"Tarif fratrie\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/school-fees/outstanding")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[?(@.invoiceId == " + autre.getId() + ")].discountCents")
+                        .value(org.hamcrest.Matchers.contains(20000)))
+                .andExpect(jsonPath("$.data[?(@.invoiceId == " + autre.getId() + ")].discountReason")
+                        .value(org.hamcrest.Matchers.contains("Tarif fratrie")));
+    }
+
+    /** Une remise sans motif est un trou dans la comptabilité : elle est refusée. */
+    @Test
+    void aDiscountWithoutAReasonIsRejected() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Remise Motif");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "compta-motif@ecole.example",
+                Role.ACCOUNTANT);
+        StudentFeeInvoice facture = factureSimple(tenant, "MOT-1", 50000);
+
+        mockMvc.perform(put("/api/v1/school-fees/invoices/" + facture.getId() + "/discount")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountCents\":10000,\"reason\":\"   \"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    /**
+     * Une remise qui ramène le dû sous ce qui est déjà versé créerait un trop-perçu que rien
+     * ne sait rembourser. Le cas arrive quand une bourse est accordée en cours d'année : il
+     * faut alors un remboursement, pas une remise, et l'application doit le dire.
+     */
+    @Test
+    void aDiscountCannotBringTheAmountOwedBelowWhatTheFamilyHasAlreadyPaid() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Remise Trop-perçu");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "compta-trop@ecole.example",
+                Role.ACCOUNTANT);
+        StudentFeeInvoice facture = factureSimple(tenant, "TRP-1", 50000);
+
+        mockMvc.perform(post("/api/v1/school-fees/invoices/" + facture.getId() + "/payments")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountCents\":30000,\"method\":\"CASH\",\"reference\":\"R\"}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(put("/api/v1/school-fees/invoices/" + facture.getId() + "/discount")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountCents\":35000,\"reason\":\"Bourse tardive\"}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("DISCOUNT_BELOW_AMOUNT_PAID"));
+    }
+
+    /** Le secrétariat encaisse, il n'accorde pas : une remise est une décision financière. */
+    @Test
+    void aSecretaryCannotGrantADiscount() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Remise Rôle");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "secretariat-remise@ecole.example",
+                Role.SECRETARY);
+        StudentFeeInvoice facture = factureSimple(tenant, "ROL-1", 50000);
+
+        mockMvc.perform(put("/api/v1/school-fees/invoices/" + facture.getId() + "/discount")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountCents\":5000,\"reason\":\"Geste commercial\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    private StudentFeeInvoice factureSimple(Tenant tenant, String matricule, long montant) {
+        SchoolClass classe = schoolClassRepository.save(TestAuthSupport.withTenant(
+                new SchoolClass("Classe " + matricule, null), tenant.getId()));
+        FeeSchedule echeance = feeScheduleRepository.save(TestAuthSupport.withTenant(
+                new FeeSchedule(classe.getId(), "Scolarité", montant, "XOF", LocalDate.of(2026, 11, 30)),
+                tenant.getId()));
+        Student eleve = studentRepository.save(TestAuthSupport.withTenant(
+                new Student(matricule, "Élève", matricule, null, null, classe.getId()), tenant.getId()));
+        return invoiceRepository.save(TestAuthSupport.withTenant(
+                new StudentFeeInvoice(echeance.getId(), eleve.getId(), montant), tenant.getId()));
     }
 }

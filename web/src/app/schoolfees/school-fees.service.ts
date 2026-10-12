@@ -34,7 +34,11 @@ export interface FeeOutstanding {
   className: string;
   scheduleLabel: string;
   dueDate: string | null;
+  /** Montant net dû, remise déduite. */
   amountDueCents: number;
+  /** Remise accordée sur le tarif de la classe, et son motif. */
+  discountCents: number;
+  discountReason: string | null;
   amountPaidCents: number;
   amountRemainingCents: number;
   status: string;
@@ -208,5 +212,15 @@ export class SchoolFeesService {
       total: response.meta?.total ?? response.data.length,
       totalSum: response.meta?.totalSum ?? 0,
     };
+  }
+
+  /**
+   * Accorde, corrige ou annule une remise. Le montant porte sur le tarif de la classe, pas
+   * sur le net courant : rejouer l'opération corrige la remise au lieu de l'empiler.
+   */
+  async applyDiscount(invoiceId: number, amountCents: number, reason: string): Promise<void> {
+    await firstValueFrom(
+      this.http.put(`${BASE_URL}/invoices/${invoiceId}/discount`, { amountCents, reason }),
+    );
   }
 }

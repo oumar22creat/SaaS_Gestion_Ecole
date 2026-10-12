@@ -21,8 +21,23 @@ public class StudentFeeInvoice extends TenantScopedEntity {
     @Column(name = "student_id", nullable = false, updatable = false)
     private Long studentId;
 
-    @Column(name = "amount_due_cents", nullable = false, updatable = false)
+    /**
+     * Montant NET réellement dû, remise déduite. Tout le reste du produit lit cette colonne :
+     * reste à payer, impayés, taux de recouvrement, reçus, portail famille.
+     */
+    @Column(name = "amount_due_cents", nullable = false)
     private long amountDueCents;
+
+    /**
+     * Réduction accordée sur le montant de l'échéancier : bourse, tarif fratrie, exonération.
+     * Conservée à part du net pour rester lisible après coup, même si l'échéancier de la
+     * classe change entre-temps.
+     */
+    @Column(name = "discount_cents", nullable = false)
+    private long discountCents;
+
+    @Column(name = "discount_reason")
+    private String discountReason;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -64,5 +79,29 @@ public class StudentFeeInvoice extends TenantScopedEntity {
 
     public Instant getIssuedAt() {
         return issuedAt;
+    }
+
+    public long getDiscountCents() {
+        return discountCents;
+    }
+
+    public String getDiscountReason() {
+        return discountReason;
+    }
+
+    /** Montant de l'échéancier avant remise : c'est le net et la remise réunis. */
+    public long getGrossAmountCents() {
+        return amountDueCents + discountCents;
+    }
+
+    /**
+     * Applique une remise sur le montant d'origine, et non sur le net courant : rejouer
+     * l'opération corrige la remise au lieu de l'empiler.
+     */
+    public void applyDiscount(long discountCents, String reason) {
+        long brut = getGrossAmountCents();
+        this.discountCents = discountCents;
+        this.discountReason = discountCents == 0 ? null : reason;
+        this.amountDueCents = brut - discountCents;
     }
 }

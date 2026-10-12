@@ -38,6 +38,13 @@ public final class PortalResponse {
             String label,
             LocalDate dueDate,
             long amountDueCents,
+            /**
+             * Remise accordée et son motif. Affichés à la famille : une réduction qu'elle ne
+             * voit pas est une réduction qu'elle redemandera, et dont elle doutera au moment
+             * de comparer son reçu au tarif affiché de la classe.
+             */
+            long discountCents,
+            String discountReason,
             long amountPaidCents,
             long amountRemainingCents,
             String status,

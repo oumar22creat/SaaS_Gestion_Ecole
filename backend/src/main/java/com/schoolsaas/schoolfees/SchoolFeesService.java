@@ -6,6 +6,7 @@ import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.notification.NotificationType;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.schoolfees.dto.FeeOutstandingEntry;
+import com.schoolsaas.schoolfees.dto.FeeDiscountRequest;
 import com.schoolsaas.schoolfees.dto.FeePaymentCreateRequest;
 import com.schoolsaas.schoolfees.dto.FeePaymentJournalEntry;
 import com.schoolsaas.schoolfees.dto.FeeReportingResponse;
@@ -113,6 +114,43 @@ public class SchoolFeesService {
 
     public List<FeePayment> paymentsForInvoice(Long invoiceId) {
         return paymentRepository.findAllByInvoiceId(invoiceId);
+    }
+
+    /**
+     * Accorde, corrige ou annule une remise sur une facture.
+     *
+     * <p>Deux garde-fous, et le second est celui qui compte. Une remise ne peut pas excéder
+     * le montant de l'échéancier — une facture négative n'a pas de sens et rien ne sait la
+     * rembourser. Et elle ne peut pas descendre sous ce que la famille a déjà versé : la
+     * ramener à 20 000 alors que 30 000 sont encaissés créerait un trop-perçu silencieux,
+     * que le produit n'a aucun moyen de restituer. Le cas se présente quand une bourse est
+     * accordée en cours d'année, et il faut alors un remboursement, pas une remise.
+     */
+    @Transactional
+    public StudentFeeInvoice applyDiscount(Long invoiceId, FeeDiscountRequest request) {
+        StudentFeeInvoice invoice = getInvoice(invoiceId);
+        if (invoice.getStatus() == FeeInvoiceStatus.CANCELLED) {
+            throw ApiException.badRequest("INVOICE_CANCELLED", "Cette facture est annulée", List.of());
+        }
+        long brut = invoice.getGrossAmountCents();
+        if (request.amountCents() > brut) {
+            throw ApiException.unprocessable(
+                    "DISCOUNT_EXCEEDS_INVOICE",
+                    "La remise dépasse le montant de l'échéance (" + brut + ")");
+        }
+        long dejaVerse = paidAmountForInvoice(invoiceId);
+        if (brut - request.amountCents() < dejaVerse) {
+            throw ApiException.unprocessable(
+                    "DISCOUNT_BELOW_AMOUNT_PAID",
+                    "La famille a déjà versé " + dejaVerse + " : une remise qui ramène le dû en dessous "
+                            + "créerait un trop-perçu que l'application ne sait pas rembourser");
+        }
+
+        invoice.applyDiscount(request.amountCents(), request.reason());
+        invoice.setStatus(
+                dejaVerse >= invoice.getAmountDueCents() ? FeeInvoiceStatus.PAID
+                        : dejaVerse > 0 ? FeeInvoiceStatus.PARTIALLY_PAID : FeeInvoiceStatus.PENDING);
+        return invoice;
     }
 
     @Transactional
@@ -424,6 +462,8 @@ public class SchoolFeesService {
                 schedule == null ? "—" : schedule.getLabel(),
                 dueDate,
                 invoice.getAmountDueCents(),
+                invoice.getDiscountCents(),
+                invoice.getDiscountReason(),
                 paidCents,
                 invoice.getAmountDueCents() - paidCents,
                 invoice.getStatus(),

@@ -175,6 +175,8 @@ public class PortalController {
                             schedule == null ? "Frais de scolarité" : schedule.getLabel(),
                             dueDate,
                             invoice.getAmountDueCents(),
+                            invoice.getDiscountCents(),
+                            invoice.getDiscountReason(),
                             paid,
                             remaining,
                             invoice.getStatus().name(),

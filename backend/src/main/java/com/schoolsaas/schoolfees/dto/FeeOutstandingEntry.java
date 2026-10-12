@@ -21,7 +21,15 @@ public record FeeOutstandingEntry(
         String className,
         String scheduleLabel,
         LocalDate dueDate,
+        /** Montant net dû, remise déduite. */
         long amountDueCents,
+        /**
+         * Remise accordée et son motif. Portés jusqu'ici parce que l'écran des impayés est
+         * celui où le comptable accorde une réduction : sans eux, il ne saurait pas qu'une
+         * remise existe déjà, et l'écran ne pourrait pas rappeler le tarif de la classe.
+         */
+        long discountCents,
+        String discountReason,
         long amountPaidCents,
         long amountRemainingCents,
         FeeInvoiceStatus status,

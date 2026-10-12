@@ -139,6 +139,14 @@
                 @if (entry.amountPaidCents > 0) {
                   <span class="cell-muted">déjà versé {{ money(entry.amountPaidCents) }}</span>
                 }
+                @if (entry.discountCents > 0) {
+                  <span class="cell-muted"
+                    >remise {{ money(entry.discountCents) }}
+                    @if (entry.discountReason) {
+                      · {{ entry.discountReason }}
+                    }
+                  </span>
+                }
               </td>
             </ng-container>
 
@@ -158,6 +166,9 @@
               <td mat-cell *matCellDef="let entry">
                 <button mat-button (click)="openPayment(entry)">
                   <mat-icon>payments</mat-icon> Encaisser
+                </button>
+                <button mat-button (click)="openDiscount(entry)">
+                  <mat-icon>percent</mat-icon> Remise
                 </button>
               </td>
             </ng-container>

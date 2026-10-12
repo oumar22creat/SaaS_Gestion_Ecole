@@ -147,6 +147,13 @@ public class PaperworkService {
             body.add("Référence : " + payment.getReference());
         }
         body.add("");
+        if (invoice.getDiscountCents() > 0) {
+            // Sur la pièce comptable, pas seulement à l'écran : c'est ce document que la
+            // famille présente si elle conteste, et que le commissaire aux comptes lit.
+            body.add("Tarif de la classe : " + money(invoice.getGrossAmountCents()));
+            body.add("Remise accordée : -" + money(invoice.getDiscountCents())
+                    + (invoice.getDiscountReason() == null ? "" : " (" + invoice.getDiscountReason() + ")"));
+        }
         body.add("Montant reçu : " + money(payment.getAmountCents()));
         body.add("Total versé sur cette échéance : " + money(alreadyPaid) + " sur " + money(invoice.getAmountDueCents()));
         body.add(remaining > 0 ? "Reste à payer : " + money(remaining) : "Échéance soldée.");

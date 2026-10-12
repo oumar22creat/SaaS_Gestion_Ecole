@@ -143,6 +143,12 @@ jobs:
           printf '  Issuer ID : %s caractères, attendu 36 — conforme : %s\n' \
             "${#EMETTEUR}" "$(printf '%s' "$EMETTEUR" | grep -qE '^[0-9a-f-]{36}$' && echo oui || echo NON)"
 
+          # Empreintes plutôt que valeurs : le dépôt est public, et ces lignes finissent
+          # dans un journal lisible par tous. Comparées aux empreintes relevées sur la
+          # console Apple, elles disent si le bon identifiant a été recopié.
+          printf '  empreinte Key ID    : %s\n' "$(printf '%s' "$CLE_ID" | shasum -a 256 | cut -c1-16)"
+          printf '  empreinte Issuer ID : %s\n' "$(printf '%s' "$EMETTEUR" | shasum -a 256 | cut -c1-16)"
+
           echo "Forme de la clé :"
           head -c 27 "$CHEMIN" | grep -q "BEGIN PRIVATE KEY" \
             && echo "  en-tête PEM présent" \

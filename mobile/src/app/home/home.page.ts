@@ -4,6 +4,8 @@ import { IonButton, IonContent, IonIcon, NavController } from '@ionic/angular';
 import { AuthTokenService } from '../auth/auth-token.service';
 import { homeEyebrowForRole, homeTilesForRole } from '../core/role-access';
 
+import { PushNotificationService } from '../push/push-notification.service';
+
 @Component({
   selector: 'app-home-page',
   imports: [IonContent, IonButton, RouterLink, IonIcon],
@@ -92,6 +94,7 @@ import { homeEyebrowForRole, homeTilesForRole } from '../core/role-access';
 })
 export class HomePage {
   private readonly authTokenService = inject(AuthTokenService);
+  private readonly pushNotificationService = inject(PushNotificationService);
   private readonly navController = inject(NavController);
 
   /*
@@ -112,6 +115,13 @@ export class HomePage {
   protected readonly tiles = computed(() => homeTilesForRole(this.role()));
 
   async logout(): Promise<void> {
+    /*
+     * Avant `clear()` : la requête de retrait a besoin du jeton de session, et sans elle
+     * l'appareil resterait rattaché au compte qui part. Sur un téléphone partagé — celui
+     * d'une école, celui d'un foyer — les notifications du premier arriveraient sur un
+     * écran que lit désormais le second.
+     */
+    await this.pushNotificationService.retirerAvantDeconnexion();
     this.authTokenService.clear();
     /*
      * `navigateRoot` et non `navigateByUrl` : il vide la pile d'Ionic au lieu d'empiler

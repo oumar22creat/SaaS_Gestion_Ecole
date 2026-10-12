@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { IonButton, IonContent, IonIcon, IonInput, IonItem, IonSpinner, NavController } from '@ionic/angular';
 import { extractErrorMessage } from '../core/http-error.util';
 import { AuthTokenService } from './auth-token.service';
+import { PushNotificationService } from '../push/push-notification.service';
 import { AuthService } from './auth.service';
 
 /** Identique en logique à web/src/app/auth/login.page.ts — composants Ionic natifs (docs/DESIGN.md §3). */
@@ -43,6 +44,7 @@ export class LoginPage {
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly authTokenService = inject(AuthTokenService);
+  private readonly pushNotificationService = inject(PushNotificationService);
   private readonly navController = inject(NavController);
 
   protected readonly submitting = signal(false);
@@ -66,6 +68,12 @@ export class LoginPage {
       const { subdomain, email, password } = this.form.getRawValue();
       const tokens = await this.authService.login(subdomain, email, password);
       this.authTokenService.store(tokens);
+      /*
+       * La permission de notifier se demande ici, et pas au lancement : un utilisateur à
+       * qui on la réclame avant qu'il sache ce que fait l'application refuse, et un refus
+       * ne se redemande pas — il faut aller le changer dans les réglages du téléphone.
+       */
+      await this.pushNotificationService.enregistrerApresConnexion();
       /*
        * `navigateRoot` vide la pile d'Ionic : l'écran de connexion ne reste pas monté
        * derrière l'accueil, et aucun écran du compte précédent ne subsiste dans la pile.

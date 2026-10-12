@@ -15,3 +15,19 @@ skills-lock.json
 # Fichier de travail local : il contient un mot de passe en clair, par nécessité —
 # les deux formulaires de revue le réclament tel quel.
 identifiants-revue-stores.txt
+
+# Clés Firebase et Apple déposées pendant la configuration du push.
+#
+# Deux des quatre fichiers sont des secrets : la clé APNs (.p8) et la clé de compte de
+# service Firebase. Cette dernière ouvre l'envoi de notifications à tous les utilisateurs
+# de l'application. Poussée une fois sur GitHub, elle reste dans l'historique même après
+# suppression du commit, et doit alors être révoquée.
+#
+# Les deux autres — google-services.json et GoogleService-Info.plist — ne contiennent que
+# des identifiants publics de projet et ont leur place dans le dépôt, mais à leur
+# emplacement dans mobile/, pas ici.
+cle/
+
+# Secrets déposés sur le serveur (clé FCM). Jamais dans le dépôt : ce sont des fichiers,
+# pas des valeurs, et deploy/ est versionné.
+deploy/secrets/

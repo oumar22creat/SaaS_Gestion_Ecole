@@ -6,6 +6,9 @@ import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.notification.NotificationType;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.schoolfees.dto.FeeOutstandingEntry;
+import com.schoolsaas.schoolfees.dto.FeeScheduleResponse;
+import com.schoolsaas.schoolfees.dto.FeeScheduleUpdateRequest;
+import com.schoolsaas.schoolfees.dto.FeeScheduleUpdateResult;
 import com.schoolsaas.schoolfees.dto.FeeDiscountRequest;
 import com.schoolsaas.schoolfees.dto.FeePaymentCreateRequest;
 import com.schoolsaas.schoolfees.dto.FeePaymentJournalEntry;
@@ -20,6 +23,7 @@ import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
 import java.text.NumberFormat;
 import com.schoolsaas.common.PagedList;
+import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -114,6 +118,64 @@ public class SchoolFeesService {
 
     public List<FeePayment> paymentsForInvoice(Long invoiceId) {
         return paymentRepository.findAllByInvoiceId(invoiceId);
+    }
+
+    /**
+     * Corrige une échéance, et répercute le nouveau tarif sur les factures déjà émises.
+     *
+     * <p>Répercuter est le comportement attendu : on corrige une échéance parce que son
+     * montant était faux, et laisser les trente factures à l'ancien tarif ne corrigerait
+     * rien. La remise individuelle de chaque facture est conservée — la réduction accordée
+     * à une famille n'a aucune raison de disparaître parce que l'école s'est trompée de
+     * tarif.
+     *
+     * <p>Deux cas ne peuvent pas suivre, et ils sont rendus à l'appelant au lieu de faire
+     * échouer l'ensemble : la facture d'une famille qui a déjà versé plus que le nouveau
+     * montant, et celle dont la remise dépasse le nouveau tarif. Tout refuser bloquerait la
+     * correction pour vingt-neuf élèves à cause d'un seul ; les corriger de force créerait
+     * un trop-perçu que rien ne sait rembourser. Le comptable traite ces cas à la main, et
+     * pour cela il lui faut les noms.
+     */
+    @Transactional
+    public FeeScheduleUpdateResult updateSchedule(Long id, FeeScheduleUpdateRequest request) {
+        FeeSchedule schedule = getSchedule(id);
+        long ancienMontant = schedule.getAmountCents();
+        schedule.modifier(request.label(), request.amountCents(), request.dueDate());
+
+        if (request.amountCents() == ancienMontant) {
+            return new FeeScheduleUpdateResult(FeeScheduleResponse.from(schedule), 0, List.of());
+        }
+
+        List<StudentFeeInvoice> factures = invoiceRepository.findAllByFeeScheduleId(id).stream()
+                .filter(facture -> facture.getStatus() != FeeInvoiceStatus.CANCELLED)
+                .toList();
+        Map<Long, Long> versePar = paidAmountsByInvoice(factures);
+        Map<Long, Student> elevesParId = studentsById(factures);
+
+        int corrigees = 0;
+        List<String> ignorees = new ArrayList<>();
+        for (StudentFeeInvoice facture : factures) {
+            long nouveauNet = request.amountCents() - facture.getDiscountCents();
+            long verse = versePar.getOrDefault(facture.getId(), 0L);
+            String eleve = studentName(elevesParId.get(facture.getStudentId()));
+
+            if (nouveauNet < 0) {
+                ignorees.add(eleve + " : la remise de " + facture.getDiscountCents()
+                        + " dépasse le nouveau montant, facture inchangée");
+                continue;
+            }
+            if (nouveauNet < verse) {
+                ignorees.add(eleve + " : a déjà versé " + verse
+                        + ", le nouveau montant créerait un trop-perçu, facture inchangée");
+                continue;
+            }
+            facture.rebase(request.amountCents());
+            facture.setStatus(
+                    verse >= facture.getAmountDueCents() ? FeeInvoiceStatus.PAID
+                            : verse > 0 ? FeeInvoiceStatus.PARTIALLY_PAID : FeeInvoiceStatus.PENDING);
+            corrigees++;
+        }
+        return new FeeScheduleUpdateResult(FeeScheduleResponse.from(schedule), corrigees, ignorees);
     }
 
     /**

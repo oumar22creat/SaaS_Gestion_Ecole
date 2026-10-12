@@ -23,6 +23,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import com.schoolsaas.schoolfees.dto.FeeScheduleUpdateRequest;
+import com.schoolsaas.schoolfees.dto.FeeScheduleUpdateResult;
 import com.schoolsaas.schoolfees.dto.FeeDiscountRequest;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -55,6 +57,17 @@ public class SchoolFeesController {
         List<FeeScheduleResponse> data =
                 schoolFeesService.listSchedulesForClass(schoolClassId).stream().map(FeeScheduleResponse::from).toList();
         return ApiResponse.of(data);
+    }
+
+    /**
+     * Corrige une échéance. Le nouveau montant est répercuté sur les factures déjà émises ;
+     * la réponse dit combien ont suivi et nomme celles qui ne pouvaient pas.
+     */
+    @PutMapping("/schedules/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCOUNTANT')")
+    public ApiResponse<FeeScheduleUpdateResult> updateSchedule(
+            @PathVariable Long id, @Valid @RequestBody FeeScheduleUpdateRequest request) {
+        return ApiResponse.of(schoolFeesService.updateSchedule(id, request));
     }
 
     @PostMapping("/schedules/{id}/generate-invoices")

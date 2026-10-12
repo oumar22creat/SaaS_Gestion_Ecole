@@ -67,4 +67,15 @@ public class FeeSchedule extends TenantScopedEntity {
     public Instant getCreatedAt() {
         return createdAt;
     }
+
+    /**
+     * Corrige l'intitulé, le montant et l'échéance. La classe reste figée : déplacer une
+     * échéance d'une classe à l'autre reviendrait à facturer d'autres élèves que ceux déjà
+     * facturés.
+     */
+    public void modifier(String label, long amountCents, LocalDate dueDate) {
+        this.label = label;
+        this.amountCents = amountCents;
+        this.dueDate = dueDate;
+    }
 }

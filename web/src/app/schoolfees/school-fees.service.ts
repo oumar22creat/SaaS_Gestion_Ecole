@@ -25,6 +25,13 @@ export interface FeeInvoice {
 }
 
 /** Une facture non soldée, telle que l'écran la présente : un élève nommé, une dette datée. */
+/** Ce qu'a produit la correction d'une échéance : les factures suivies, et celles qui ne l'ont pas pu. */
+export interface FeeScheduleUpdateResult {
+  schedule: FeeSchedule;
+  updatedInvoices: number;
+  skipped: string[];
+}
+
 export interface FeeOutstanding {
   invoiceId: number;
   studentId: number;
@@ -222,5 +229,25 @@ export class SchoolFeesService {
     await firstValueFrom(
       this.http.put(`${BASE_URL}/invoices/${invoiceId}/discount`, { amountCents, reason }),
     );
+  }
+
+  /**
+   * Corrige une échéance. Le nouveau montant est répercuté sur les factures déjà émises :
+   * la réponse dit combien ont suivi et nomme celles qui ne pouvaient pas.
+   */
+  async updateSchedule(
+    id: number,
+    label: string,
+    amountCents: number,
+    dueDate: string,
+  ): Promise<FeeScheduleUpdateResult> {
+    const response = await firstValueFrom(
+      this.http.put<ApiResponse<FeeScheduleUpdateResult>>(`${BASE_URL}/schedules/${id}`, {
+        label,
+        amountCents,
+        dueDate,
+      }),
+    );
+    return response.data;
   }
 }

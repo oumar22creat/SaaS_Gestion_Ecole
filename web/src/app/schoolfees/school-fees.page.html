@@ -260,6 +260,14 @@
                   <button mat-button (click)="generate(schedule)">
                     <mat-icon>receipt_long</mat-icon> Facturer les élèves
                   </button>
+                  <button
+                    mat-icon-button
+                    (click)="openScheduleEdit(schedule)"
+                    [attr.aria-label]="'Corriger ' + schedule.label"
+                    matTooltip="Corriger l'intitulé, le montant ou l'échéance"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
                 </td>
               </ng-container>
               <tr mat-header-row *matHeaderRowDef="scheduleColumns"></tr>

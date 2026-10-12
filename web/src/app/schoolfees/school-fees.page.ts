@@ -7,6 +7,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -24,6 +25,7 @@ import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
 import { PaperworkService } from '../paperwork/paperwork.service';
 import { DiscountDialog } from './discount.dialog';
+import { ScheduleEditDialog } from './schedule-edit.dialog';
 import { PaymentDialog } from './payment.dialog';
 import {
   FeeOutstanding,
@@ -57,6 +59,7 @@ import {
     MatButtonModule,
     MatTableModule,
     MatIconModule,
+    MatTooltipModule,
     MatPaginatorModule,
     MatDialogModule,
   ],
@@ -326,6 +329,18 @@ export class SchoolFeesPage {
         if (recorded) {
           void this.load();
           void this.loadJournal();
+        }
+      });
+  }
+
+  /** Correction d'une échéance : intitulé, montant ou date. */
+  openScheduleEdit(schedule: FeeSchedule): void {
+    this.dialog
+      .open(ScheduleEditDialog, { data: { schedule }, width: '520px' })
+      .afterClosed()
+      .subscribe((changed) => {
+        if (changed) {
+          void this.load();
         }
       });
   }

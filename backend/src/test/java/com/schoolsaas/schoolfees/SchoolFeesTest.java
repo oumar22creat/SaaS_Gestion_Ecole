@@ -585,4 +585,98 @@ class SchoolFeesTest extends AbstractIntegrationTest {
         return invoiceRepository.save(TestAuthSupport.withTenant(
                 new StudentFeeInvoice(echeance.getId(), eleve.getId(), montant), tenant.getId()));
     }
+
+    /**
+     * Corriger une échéance doit corriger les factures déjà émises, sinon on ne corrige
+     * rien : les trente élèves resteraient à l'ancien tarif.
+     *
+     * <p>Et deux factures ne peuvent pas suivre. Celle d'une famille qui a déjà versé plus
+     * que le nouveau montant : la forcer créerait un trop-perçu que rien ne sait rembourser.
+     * Celle dont la remise dépasse le nouveau tarif. Elles sont nommées dans la réponse
+     * plutôt que de faire échouer la correction pour tous les autres — sans les noms, le
+     * comptable croirait toute la classe au nouveau tarif.
+     */
+    @Test
+    void correctingAScheduleUpdatesTheInvoicesAndNamesThoseItCouldNotTouch() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Correction");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "compta-corr@ecole.example",
+                Role.ACCOUNTANT);
+        SchoolClass classe = schoolClassRepository.save(
+                TestAuthSupport.withTenant(new SchoolClass("6ème Correction", null), tenant.getId()));
+        // 600 000 au lieu de 60 000 : la faute de frappe classique, un zéro de trop.
+        FeeSchedule echeance = feeScheduleRepository.save(TestAuthSupport.withTenant(
+                new FeeSchedule(classe.getId(), "Scolarité", 600000, "XOF", LocalDate.of(2026, 11, 30)),
+                tenant.getId()));
+
+        StudentFeeInvoice intacte = factureSur(tenant, echeance, classe, "COR-1");
+        StudentFeeInvoice avecRemise = factureSur(tenant, echeance, classe, "COR-2");
+        StudentFeeInvoice dejaPayee = factureSur(tenant, echeance, classe, "COR-3");
+
+        mockMvc.perform(put("/api/v1/school-fees/invoices/" + avecRemise.getId() + "/discount")
+                .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"amountCents\":10000,\"reason\":\"Tarif fratrie\"}")).andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/school-fees/invoices/" + dejaPayee.getId() + "/payments")
+                .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"amountCents\":200000,\"method\":\"CASH\",\"reference\":\"R\"}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(put("/api/v1/school-fees/schedules/" + echeance.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"label\":\"Scolarité 1er trimestre\",\"amountCents\":60000,"
+                                + "\"dueDate\":\"2026-12-15\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.schedule.label").value("Scolarité 1er trimestre"))
+                .andExpect(jsonPath("$.data.schedule.amountCents").value(60000))
+                .andExpect(jsonPath("$.data.schedule.dueDate").value("2026-12-15"))
+                // Deux corrigées, une laissée de côté et nommée.
+                .andExpect(jsonPath("$.data.updatedInvoices").value(2))
+                .andExpect(jsonPath("$.data.skipped.length()").value(1))
+                .andExpect(jsonPath("$.data.skipped[0]").value(
+                        org.hamcrest.Matchers.containsString("a déjà versé 200000")));
+
+        org.assertj.core.api.Assertions.assertThat(
+                        invoiceRepository.findById(intacte.getId()).orElseThrow().getAmountDueCents())
+                .as("la facture sans histoire passe au nouveau tarif")
+                .isEqualTo(60000);
+        StudentFeeInvoice remisee = invoiceRepository.findById(avecRemise.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(remisee.getAmountDueCents())
+                .as("la remise accordée à cette famille survit à la correction du tarif")
+                .isEqualTo(50000);
+        org.assertj.core.api.Assertions.assertThat(remisee.getDiscountCents()).isEqualTo(10000);
+        org.assertj.core.api.Assertions.assertThat(
+                        invoiceRepository.findById(dejaPayee.getId()).orElseThrow().getAmountDueCents())
+                .as("la facture trop payée reste à l'ancien montant, à traiter à la main")
+                .isEqualTo(600000);
+    }
+
+    /** Corriger seulement l'intitulé et la date ne touche à aucune facture. */
+    @Test
+    void correctingOnlyTheLabelLeavesEveryInvoiceAlone() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Libellé");
+        String token = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "compta-lib@ecole.example",
+                Role.ACCOUNTANT);
+        StudentFeeInvoice facture = factureSimple(tenant, "LIB-1", 50000);
+        long echeanceId = facture.getFeeScheduleId();
+
+        mockMvc.perform(put("/api/v1/school-fees/schedules/" + echeanceId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"label\":\"Scolarité — 1er trimestre\",\"amountCents\":50000,"
+                                + "\"dueDate\":\"2026-12-20\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updatedInvoices").value(0))
+                .andExpect(jsonPath("$.data.skipped.length()").value(0));
+    }
+
+    private StudentFeeInvoice factureSur(
+            Tenant tenant, FeeSchedule echeance, SchoolClass classe, String matricule) {
+        Student eleve = studentRepository.save(TestAuthSupport.withTenant(
+                new Student(matricule, "Élève", matricule, null, null, classe.getId()), tenant.getId()));
+        return invoiceRepository.save(TestAuthSupport.withTenant(
+                new StudentFeeInvoice(echeance.getId(), eleve.getId(), echeance.getAmountCents()),
+                tenant.getId()));
+    }
 }

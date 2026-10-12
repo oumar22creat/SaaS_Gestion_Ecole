@@ -104,4 +104,13 @@ public class StudentFeeInvoice extends TenantScopedEntity {
         this.discountReason = discountCents == 0 ? null : reason;
         this.amountDueCents = brut - discountCents;
     }
+
+    /**
+     * Rebase la facture sur un nouveau tarif de classe, remise conservée. Utilisé quand
+     * l'établissement corrige le montant d'une échéance après avoir facturé : la réduction
+     * accordée à cette famille n'a aucune raison de disparaître avec la correction.
+     */
+    public void rebase(long grossAmountCents) {
+        this.amountDueCents = grossAmountCents - this.discountCents;
+    }
 }

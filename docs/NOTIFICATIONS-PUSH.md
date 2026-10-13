@@ -156,9 +156,19 @@ scp -i ~/.ssh/schoolmanager_vps fcm-service-account.json \
 Puis, sur le serveur, en restreindre la lecture :
 
 ```bash
-chown schoolmanager:schoolmanager /home/schoolmanager/school-manager/deploy/secrets/fcm.json
-chmod 600 /home/schoolmanager/school-manager/deploy/secrets/fcm.json
+cd /home/schoolmanager/school-manager/deploy
+# Le groupe 101 est celui de l'utilisateur « app » DANS le conteneur, pas sur l'hôte.
+# C'est lui qui doit pouvoir lire : le conteneur ne tourne pas en root, et un fichier
+# en 600 appartenant à schoolmanager fait échouer le démarrage du backend sur un
+# « Permission denied » qui ne mentionne jamais les droits du montage.
+chown -R schoolmanager:101 secrets
+chmod 750 secrets
+chmod 640 secrets/fcm.json
 ```
+
+> Sur l'hôte, le gid 101 est celui de `syslog`, qui n'a aucun membre : personne d'autre
+> que le conteneur ne gagne l'accès. Vérifiez-le quand même avec `getent group 101` avant
+> d'appliquer, les numéros de groupe système varient d'une distribution à l'autre.
 
 > **Ces deux réglages n'existent pas encore** et ne seront lus par rien tant que la passerelle
 > FCM n'est pas écrite. Ils sont donnés ici pour que la clé soit déjà en place, et parce que

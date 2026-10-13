@@ -33,6 +33,33 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
+    // MARK: - Notifications distantes
+    //
+    // Sans ces deux renvois, le greffon de notifications ne reçoit jamais le jeton
+    // d'APNs. iOS, lui, l'obtient bien : la permission est accordée, register() réussit,
+    // et tout a l'air de fonctionner — seul l'événement d'enregistrement ne se déclenche
+    // pas, donc l'appareil n'est jamais déclaré au serveur, sans la moindre erreur.
+    //
+    // Capacitor écoute ces notifications NSNotification plutôt que d'intercepter le
+    // délégué lui-même : une application peut avoir d'autres raisons d'implémenter ces
+    // rappels, et il n'irait pas les lui voler.
+
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        NotificationCenter.default.post(
+            name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+    }
+
+    func application(
+        _ application: UIApplication,
+        didFailToRegisterForRemoteNotificationsWithError error: Error
+    ) {
+        NotificationCenter.default.post(
+            name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+    }
+
     func application(_ application: UIApplication,
                      configurationForConnecting connectingSceneSession: UISceneSession,
                      options: UIScene.ConnectionOptions) -> UISceneConfiguration {

@@ -80,10 +80,21 @@ services:
       SMS_SENDER_NAME: ${SMS_SENDER_NAME:-School Manager}
       SMS_DEFAULT_COUNTRY_CODE: ${SMS_DEFAULT_COUNTRY_CODE:-223}
       BILLING_CASH_GRACE_DAYS: ${BILLING_CASH_GRACE_DAYS:-0}
+      # Notifications push. Même interrupteur que le SMS et pour la même raison : rien ne
+      # part tant que l'exploitant ne l'a pas décidé. Sans destinataire ayant enregistré un
+      # appareil, la passerelle sort sans rien envoyer — activer n'expédie donc rien tant
+      # que personne n'a installé l'application.
+      FCM_ENABLED: ${FCM_ENABLED:-false}
+      FCM_CREDENTIALS_PATH: ${FCM_CREDENTIALS_PATH:-/run/secrets/fcm.json}
     volumes:
       # Logos d'établissement et documents générés. Sauvegardé au même titre que la base :
       # un bulletin sans le logo de son école n'est plus le même document.
       - backend_storage:/app/storage
+      # Clé de compte de service Firebase. En lecture seule, et montée depuis le disque
+      # plutôt que passée en variable : c'est un fichier JSON de deux kilo-octets, et le
+      # coller dans une variable d'environnement le rendrait visible dans `docker inspect`
+      # comme dans le moindre vidage de configuration.
+      - ./secrets:/run/secrets:ro
     deploy:
       resources:
         limits:

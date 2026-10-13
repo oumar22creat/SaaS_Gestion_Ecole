@@ -2,6 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!--
+	  Déclaration d'exportation du chiffrement, exigée à chaque envoi vers App Store
+	  Connect. La renseigner ici évite la question dans l'interface à chaque build.
+
+	  « false » parce que l'application n'embarque aucune cryptographie : pas de
+	  bibliothèque de chiffrement, aucun appel à une API de chiffrement, et le jeton JWT
+	  est seulement décodé — jamais vérifié. Tout le chiffrement vient de HTTPS, donc du
+	  système d'Apple, ce qui relève de l'exemption.
+
+	  À revoir si l'application se met un jour à chiffrer des données localement, par
+	  exemple pour un mode hors ligne.
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
   <key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>

@@ -55,7 +55,7 @@ export class PushNotificationService {
       if (accordee.receive !== 'granted') {
         return;
       }
-      this.poserLesEcouteurs();
+      await this.poserLesEcouteurs();
       await PushNotifications.register();
     } catch {
       // Silencieux à dessein : voir le contrat de la méthode.
@@ -82,21 +82,29 @@ export class PushNotificationService {
     }
   }
 
-  /** Posés une seule fois : les rattacher à chaque connexion dupliquerait les envois. */
-  private poserLesEcouteurs(): void {
+  /**
+   * Posés une seule fois, et <b>attendus</b> avant d'appeler register().
+   *
+   * <p>addListener rend une promesse : ne pas l'attendre ouvre une course avec
+   * l'événement d'enregistrement, qui arrive parfois avant que l'écouteur soit en place.
+   * Le jeton est alors émis dans le vide, et rien ne le signale — l'application a l'air
+   * de fonctionner, simplement aucun appareil n'est jamais enregistré.
+   */
+  private async poserLesEcouteurs(): Promise<void> {
     if (this.ecouteursPoses) {
       return;
     }
     this.ecouteursPoses = true;
 
-    void PushNotifications.addListener('registration', (jeton) => {
+    await PushNotifications.addListener('registration', (jeton) => {
       this.jetonAppareil.set(jeton.value);
       void this.declarerAuServeur(jeton.value);
     });
 
-    void PushNotifications.addListener('registrationError', () => {
-      // Rien à faire de plus : l'appareil ne recevra pas de notification, et l'application
-      // fonctionne sans.
+    await PushNotifications.addListener('registrationError', (erreur) => {
+      // Journalisé et non avalé : c'est le seul endroit où l'on apprend qu'APNs a refusé,
+      // et sans cette trace un push qui n'arrive pas ne laisse aucune piste.
+      console.error('Enregistrement push refusé par le système', erreur);
     });
   }
 

@@ -216,6 +216,9 @@ jobs:
             exit 1
           fi
 
+      # Le numéro de build vient du numéro d'exécution : Apple refuse deux envois portant
+      # le même CFBundleVersion, et le gérer à la main se solde tôt ou tard par un
+      # « redundant binary upload » après dix minutes d'archivage.
       - name: Archiver
         working-directory: mobile/ios/App
         env:
@@ -232,6 +235,7 @@ jobs:
             -authenticationKeyPath ~/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$EMETTEUR" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             archive
 
       - name: Options d'export

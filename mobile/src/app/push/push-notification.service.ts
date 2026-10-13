@@ -1,12 +1,18 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import { PushNotifications } from '@capacitor/push-notifications';
+import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 /**
  * Enregistre l'appareil auprès du serveur pour recevoir les notifications push.
+ *
+ * <p>Passe par Firebase Messaging et non par {@code @capacitor/push-notifications}. Ce
+ * dernier rend, sur iOS, le jeton APNs brut — soixante-quatre caractères — là où le serveur
+ * envoie par Firebase, qui n'accepte que ses propres jetons. Le symptôme était muet :
+ * l'appareil s'enregistrait, puis Firebase rejetait le jeton au premier envoi et la
+ * passerelle le purgeait comme un appareil désinstallé.
  *
  * <p>Deux règles gouvernent ce service, et elles viennent du terrain plutôt que de la
  * technique.
@@ -14,8 +20,7 @@ import { environment } from '../../environments/environment';
  * <p>La permission n'est demandée qu'<b>après</b> la connexion, jamais au premier
  * lancement. Un parent à qui l'on réclame l'autorisation de notifier avant même qu'il sache
  * ce que fait l'application refuse — et un refus ne se redemande pas : il faut aller le
- * changer dans les réglages du téléphone, ce que personne ne fait. On demande donc au
- * moment où l'utilisateur a une raison de dire oui.
+ * changer dans les réglages du téléphone, ce que personne ne fait.
  *
  * <p>Le jeton est retiré à la déconnexion. Sur un téléphone partagé — celui d'une école,
  * celui d'un foyer — un enseignant se déconnecte, un parent se connecte, et les
@@ -28,15 +33,19 @@ export class PushNotificationService {
 
   /** Dernier jeton enregistré, pour savoir quoi retirer à la déconnexion. */
   private readonly jetonAppareil = signal<string | null>(null);
-  private ecouteursPoses = false;
+  private ecouteurPose = false;
 
-  /** Vrai seulement sur un vrai téléphone : le web n'a pas de jeton FCM. */
+  /** Vrai seulement sur un vrai téléphone : le web n'a pas de jeton d'appareil. */
   private disponible(): boolean {
-    return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PushNotifications');
+    return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('FirebaseMessaging');
   }
 
   /**
-   * Demande la permission, puis enregistre l'appareil. Appelé après une connexion réussie.
+   * Demande la permission, récupère le jeton et le déclare au serveur.
+   *
+   * <p>{@code getToken()} rend directement le jeton, là où l'ancien greffon le faisait
+   * parvenir par un événement : plus d'écouteur à poser avant d'appeler l'enregistrement,
+   * donc plus de course possible entre les deux.
    *
    * <p>Ne lève jamais : une notification est un confort, pas une condition d'usage. Un
    * téléphone sans services Google, une permission refusée, un réseau coupé — rien de cela
@@ -47,18 +56,22 @@ export class PushNotificationService {
       return;
     }
     try {
-      const permission = await PushNotifications.checkPermissions();
+      const permission = await FirebaseMessaging.checkPermissions();
       const accordee =
         permission.receive === 'granted'
           ? permission
-          : await PushNotifications.requestPermissions();
+          : await FirebaseMessaging.requestPermissions();
       if (accordee.receive !== 'granted') {
         return;
       }
-      await this.poserLesEcouteurs();
-      await PushNotifications.register();
-    } catch {
-      // Silencieux à dessein : voir le contrat de la méthode.
+
+      const { token } = await FirebaseMessaging.getToken();
+      await this.declarerAuServeur(token);
+      await this.suivreLesRenouvellements();
+    } catch (erreur) {
+      // Journalisé et non avalé : sans cette trace, un push qui n'arrive jamais ne laisse
+      // aucune piste — c'est ce qui nous a coûté plusieurs jours.
+      console.error("Enregistrement push impossible", erreur);
     }
   }
 
@@ -83,32 +96,22 @@ export class PushNotificationService {
   }
 
   /**
-   * Posés une seule fois, et <b>attendus</b> avant d'appeler register().
-   *
-   * <p>addListener rend une promesse : ne pas l'attendre ouvre une course avec
-   * l'événement d'enregistrement, qui arrive parfois avant que l'écouteur soit en place.
-   * Le jeton est alors émis dans le vide, et rien ne le signale — l'application a l'air
-   * de fonctionner, simplement aucun appareil n'est jamais enregistré.
+   * Firebase renouvelle les jetons de lui-même — réinstallation, restauration de sauvegarde,
+   * inactivité prolongée. Sans ce suivi, l'appareil deviendrait injoignable sans que rien ne
+   * le signale, et seul un nouveau cycle connexion/déconnexion le rétablirait.
    */
-  private async poserLesEcouteurs(): Promise<void> {
-    if (this.ecouteursPoses) {
+  private async suivreLesRenouvellements(): Promise<void> {
+    if (this.ecouteurPose) {
       return;
     }
-    this.ecouteursPoses = true;
-
-    await PushNotifications.addListener('registration', (jeton) => {
-      this.jetonAppareil.set(jeton.value);
-      void this.declarerAuServeur(jeton.value);
-    });
-
-    await PushNotifications.addListener('registrationError', (erreur) => {
-      // Journalisé et non avalé : c'est le seul endroit où l'on apprend qu'APNs a refusé,
-      // et sans cette trace un push qui n'arrive pas ne laisse aucune piste.
-      console.error('Enregistrement push refusé par le système', erreur);
+    this.ecouteurPose = true;
+    await FirebaseMessaging.addListener('tokenReceived', (evenement) => {
+      void this.declarerAuServeur(evenement.token);
     });
   }
 
   private async declarerAuServeur(jeton: string): Promise<void> {
+    this.jetonAppareil.set(jeton);
     try {
       await firstValueFrom(
         this.http.post(`${environment.apiUrl}/device-tokens`, {
@@ -116,8 +119,8 @@ export class PushNotificationService {
           platform: Capacitor.getPlatform() === 'ios' ? 'IOS' : 'ANDROID',
         }),
       );
-    } catch {
-      // Sans conséquence immédiate : la prochaine connexion réessaiera.
+    } catch (erreur) {
+      console.error("Déclaration de l'appareil refusée par le serveur", erreur);
     }
   }
 }

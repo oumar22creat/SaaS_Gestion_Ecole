@@ -121,6 +121,14 @@ public class FcmNotificationGateway implements NotificationGateway {
                     : resultat.getException().getMessagingErrorCode();
             if (code == MessagingErrorCode.UNREGISTERED || code == MessagingErrorCode.INVALID_ARGUMENT) {
                 disparus.add(jetons.get(i));
+            } else {
+                // Tout le reste était ignoré en silence, et c'est le trou qui nous a coûté
+                // le plus cher : THIRD_PARTY_AUTH_ERROR — la clé APNs absente ou invalide
+                // chez Firebase — tombe ici. FCM accepte alors le jeton, ne le déclare pas
+                // mort, et la notification n'arrive jamais. Sans cette trace, rien ne
+                // distingue ce cas d'un envoi réussi.
+                log.warn("Envoi push refusé pour un appareil : code {} — {}", code,
+                        resultat.getException() == null ? "sans détail" : resultat.getException().getMessage());
             }
         }
         if (!disparus.isEmpty()) {

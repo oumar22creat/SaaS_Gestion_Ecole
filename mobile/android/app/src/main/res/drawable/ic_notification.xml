@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Icône des notifications Android.
+
+    Android n'affiche d'une icône de notification que sa COUCHE ALPHA : la forme est
+    reteintée par le système, et tout ce qui est opaque devient un aplat. Une icône en
+    couleurs — l'icône de lancement, par exemple — y perd donc ses détails et se réduit
+    à sa silhouette : un carré blanc, qui est le défaut le plus visible des premières
+    versions Android d'une application.
+
+    D'où cette ressource distincte : une toque de diplômé en blanc sur fond transparent,
+    déclarée dans le manifeste comme icône par défaut de Firebase Messaging. Elle reprend
+    le motif du logo de l'application, réduit à ce qui survit à la contrainte.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,3L1,9l11,6l9,-4.91V17h2V9L12,3z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M5,13.18v4L12,21l7,-3.82v-4L12,17L5,13.18z" />
+</vector>

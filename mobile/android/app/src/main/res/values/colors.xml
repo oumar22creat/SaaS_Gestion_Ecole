@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Teinte appliquée par Android à l'icône de notification et au nom de l'application
+        dans le bandeau. C'est le vert de la marque, repris de mobile/src/theme/variables.scss
+        (variable tenant-primary) pour que la notification et l'application se répondent.
+
+        Android reteinte l'icône de force : sans cette couleur, il choisit un gris.
+    -->
+    <color name="notification_accent">#0F5C4C</color>
+</resources>

@@ -3,6 +3,8 @@ package com.schoolsaas.notification;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.AndroidNotification;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.MessagingErrorCode;
@@ -34,6 +36,17 @@ public class FcmNotificationGateway implements NotificationGateway {
 
     /** Limite de l'API : au-delà, FCM refuse le lot entier. */
     private static final int TAILLE_LOT = 500;
+
+    /**
+     * Identifiant du canal de notification Android.
+     *
+     * <p>Doit rester identique à {@code notification_channel_vie_scolaire} dans
+     * {@code mobile/android/app/src/main/res/values/strings.xml}, et au canal créé par
+     * {@code MainActivity} : c'est la même chaîne, écrite des deux côtés d'une frontière que
+     * le compilateur ne franchit pas. Un canal inconnu de l'appareil fait disparaître la
+     * notification sans la moindre erreur, ni ici ni là-bas.
+     */
+    private static final String CANAL_ANDROID = "vie-scolaire";
 
     private final FcmProperties properties;
     private final DeviceTokenService deviceTokenService;
@@ -79,12 +92,33 @@ public class FcmNotificationGateway implements NotificationGateway {
         }
     }
 
+    /**
+     * Réglages propres à Android.
+     *
+     * <p>Le canal est nommé ici en plus du manifeste : quand l'application tourne au
+     * premier plan, c'est le greffon qui affiche la notification et il suit ce que dit le
+     * message, pas le manifeste. Les deux doivent donc porter le même identifiant, faute de
+     * quoi la notification change de canal — et d'importance — selon que l'application est
+     * ouverte ou fermée.
+     *
+     * <p>{@code HIGH} parce qu'une absence signalée doit s'afficher par-dessus ce que le
+     * parent est en train de faire. Android ne fait qu'y consentir : passé la première
+     * notification, c'est le réglage du canal choisi par le parent qui tranche.
+     */
+    private static final AndroidConfig REGLAGES_ANDROID = AndroidConfig.builder()
+            .setPriority(AndroidConfig.Priority.HIGH)
+            .setNotification(AndroidNotification.builder()
+                    .setChannelId(CANAL_ANDROID)
+                    .build())
+            .build();
+
     private void envoyerUnLot(NotificationEvent event, List<String> jetons) {
         MulticastMessage message = MulticastMessage.builder()
                 .setNotification(Notification.builder()
                         .setTitle(event.title())
                         .setBody(event.body())
                         .build())
+                .setAndroidConfig(REGLAGES_ANDROID)
                 // Le type voyage en donnée : il permet à l'application d'ouvrir le bon écran
                 // quand l'utilisateur touche la notification.
                 .putData("type", event.type().name())

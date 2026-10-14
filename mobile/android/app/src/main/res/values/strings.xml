@@ -4,4 +4,18 @@
     <string name="title_activity_main">Gestion Scolaire</string>
     <string name="package_name">com.schoolsaas.mobile</string>
     <string name="custom_url_scheme">com.schoolsaas.mobile</string>
+
+    <!--
+        Canal de notification. Son identifiant est technique et ne doit jamais changer :
+        Android le grave dans les réglages du téléphone au premier affichage, et un
+        identifiant modifié crée un second canal au lieu de remplacer le premier — les
+        préférences du parent restent alors attachées à un canal devenu muet.
+
+        Le nom, lui, est ce que le parent lit dans les réglages. Il doit décrire ce qu'il
+        recevra, pas l'application qui l'envoie : « Gestion Scolaire » ne lui apprendrait
+        rien qu'il ne sache déjà.
+    -->
+    <string name="notification_channel_vie_scolaire" translatable="false">vie-scolaire</string>
+    <string name="notification_channel_vie_scolaire_nom">Vie scolaire</string>
+    <string name="notification_channel_vie_scolaire_description">Absences, notes, messages de l\'école et rappels de scolarité.</string>
 </resources>

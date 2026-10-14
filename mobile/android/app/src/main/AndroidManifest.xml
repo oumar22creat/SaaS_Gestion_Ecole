@@ -24,6 +24,30 @@
 
         </activity>
 
+        <!--
+            Notifications push : ces trois métadonnées ne servent qu'au cas où l'application
+            est en arrière-plan ou fermée. C'est alors le système, et non le code, qui
+            affiche la notification — il ne lit que le manifeste.
+
+            Sans l'icône, Android retombe sur celle de lancement, dont il ne garde que la
+            silhouette : un carré blanc (voir drawable/ic_notification.xml).
+
+            Sans le canal, la notification atterrit dans un canal de repli créé par le SDK,
+            à l'importance par défaut : pas de bannière, et un intitulé que le parent ne
+            reconnaît pas dans les réglages de son téléphone. Le canal nommé ici est créé
+            par MainActivity au démarrage ; déclarer un identifiant sans créer le canal
+            correspondant revient au même que ne rien déclarer.
+        -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_accent" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="@string/notification_channel_vie_scolaire" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -1,0 +1,350 @@
+# Fiches des stores — School Manager
+
+Tout ce qui se colle dans Google Play Console et App Store Connect. Les champs sont donnés
+dans l'ordre des formulaires, avec leur limite de caractères, pour qu'il n'y ait rien à
+réécrire sur place.
+
+Les étapes marquées 🔑 exigent une authentification sur vos comptes de développeur et vous
+reviennent donc.
+
+---
+
+## Ce qui est prêt
+
+| Élément | État |
+|---|---|
+| Bundle Android `.aab` signé | ✅ `mobile/android/app/build/outputs/bundle/release/app-release.aab`, 4,4 Mo, reconstruit le 14/10/2026 |
+| Build iOS | ✅ TestFlight n° 32, « Prêt à soumettre » |
+| Politique de confidentialité en ligne | ✅ https://schoolmanager.tech/confidentialite.html (HTTP 200) |
+| Textes de fiche | ✅ ci-dessous |
+| Captures d'écran | ⏳ à prendre sur un appareil — voir §4 |
+
+> **Attention au bundle Android.** Celui du 6 octobre qui traînait dans `build/outputs` était
+> antérieur à tout le travail récent, notifications push comprises. Il a été reconstruit. Pour
+> le refaire plus tard, la commande est au §5 : la chaîne exige **Node ≥ 22.22.3** et
+> **JDK 21**, et les versions par défaut de la machine ne conviennent ni l'une ni l'autre.
+
+---
+
+## 1. Identité de l'application
+
+| Champ | Valeur |
+|---|---|
+| Nom (Play, 30 car. max) | `School Manager` |
+| Nom (App Store, 30 car. max) | `School Manager` |
+| Identifiant de paquet | `com.schoolsaas.mobile` |
+| Version | 1.0 |
+| Éditeur | logilab — Bamako, Mali |
+| Langue par défaut | Français (France) |
+| Autres langues | aucune pour l'instant |
+
+### Catégorie
+
+| Store | Catégorie | Pourquoi |
+|---|---|---|
+| Google Play | **Éducation** | catégorie d'application, pas de jeu |
+| App Store | **Éducation**, catégorie secondaire **Productivité** | |
+
+Ne pas choisir « Parentalité » sur Play : cette catégorie attire un examen supplémentaire
+destiné aux applications de contrôle parental, qui n'est pas notre cas.
+
+---
+
+## 2. Textes
+
+### 2.1 Google Play — description courte (80 caractères)
+
+```
+Suivi scolaire des élèves : notes, absences, scolarité et emploi du temps.
+```
+*(73 caractères)*
+
+### 2.2 Google Play — description complète (4 000 caractères)
+
+```
+School Manager relie l'école et la famille.
+
+Conçue pour les établissements d'Afrique de l'Ouest, l'application donne aux parents, aux
+élèves et aux enseignants un accès direct à la vie scolaire, depuis le téléphone.
+
+POUR LES PARENTS
+
+• Absences et retards. Vous êtes prévenu dès que l'absence est saisie par l'école, avec le
+  motif et la date. Plus besoin d'attendre le bulletin pour l'apprendre.
+• Notes et bulletins. Les notes de devoirs et de composition s'affichent matière par matière,
+  avec la moyenne et le rang dans la classe.
+• Scolarité. L'échéancier, ce qui a été réglé, ce qui reste dû, et le reçu de chaque paiement
+  consultable à tout moment.
+• Emploi du temps. La semaine de votre enfant, salle par salle.
+• Plusieurs enfants. Un seul compte suffit : vous passez de l'un à l'autre d'un geste.
+
+POUR LES ENSEIGNANTS
+
+• Feuille d'appel. L'appel se fait en classe, en quelques secondes, et les familles concernées
+  sont prévenues aussitôt.
+• Saisie des notes. Les évaluations se remplissent directement depuis le téléphone.
+• Emploi du temps. Vos cours de la journée, sans passer par le secrétariat.
+
+POUR LES ÉLÈVES
+
+• Leur propre compte, avec leurs notes, leurs absences et leur emploi du temps.
+
+NOTIFICATIONS
+
+Vous choisissez ce que vous recevez, ligne par ligne, depuis l'application. Couper une
+notification qui vous importune vaut mieux que de toutes les désactiver.
+
+CONÇUE POUR LE CONTEXTE MALIEN
+
+• Entièrement en français.
+• Montants en francs CFA.
+• Programme de l'enseignement fondamental, de la 1ère à la 9ème année.
+• Pensée pour les connexions lentes : l'application ne télécharge que ce qu'elle affiche.
+
+UN COMPTE FOURNI PAR VOTRE ÉCOLE
+
+School Manager ne s'utilise pas seul. Votre établissement doit être inscrit sur la plateforme
+et vous remettre vos identifiants : le sous-domaine de l'école, votre adresse e-mail et votre
+mot de passe. Sans ces trois éléments, la connexion est impossible.
+
+Les écoles intéressées trouveront la plateforme d'administration sur schoolmanager.tech.
+
+CONFIDENTIALITÉ
+
+Les données de chaque établissement sont cloisonnées : une école ne voit jamais les données
+d'une autre. À l'intérieur d'une école, chaque rôle n'ouvre que son périmètre — la
+comptabilité ne voit pas la vie scolaire, un enseignant ne voit pas la trésorerie.
+
+Notre politique de confidentialité : https://schoolmanager.tech/confidentialite.html
+```
+*(environ 2 150 caractères — il reste de la marge si vous souhaitez ajouter des témoignages
+d'établissements une fois les premiers clients signés.)*
+
+### 2.3 App Store — sous-titre (30 caractères)
+
+```
+L'école dans votre poche
+```
+*(23 caractères)*
+
+### 2.4 App Store — texte promotionnel (170 caractères, modifiable sans nouvelle version)
+
+```
+Absences signalées en temps réel, notes, bulletins, scolarité et emploi du temps : la vie scolaire de votre enfant, consultable depuis votre téléphone.
+```
+*(149 caractères)*
+
+### 2.5 App Store — description
+
+Reprendre le texte du §2.2 tel quel. Apple accepte le même contenu et la même longueur.
+
+### 2.6 App Store — mots-clés (100 caractères, séparés par des virgules, sans espaces)
+
+```
+école,scolaire,bulletin,notes,absence,parent,enseignant,élève,Mali,scolarité,emploi du temps
+```
+*(91 caractères)*
+
+> Ne pas répéter dans les mots-clés ce qui figure déjà dans le nom ou le sous-titre : Apple
+> indexe les trois ensemble, et un doublon gâche une place.
+
+### 2.7 Notes de version (première publication)
+
+```
+Première version de School Manager.
+
+• Absences et retards signalés en temps réel aux familles
+• Notes, moyennes et bulletins
+• Scolarité : échéancier, paiements et reçus
+• Emploi du temps
+• Feuille d'appel et saisie des notes pour les enseignants
+• Notifications réglables ligne par ligne
+```
+
+---
+
+## 3. Formulaires de conformité
+
+### 3.1 Classification du contenu (Play) / Tranche d'âge (App Store)
+
+Questionnaire Play, section « Référence, actualités ou éducation » :
+
+| Question | Réponse |
+|---|---|
+| Violence, sexualité, grossièretés, drogues | Non à tout |
+| L'application permet-elle aux utilisateurs d'interagir entre eux ? | **Oui** — messagerie entre l'école et les familles |
+| Partage de la position de l'utilisateur ? | Non |
+| Achats dans l'application ? | Non — l'abonnement est facturé à l'établissement, hors application |
+| Contenu généré par les utilisateurs ? | Oui, limité aux messages entre comptes d'un même établissement |
+
+Résultat attendu : **PEGI 3 / Tout public** sur Play, **4+** sur l'App Store.
+
+> Répondre « Oui » à l'interaction entre utilisateurs est obligatoire dès qu'une messagerie
+> existe, même interne et cloisonnée. Une réponse « Non » découverte plus tard entraîne un
+> retrait.
+
+### 3.2 Sécurité des données (Play) / Étiquettes de confidentialité (App Store)
+
+Données **collectées** et **liées à l'identité** de l'utilisateur :
+
+| Catégorie | Donnée | Finalité | Obligatoire ? |
+|---|---|---|---|
+| Informations personnelles | Nom, prénom | Fonctionnement de l'application | Oui |
+| Informations personnelles | Adresse e-mail | Identification du compte | Oui |
+| Informations personnelles | Numéro de téléphone | Alertes d'absence par SMS | Oui |
+| Identifiants | Identifiant de compte | Fonctionnement de l'application | Oui |
+| Messages | Messages entre l'école et les familles | Fonctionnement de l'application | Non |
+| Informations financières | Historique des paiements de scolarité | Fonctionnement de l'application | Oui |
+| Photos | Portrait de l'élève | Carte d'identité scolaire | Non |
+
+Données **non** collectées : position, contacts, calendrier, historique de navigation,
+historique de recherche, fichiers et documents de l'appareil, santé, données publicitaires.
+
+Réponses aux questions transversales :
+
+| Question | Réponse |
+|---|---|
+| Les données sont-elles chiffrées en transit ? | **Oui** — HTTPS exclusivement |
+| L'utilisateur peut-il demander la suppression de ses données ? | **Oui** — par l'établissement, procédure décrite dans la politique de confidentialité |
+| Les données sont-elles partagées avec des tiers ? | **Non** |
+| Les données servent-elles à la publicité ou au suivi ? | **Non** |
+
+> Le jeton de notification push est traité par Firebase Cloud Messaging. Ni Google ni Apple ne
+> le comptent comme une donnée collectée au sens du formulaire lorsqu'il ne sert qu'à l'envoi
+> des notifications, ce qui est notre cas. Il n'y a donc rien à déclarer de ce côté, mais la
+> question revient souvent.
+
+### 3.3 Déclaration de chiffrement (App Store)
+
+`ITSAppUsesNonExemptEncryption` est déjà positionné à `false` dans `Info.plist` : l'application
+n'utilise que HTTPS, ce qui relève de l'exemption. Aucune démarche supplémentaire.
+
+### 3.4 Coordonnées et liens
+
+| Champ | Valeur |
+|---|---|
+| Site web | https://schoolmanager.tech |
+| Politique de confidentialité | https://schoolmanager.tech/confidentialite.html |
+| E-mail d'assistance | 🔑 à confirmer — une adresse dédiée (`support@schoolmanager.tech`) vaut mieux qu'une adresse personnelle, qui sera publique sur la fiche |
+| Téléphone d'assistance | 🔑 facultatif sur Play, exigé par Apple pour le contact de revue |
+
+### 3.5 Compte de démonstration pour les examinateurs
+
+Les deux stores refusent une application dont l'écran d'accueil est un formulaire de connexion
+sans compte fourni. Les identifiants sont dans `identifiants-revue-stores.txt` (non versionné).
+
+Texte à coller dans le champ « Notes pour l'examinateur » :
+
+```
+L'écran de connexion comporte TROIS champs. Sans le premier, la connexion échoue.
+
+  Établissement : demo
+  E-mail        : revue@demo.schoolmanager.tech
+  Mot de passe  : (celui saisi dans le champ prévu ci-dessus)
+
+Ce compte est administrateur. Pour voir l'application du côté famille, qui est
+l'usage principal, se connecter avec parent@demo.schoolmanager.tech et le même
+mot de passe.
+
+L'établissement de démonstration contient une année scolaire complète : 9 classes,
+108 élèves, notes, absences, emploi du temps et paiements de scolarité.
+```
+
+---
+
+## 4. Captures d'écran
+
+### 4.1 Ce qu'exigent les stores
+
+| Store | Format | Nombre | Dimensions |
+|---|---|---|---|
+| Google Play | PNG ou JPEG | 2 minimum, 8 maximum | côté le plus court ≥ 320 px, le plus long ≤ 3 840 px, et **jamais plus du double du plus court** |
+| App Store — iPhone 6,9" | PNG ou JPEG | 3 minimum, 10 maximum | 1320 × 2868 ou 2868 × 1320 |
+| App Store — iPhone 6,5" | PNG ou JPEG | facultatif si le 6,9" est fourni | 1242 × 2688 |
+
+> Le piège de Play : une capture d'iPhone moderne fait 1290 × 2796, soit un rapport de 2,17.
+> Play la refuse, parce qu'elle dépasse le double. Il faut la recadrer ou la poser sur un fond.
+> Une capture d'Android est généralement conforme telle quelle.
+
+### 4.2 Les six écrans à photographier, dans cet ordre
+
+L'ordre compte : les deux premières captures sont les seules que voit un visiteur qui ne fait
+pas défiler.
+
+| # | Écran | Compte | Pourquoi celui-ci |
+|---|---|---|---|
+| 1 | Portail famille, fiche d'un élève | `parent@` | C'est l'application en une image : notes, absences et scolarité au même endroit |
+| 2 | Notification d'absence reçue | `parent@` | L'argument qui décide un parent. Capturer l'écran verrouillé au moment où elle arrive |
+| 3 | Notes d'une matière | `parent@` | Montre la profondeur du suivi |
+| 4 | Scolarité : échéancier et reçus | `parent@` | Le sujet le plus sensible pour une famille |
+| 5 | Feuille d'appel | `enseignant@` | Montre que l'école travaille dans l'application, pas seulement qu'elle la consulte |
+| 6 | Emploi du temps | `parent@` ou `enseignant@` | Écran lisible, qui fait respirer la série |
+
+Prendre les captures sur l'iPhone, sur la build TestFlight déjà installée : ce sont de vraies
+captures d'appareil, aux bonnes dimensions pour Apple, et recadrables pour Play. Pour la n° 2,
+l'écran verrouillé s'obtient en verrouillant le téléphone puis en faisant saisir une absence
+sur une date encore libre (voir `NOTIFICATIONS-PUSH.md` §7.1).
+
+### 4.3 Icône et bandeau
+
+| Élément | Store | Dimensions | État |
+|---|---|---|---|
+| Icône | Play | 512 × 512 PNG 32 bits | 🔑 à extraire des ressources du projet |
+| Bandeau de présentation | Play | 1024 × 500 | 🔑 obligatoire, à produire |
+| Icône | App Store | 1024 × 1024 PNG sans transparence | 🔑 à extraire |
+
+---
+
+## 5. Reconstruire le bundle Android
+
+```bash
+cd mobile
+export PATH="$HOME/.nvm/versions/node/v22.23.1/bin:$PATH"
+export JAVA_HOME="/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home"
+npx ng build && npx cap sync android && (cd android && ./gradlew bundleRelease)
+```
+
+Les deux `export` ne sont pas décoratifs :
+
+- La version de Node par défaut de la machine (v22.19) est **inférieure au minimum exigé par
+  Angular** (v22.22.3). `ng build` s'arrête alors sans rien produire — et `cap sync`, lancé
+  à la suite, recopie sans broncher les *anciens* fichiers web. Le bundle est construit, signé,
+  valide, et contient une version périmée de l'application. Rien ne le signale.
+- La version de Java par défaut (25) n'est pas supportée par Gradle 8.14, qui échoue sur
+  `Unsupported class file major version 69`. Celle-là, au moins, est bruyante.
+
+Vérifier après coup que le `.aab` porte bien la date du jour, et qu'il est signé :
+
+```bash
+ls -l mobile/android/app/build/outputs/bundle/release/app-release.aab
+"$JAVA_HOME/bin/keytool" -printcert -jarfile \
+  mobile/android/app/build/outputs/bundle/release/app-release.aab | grep Propriétaire
+```
+
+Le certificat attendu est `CN=oumar, OU=logilab, O=logilab, L=Mali, ST=Bamako, C=ML`.
+
+### Numéro de version
+
+`versionCode` vaut **1** et `versionName` **1.0**, dans `mobile/android/app/build.gradle`.
+Play refuse un `versionCode` déjà téléversé : à partir de la deuxième livraison, l'incrémenter
+avant de reconstruire.
+
+---
+
+## 6. Ordre de dépôt sur Google Play 🔑
+
+1. Play Console → **Créer une application** — nom, langue par défaut, « Application »,
+   « Gratuite ».
+2. **Configuration du tableau de bord**, dans l'ordre que la console impose :
+   accès à l'application (y coller les identifiants du §3.5), publicités (**non**),
+   classification du contenu (§3.1), public cible (**18 ans et plus** : l'application
+   s'adresse aux parents et au personnel, et les comptes élèves sont créés par l'école, ce qui
+   évite le régime « conçu pour les enfants » et son examen renforcé), sécurité des données
+   (§3.2), politique de confidentialité (§3.4).
+3. **Fiche principale du store** — textes du §2, captures du §4.
+4. **Production → Créer une version** — téléverser le `.aab`, coller les notes de version.
+5. Soumettre.
+
+Compter deux à sept jours d'examen pour une première publication. Apple est généralement plus
+rapide, mais plus exigeant sur le compte de démonstration : c'est là que la plupart des
+premiers refus se jouent, et c'est pourquoi le §3.5 insiste sur les trois champs.

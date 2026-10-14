@@ -193,10 +193,65 @@ Trois signaux à surveiller :
   jusqu'à sa remise en route ou une restauration ailleurs. Acceptable au démarrage, à
   revoir lorsque des dizaines d'établissements en dépendront.
 - **Pas de supervision automatique.** Aucune alerte ne part si le serveur s'arrête à 3 h du
-  matin. Un service de surveillance externe (UptimeRobot et équivalents, gratuits) comble ce
-  manque en quelques minutes ; c'est la première chose à ajouter.
+  matin. La marche à suivre est au paragraphe suivant ; elle prend cinq minutes et c'est la
+  première chose à ajouter.
 - **Pas de déploiement sans interruption.** `deploy.sh` redémarre le backend : quelques
   secondes de coupure. Sans conséquence pour un usage scolaire diurne si l'on déploie le soir.
+
+## Surveillance externe
+
+Un service tiers interroge le serveur depuis l'extérieur et prévient quand il ne répond plus.
+Il faut qu'il soit tiers : une sonde hébergée sur le VPS se tait en même temps que lui.
+
+### Ce qu'il faut surveiller
+
+| Nom du contrôle | URL | Attendu | Intervalle |
+|---|---|---|---|
+| API — santé | `https://app.schoolmanager.tech/actuator/health` | code 200 **et** le corps contient `"status":"UP"` | 5 min |
+| Application web | `https://app.schoolmanager.tech/login` | code 200 | 5 min |
+| Site vitrine | `https://schoolmanager.tech/` | code 200 | 15 min |
+| Certificat TLS | le même domaine | alerte à 14 jours de l'expiration | — |
+
+Le premier contrôle est le seul qui compte vraiment, à condition de **vérifier le contenu de
+la réponse et pas seulement le code**. Spring répond `200` avec `{"status":"UP"}` quand tout
+va, mais `503` avec `{"status":"DOWN"}` si la base est injoignable — un contrôle réglé sur le
+seul code HTTP attraperait déjà ce cas. En revanche, le contrôle de contenu protège contre un
+reverse proxy qui servirait une page d'erreur en 200, ce qu'un `curl` ne distingue pas.
+
+Depuis l'extérieur, `/actuator/health` ne renvoie que `{"status":"UP"}`. Le détail par
+composant — base, disque, Redis — n'apparaît que sur la boucle locale
+(`management.endpoint.health.show-details`). Il n'y a donc rien à masquer en l'exposant.
+
+### Mise en place 🔑
+
+1. Créer un compte sur [uptimerobot.com](https://uptimerobot.com) — l'offre gratuite autorise
+   50 contrôles à 5 minutes, bien au-delà du besoin.
+2. **Add New Monitor** pour chaque ligne du tableau. Type **HTTP(s)**, et pour le premier,
+   activer **Keyword** avec le mot-clé `"status":"UP"` en mode *exists*.
+3. Renseigner une alerte par **e-mail**, et une seconde par un canal qui réveille : l'offre
+   gratuite envoie des notifications mobiles via l'application UptimeRobot.
+4. Régler le délai avant alerte sur **2 échecs consécutifs** plutôt qu'un seul : un incident
+   réseau d'une minute ne doit pas sonner à 3 h.
+
+### Ce que Cloudflare laisse passer
+
+Les domaines sont derrière Cloudflare (`server: cloudflare` dans les en-têtes). Une sonde
+ordinaire passe sans difficulté : un `GET` sur `/actuator/health` depuis l'extérieur répond
+`200`, et un `POST` de connexion répond `401` sur un mauvais mot de passe — Cloudflare ne
+s'interpose pas.
+
+En revanche, Cloudflare **refuse certaines signatures de client**, sur l'agent utilisateur et
+non sur la méthode ou le chemin. Mesuré depuis le VPS, sur la route publique :
+
+| Agent utilisateur | `GET /actuator/health` | `POST /api/v1/auth/login` |
+|---|---|---|
+| `curl/8.x` | `200` | `401` |
+| `Python-urllib/3.14` | `403 — error code: 1010` | `403 — error code: 1010` |
+
+L'erreur 1010 signifie que la signature du client est bannie. Un script d'intégration écrit en
+Python avec `urllib` échouera donc en production alors qu'il fonctionne en local, et le
+message ne mentionnera jamais Cloudflare. Il suffit de lui donner un agent utilisateur
+explicite. UptimeRobot, qui envoie le sien, n'est pas concerné.
 
 ## Note de sécurité — en-tête X-Tenant-Id
 

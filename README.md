@@ -226,6 +226,9 @@ La procédure complète — serveur, DNS générique, TLS, sauvegardes chiffrée
 mises à jour — est dans [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md). Les fichiers
 correspondants vivent dans `deploy/`.
 
-Les notifications push ne sont pas encore envoyées : la passerelle journalise sans émettre
-(ADR-020). La collecte des clés Firebase et Apple, préalable au câblage, est décrite dans
-[docs/NOTIFICATIONS-PUSH.md](docs/NOTIFICATIONS-PUSH.md).
+Les notifications push sont en service, vérifiées de bout en bout sur un appareil physique.
+La collecte des clés Firebase et Apple, et surtout le diagnostic d'un envoi qui n'arrive pas,
+sont dans [docs/NOTIFICATIONS-PUSH.md](docs/NOTIFICATIONS-PUSH.md).
+
+Les textes, catégories et formulaires de conformité à déposer sur Google Play et sur l'App
+Store sont rassemblés dans [docs/FICHES-STORES.md](docs/FICHES-STORES.md).

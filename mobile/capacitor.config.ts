@@ -16,7 +16,7 @@ const surEmulateur = process.env['CAP_EMULATEUR'] === '1';
 
 const config: CapacitorConfig = {
   appId: 'com.schoolsaas.mobile',
-  appName: 'Gestion Scolaire',
+  appName: 'School Manager',
   webDir: 'dist/app/browser',
   ...(surEmulateur
     ? { android: { allowMixedContent: true }, server: { androidScheme: 'http', cleartext: true } }

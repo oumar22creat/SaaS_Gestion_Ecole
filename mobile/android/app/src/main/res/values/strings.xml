@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Gestion Scolaire</string>
-    <string name="title_activity_main">Gestion Scolaire</string>
+    <string name="app_name">School Manager</string>
+    <string name="title_activity_main">School Manager</string>
     <string name="package_name">com.schoolsaas.mobile</string>
     <string name="custom_url_scheme">com.schoolsaas.mobile</string>
 
@@ -12,7 +12,7 @@
         préférences du parent restent alors attachées à un canal devenu muet.
 
         Le nom, lui, est ce que le parent lit dans les réglages. Il doit décrire ce qu'il
-        recevra, pas l'application qui l'envoie : « Gestion Scolaire » ne lui apprendrait
+        recevra, pas l'application qui l'envoie : « School Manager » ne lui apprendrait
         rien qu'il ne sache déjà.
     -->
     <string name="notification_channel_vie_scolaire" translatable="false">vie-scolaire</string>

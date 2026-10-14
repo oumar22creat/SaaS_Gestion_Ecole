@@ -23,6 +23,6 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('ion-title')?.textContent).toContain('Gestion Scolaire');
+    expect(compiled.querySelector('ion-title')?.textContent).toContain('School Manager');
   });
 });

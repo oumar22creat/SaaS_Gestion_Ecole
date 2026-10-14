@@ -22,6 +22,6 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('mat-toolbar')?.textContent).toContain('Gestion Scolaire');
+    expect(compiled.querySelector('mat-toolbar')?.textContent).toContain('School Manager');
   });
 });

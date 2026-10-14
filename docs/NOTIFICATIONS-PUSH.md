@@ -1,12 +1,17 @@
-# Notifications push — obtenir les clés
+# Notifications push
 
-Procédure pour récupérer, chez Firebase et chez Apple, les quatre éléments dont le code aura
-besoin pour envoyer des notifications push vers les applications mobiles.
+Procédure pour récupérer, chez Firebase et chez Apple, les quatre éléments dont le code a
+besoin pour envoyer des notifications push vers les applications mobiles — puis pour
+diagnostiquer un envoi qui n'arrive pas.
 
-**Ce document ne couvre que la collecte des clés.** Le code qui les consomme n'est pas encore
-écrit : `LoggingNotificationGateway` journalise l'intention d'envoyer sans rien envoyer (voir
-`docs/ARCHITECTURE.md` ADR-020 et ses « Points ouverts »). La liste de ce qui reste à faire
-est en fin de page.
+**La chaîne est en service.** Vérifiée de bout en bout le 14 octobre 2026 sur un iPhone
+physique, build TestFlight n° 32 : saisie d'une absence → backend → Firebase → APNs de
+production → notification affichée. `FcmNotificationGateway` remplace
+`LoggingNotificationGateway` dès que `app.fcm.enabled` vaut vrai (voir
+`docs/ARCHITECTURE.md` ADR-020).
+
+Les erreurs rencontrées pour y parvenir sont consignées au §7 : elles se ressemblent toutes,
+et se distinguent mal sans méthode.
 
 ---
 
@@ -93,15 +98,23 @@ façon pour publier sur l'App Store.
 3. Bouton **+**.
 4. Nommer la clé, par exemple `School Manager — APNs`.
 5. Cocher **Apple Push Notifications service (APNs)**.
-6. **Continue**, puis **Register**.
-7. **Download.**
+6. **Cliquer sur le bouton `Configure` de cette ligne**, et choisir **Sandbox & Production**.
+7. **Continue**, puis **Register**.
+8. **Download.**
+
+> **L'étape 6 n'est pas facultative.** Sans elle, Apple crée une clé *Sandbox only*, qui
+> fonctionne depuis Xcode sur un appareil branché et échoue pour toute application distribuée
+> par TestFlight ou par l'App Store. Rien ne le signale : Firebase répond
+> `THIRD_PARTY_AUTH_ERROR — Invalid APNs credential`, erreur identique à celle d'une clé
+> absente. Le diagnostic est au §7.2.
 
 > **Ce téléchargement n'est possible qu'une seule fois.** Le fichier, nommé
 > `AuthKey_XXXXXXXXXX.p8`, ne peut plus être récupéré ensuite — seulement révoqué et recréé.
 > Le ranger immédiatement dans un gestionnaire de mots de passe.
 
-Une même clé APNs vaut pour le développement et pour la production, et pour toutes les
-applications du compte. Il n'y en a qu'une à créer.
+Une clé créée en **Sandbox & Production** vaut pour les deux environnements et pour toutes
+les applications du compte. Il n'y en a qu'une à créer — mais elle se téléverse **deux fois**
+chez Firebase, voir §5.
 
 ### 4.2 Relever les deux identifiants qui l'accompagnent
 
@@ -129,9 +142,23 @@ C'est ce qui relie les deux mondes : Firebase se servira de cette clé pour parl
 votre nom.
 
 1. Console Firebase → **⚙ Paramètres du projet** → onglet **Cloud Messaging**.
-2. Section **Configuration de l'application iOS** → **Clé d'authentification APNs** →
-   **Importer**.
-3. Déposer le fichier `.p8`, puis saisir le **Key ID** et le **Team ID** relevés en 4.2.
+2. Section **Configuration de l'application Apple** → **Clé d'authentification APNs**.
+
+Firebase y présente **deux emplacements distincts**, et c'est le piège principal de toute
+cette procédure :
+
+| Emplacement | Qui l'utilise |
+|---|---|
+| Clé APNs **de développement** | les builds lancées depuis Xcode sur un appareil branché |
+| Clé APNs **de production** | **TestFlight et l'App Store** |
+
+3. Importer le **même fichier `.p8`** dans **les deux**, avec le même **Key ID** et le même
+   **Team ID** relevés en 4.2.
+
+Notre application porte `aps-environment = production` dans
+`mobile/ios/App/App/App.entitlements`, ce qui est le réglage correct pour une app distribuée.
+Firebase cherche donc la clé de **production** : l'emplacement de développement seul rempli,
+aucune notification n'arrive, et l'erreur renvoyée est la même que si aucune clé n'existait.
 
 ---
 
@@ -185,52 +212,153 @@ chmod 640 secrets/fcm.json
 
 ---
 
+## 7. Diagnostiquer un envoi qui n'arrive pas
+
+### 7.1 Lire la chaîne dans l'ordre
+
+Une notification qui n'arrive pas peut s'être arrêtée à quatre endroits. Les distinguer prend
+deux requêtes, et évite de chercher une clé invalide quand le message n'est tout simplement
+jamais parti.
+
+```bash
+# 1. L'événement a-t-il été dispatché, et vers combien de comptes ?
+docker exec school-manager-postgres-1 psql -U school_saas_admin -d school_saas \
+  -c "SELECT * FROM notification_log ORDER BY id DESC LIMIT 5;"
+
+# 2. Un appareil est-il enregistré pour ce compte ?
+docker exec school-manager-postgres-1 psql -U school_saas_admin -d school_saas \
+  -c "SELECT u.email, d.platform, length(d.token) FROM device_tokens d
+      JOIN users u ON u.id = d.user_id;"
+
+# 3. FCM a-t-il refusé l'envoi ?
+docker logs --since 5m school-manager-backend-1 2>&1 | grep -i push
+```
+
+| Observation | Interprétation |
+|---|---|
+| aucune ligne dans `notification_log` | `dispatch` n'a pas été appelé, ou tous les destinataires se sont désabonnés |
+| ligne avec `recipient_count = 0` | l'élève n'a aucun tuteur titulaire d'un compte |
+| ligne avec un destinataire, aucun appareil en table | la famille n'a pas installé l'application |
+| `WARN … Envoi push refusé` | la chaîne va jusqu'à Firebase : voir §7.2 |
+| aucun des trois | l'envoi a réussi ; chercher du côté de l'affichage dans l'app |
+
+> **Le piège de la feuille d'appel.** `submitRollCall` ne notifie qu'à la **création** d'un
+> enregistrement. Ressaisir une absence sur une date déjà saisie passe par `applyChange`, qui
+> met à jour sans rien envoyer et renvoie pourtant un `201`. Pour tester, choisir une date
+> libre — et le vérifier en base plutôt que de s'en remettre à l'interface :
+>
+> ```bash
+> docker exec school-manager-postgres-1 psql -U school_saas_admin -d school_saas \
+>   -At -c "SELECT date FROM attendance_records WHERE student_id = <id> ORDER BY date;"
+> ```
+>
+> Après coup, `created_at` sur la ligne créée doit porter l'heure de l'essai. S'il porte une
+> date antérieure, l'enregistrement existait déjà et aucune notification n'est partie.
+
+### 7.2 `THIRD_PARTY_AUTH_ERROR — Invalid APNs credential`
+
+Firebase a accepté le jeton mais Apple a refusé la clé. Trois causes, de la plus fréquente à
+la plus rare :
+
+1. **La clé n'est pas dans l'emplacement de production** chez Firebase (§5). C'est la cause la
+   plus courante, car l'emplacement de développement est celui qu'on remplit spontanément.
+2. **La clé est *Sandbox only*** : le bouton `Configure` a été laissé sur son réglage par
+   défaut à la création (§4.1). Une clé *Sandbox only* est irrécupérable — il faut en créer
+   une nouvelle.
+3. **Le Team ID saisi chez Firebase est erroné.** Il se tape à la main, Firebase ne le déduit
+   pas du fichier.
+
+Pour trancher entre la 2 et les autres, interroger Apple directement avec un faux jeton
+d'appareil. La réponse ne dépend alors que de la clé :
+
+| Réponse d'Apple | Signification |
+|---|---|
+| `400 BadDeviceToken` | la clé est **acceptée** pour cet environnement — le faux jeton est la seule chose refusée |
+| `403 BadEnvironmentKeyInToken` | la clé est **refusée** pour cet environnement |
+
+```bash
+python3 - <<'SCRIPT'
+import base64, json, time, subprocess, os
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec, utils
+
+KEY_ID, TEAM_ID, BUNDLE = "XXXXXXXXXX", "253HSP874T", "com.schoolsaas.mobile"
+CLE = os.path.expanduser(f"~/Downloads/AuthKey_{KEY_ID}.p8")
+b64 = lambda d: base64.urlsafe_b64encode(d).rstrip(b"=").decode()
+entete = b64(json.dumps({"alg": "ES256", "kid": KEY_ID}).encode())
+charge = b64(json.dumps({"iss": TEAM_ID, "iat": int(time.time())}).encode())
+cle = serialization.load_pem_private_key(open(CLE, "rb").read(), password=None)
+r, s = utils.decode_dss_signature(
+    cle.sign(f"{entete}.{charge}".encode(), ec.ECDSA(hashes.SHA256())))
+jwt = f"{entete}.{charge}.{b64(r.to_bytes(32, 'big') + s.to_bytes(32, 'big'))}"
+
+for nom, hote in [("production", "api.push.apple.com"),
+                  ("bac a sable", "api.sandbox.push.apple.com")]:
+    res = subprocess.run([
+        "curl", "-s", "-o", "/tmp/apns.json", "-w", "%{http_code}", "--http2",
+        "-H", f"authorization: bearer {jwt}", "-H", f"apns-topic: {BUNDLE}",
+        "-H", "apns-push-type: alert", "-d", '{"aps":{"alert":"test"}}',
+        f"https://{hote}/3/device/{'00' * 32}"], capture_output=True, text=True)
+    motif = json.load(open("/tmp/apns.json")).get("reason", "—")
+    print(f"  {nom:12} HTTP {res.stdout:4} {motif}")
+SCRIPT
+```
+
+Une clé valable pour les deux environnements répond `BadDeviceToken` aux deux lignes. Si la
+clé passe en production mais que Firebase continue de la refuser, la cause est 1 ou 3 : il n'y
+a plus rien à chercher du côté d'Apple, tout se joue dans le formulaire de la console.
+
+---
+
 ## Récapitulatif
 
 - [ ] Projet Firebase créé, sans Google Analytics
 - [ ] `google-services.json` dans `mobile/android/app/`
 - [ ] `GoogleService-Info.plist` dans `mobile/ios/App/App/`
-- [ ] Clé APNs `.p8` créée, rangée dans un gestionnaire de mots de passe
+- [ ] Clé APNs `.p8` créée **en Sandbox & Production**, rangée dans un gestionnaire de mots de passe
 - [ ] Key ID et Team ID relevés
 - [ ] App ID `com.schoolsaas.mobile` déclaré chez Apple avec la capacité Push
-- [ ] Clé APNs téléversée dans Firebase → Cloud Messaging
+- [ ] Clé APNs téléversée dans Firebase, dans l'emplacement **de développement**
+- [ ] Clé APNs téléversée dans Firebase, dans l'emplacement **de production** — le même fichier
 - [ ] Clé de compte de service déposée sur le VPS, en lecture restreinte
+- [ ] Notification reçue sur un appareil physique, build TestFlight
 
 ---
 
 ## Ce qui reste à coder
 
-Les clés ne suffisent pas : aucune des briques suivantes n'existe aujourd'hui.
-
 | Brique | État |
 |---|---|
-| Table `device_tokens` + points d'API d'enregistrement | **à écrire** — rien ne sait aujourd'hui à quel appareil parler |
-| Plugin `@capacitor/push-notifications` côté mobile | **à installer** — l'application ne demande jamais la permission |
-| `FcmNotificationGateway` remplaçant `LoggingNotificationGateway` | **à écrire** — l'interface existe déjà (ADR-020) |
-| Capacité Push dans le projet Xcode | **à activer** — aucun fichier `.entitlements` |
-| Purge des jetons morts (`UNREGISTERED`) | **à écrire** |
+| Table `device_tokens` + points d'API d'enregistrement | ✅ en service |
+| `@capacitor-firebase/messaging` côté mobile | ✅ en service — rend un vrai jeton FCM, là où `@capacitor/push-notifications` ne rend que le jeton APNs brut |
+| Renvoi du jeton APNs dans `AppDelegate` | ✅ en service — sans lui, Capacitor n'est jamais prévenu et rien ne remonte, **sans la moindre erreur** |
+| `FcmNotificationGateway` remplaçant `LoggingNotificationGateway` | ✅ en service |
+| `App.entitlements` avec `aps-environment = production` | ✅ en service |
+| Purge des jetons morts (`UNREGISTERED`) | ✅ en service |
+| Résolution des comptes familles (`FamilyRecipients`) | ✅ en service |
+| Écran de préférences dans l'application mobile | ✅ en service |
 
-Et trois défauts fonctionnels à corriger au passage, repérés en lisant le code existant :
+Restent deux types déclarés dans `NotificationType` que personne ne déclenche :
 
-1. **Les absences ne toucheraient personne.** `AttendanceService#notifyIfNeeded` appelle le
-   registre avec une liste de destinataires **vide** : ce chemin a été conçu pour le SMS, qui
-   vise les tuteurs par numéro de téléphone. Il faut résoudre les comptes des familles depuis
-   l'élève.
-2. **`NEW_GRADE` n'est jamais déclenché**, ni `NEW_DOCUMENT`, ni `SUBSCRIPTION_ALERT`. Les
-   types existent dans `NotificationType`, les appels manquent — alors qu'une note saisie est
-   ce qu'un parent attend le plus d'être averti.
-3. **Les préférences ne sont réglables que sur le web.** L'application mobile n'a pas d'écran
-   pour cela. Un parent qui ne consulte que son téléphone ne peut pas couper ce qui
-   l'importune, ce qui mène au refus de la permission système — qu'on ne peut plus redemander
-   ensuite.
+| Type | État |
+|---|---|
+| `NEW_DOCUMENT` | **à brancher** — aucun appel au registre |
+| `SUBSCRIPTION_ALERT` | **à brancher** — aucun appel au registre |
+
+Tant qu'ils ne sont pas branchés, un document déposé et un abonnement qui expire ne
+préviennent personne : le type existe, l'appel manque.
 
 ---
 
 ## Tester
 
 Le **simulateur iOS ne reçoit pas de notifications push réelles** : la vérification de bout en
-bout exigera un iPhone physique. L'émulateur Android convient, s'il embarque les services
-Google Play.
+bout exige un iPhone physique, et une build distribuée par TestFlight — une build lancée
+depuis Xcode utilise le bac à sable, donc l'autre emplacement de clé chez Firebase (§5).
+L'émulateur Android convient, s'il embarque les services Google Play.
+
+La marche à suivre pour provoquer un envoi, et lire où il s'est arrêté s'il n'arrive pas, est
+au §7.
 
 ## Et le SMS ?
 

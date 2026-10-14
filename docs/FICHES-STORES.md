@@ -13,7 +13,7 @@ reviennent donc.
 
 | Élément | État |
 |---|---|
-| Bundle Android `.aab` signé | ✅ `mobile/android/app/build/outputs/bundle/release/app-release.aab`, 4,4 Mo, reconstruit le 14/10/2026 |
+| Bundle Android `.aab` signé | ✅ `mobile/android/app/build/outputs/bundle/release/app-release.aab`, 4,4 Mo, reconstruit le 14/10/2026 à 11 h 45 — canal et icône de notification, et nom « School Manager » |
 | Build iOS | ✅ TestFlight n° 32, « Prêt à soumettre » |
 | Politique de confidentialité en ligne | ✅ https://schoolmanager.tech/confidentialite.html (HTTP 200) |
 | Textes de fiche | ✅ ci-dessous |
@@ -32,6 +32,7 @@ reviennent donc.
 |---|---|
 | Nom (Play, 30 car. max) | `School Manager` |
 | Nom (App Store, 30 car. max) | `School Manager` |
+| Nom affiché sur l'appareil | `School Manager` — identique, et c'est voulu : un nom de fiche qui diffère de celui du tiroir d'applications fait douter le visiteur au moment du téléchargement |
 | Identifiant de paquet | `com.schoolsaas.mobile` |
 | Version | 1.0 |
 | Éditeur | logilab — Bamako, Mali |

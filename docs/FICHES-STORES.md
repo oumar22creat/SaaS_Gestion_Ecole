@@ -31,8 +31,8 @@ reviennent donc.
 | Champ | Valeur |
 |---|---|
 | Nom (Play, 30 car. max) | `School Manager` |
-| Nom (App Store, 30 car. max) | `School Manager` |
-| Nom affiché sur l'appareil | `School Manager` — identique, et c'est voulu : un nom de fiche qui diffère de celui du tiroir d'applications fait douter le visiteur au moment du téléchargement |
+| Nom (App Store, 30 car. max) | `School Manager Tech` — 19 caractères. Le nom simple était indisponible : sur l'App Store il doit être unique sur toute la boutique |
+| Nom affiché sur l'appareil | `School Manager` (`CFBundleDisplayName`) — aucune contrainte d'unicité ici. L'écart avec le nom de fiche est admis par Apple tant que les deux restent manifestement liés, et « Tech » n'est qu'un suffixe |
 | Identifiant de paquet | `com.schoolsaas.mobile` |
 | Version | 1.0 |
 | Éditeur | logilab — Bamako, Mali |
@@ -226,8 +226,12 @@ n'utilise que HTTPS, ce qui relève de l'exemption. Aucune démarche supplément
 |---|---|
 | Site web | https://schoolmanager.tech |
 | Politique de confidentialité | https://schoolmanager.tech/confidentialite.html |
-| E-mail d'assistance | 🔑 à confirmer — une adresse dédiée (`support@schoolmanager.tech`) vaut mieux qu'une adresse personnelle, qui sera publique sur la fiche |
-| Téléphone d'assistance | 🔑 facultatif sur Play, exigé par Apple pour le contact de revue |
+| E-mail d'assistance | `oumarcoulou44@gmail.com` — publiquement visible sur la fiche. Une adresse dédiée (`support@schoolmanager.tech`) sera à préférer le jour où le volume d'écoles le justifie |
+| Téléphone de contact | `+223 79 82 79 79` — au format international. Apple refuse le préfixe `00` |
+
+> **Où se trouve l'URL de confidentialité chez Apple.** Sous **Confidentialité de l'app**,
+> dans la colonne de gauche (« Confiance et sécurité »), et non sous « Informations sur
+> l'app » — c'est la même page que le questionnaire des données collectées.
 
 ### 3.5 Compte de démonstration pour les examinateurs
 

@@ -6,7 +6,7 @@ import com.schoolsaas.tenant.Tenant;
 public record TenantBrandingResponse(String name, String logoUrl, String primaryColor, String secondaryColor) {
 
     /** Nom du produit, affiché tant qu'aucun établissement n'est résolu. */
-    private static final String NOM_NEUTRE = "Gestion Scolaire";
+    private static final String NOM_NEUTRE = "School Manager";
 
     /**
      * Marque à appliquer quand aucun établissement n'est résolu : page d'inscription, écran de

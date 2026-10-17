@@ -59,7 +59,7 @@ class TenantSettingsTest extends AbstractIntegrationTest {
     void servesNeutralBrandingWhenNoEstablishmentIsResolved() throws Exception {
         mockMvc.perform(get("/api/v1/tenants/current/branding"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Gestion Scolaire"))
+                .andExpect(jsonPath("$.name").value("School Manager"))
                 .andExpect(jsonPath("$.primaryColor").value("#0f5c4c"))
                 .andExpect(jsonPath("$.secondaryColor").value("#c9a227"));
     }

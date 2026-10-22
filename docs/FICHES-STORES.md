@@ -13,9 +13,9 @@ reviennent donc.
 
 | Élément | État |
 |---|---|
-| Bundle Android `.aab` signé | ✅ `mobile/android/app/build/outputs/bundle/release/app-release.aab`, 4,4 Mo, reconstruit le 14/10/2026 à 11 h 45 — canal et icône de notification, et nom « School Manager » |
+| Bundle Android `.aab` signé | ✅ `mobile/android/app/build/outputs/bundle/release/app-release.aab`, 4,4 Mo, reconstruit le 22/10/2026 à 14 h 03 — paquet `tech.schoolmanager.app`, Firebase configuré (compte Google oumarcoulou2@gmail.com, appli « School Manager Play ») |
 | Publi­cation iOS sur l'App Store | ✅ Publié le 22/10/2026 (version 1.0, build 35) — lien : https://apps.apple.com/app/id6822008457 |
-| Build Google Play | ⏳ bloqué : `google-services.json` à régénérer pour `tech.schoolmanager.app` (voir §5, « Identifiant Android ») avant de reconstruire le `.aab` |
+| Build Google Play | ⏳ bundle prêt, à téléverser dans un test fermé sur Play Console |
 | Politique de confidentialité en ligne | ✅ https://schoolmanager.tech/confidentialite.html (HTTP 200) |
 | Textes de fiche | ✅ ci-dessous |
 | Captures d'écran | ⏳ à prendre sur un appareil — voir §4 |

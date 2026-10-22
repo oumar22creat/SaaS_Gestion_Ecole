@@ -15,6 +15,23 @@ Format d'une entrée :
 
 ---
 
+## [2026-10-22] — Google Play : test fermé envoyé en examen
+**Tâche(s) réalisée(s) :** Badge App Store sur la page vitrine (non déployé). Application
+« School Manager » créée sur Play Console (compte personnel Logilab), paquet
+`tech.schoolmanager.app`. Dix déclarations de contenu remplies, fiche Play Store complète
+(textes, icône, bandeau, 5 captures 9:16), Firebase configuré pour le nouveau paquet, bundle
+reconstruit, test fermé « Alpha » (178 pays, 4 testeurs) envoyé en examen.
+**Décisions prises (et pourquoi) :** Paquet Android `tech.schoolmanager.app` car
+`com.schoolsaas.mobile` est déjà pris sur Play (iOS inchangé). Public cible 13 ans et plus
+(option B d'Oumar) pour éviter le programme « Familles ». Pas de messagerie déclarée : elle
+n'existe pas dans l'application mobile.
+**Problèmes rencontrés / points de vigilance :** Compte personnel → 12 testeurs inscrits
+pendant 14 jours obligatoires avant la production ; seulement 4 adresses pour l'instant.
+Firebase est sur le compte Google oumarcoulou2@gmail.com, Play Console sur
+oumarcoulou44@gmail.com. Le build iOS suivant devra être ≥ 36.
+**Prochaine étape :** Ajouter 8 testeurs, suivre l'examen Google, déployer la page vitrine
+(accès serveur à obtenir).
+
 ## [2026-10-22] — Publication App Store iOS
 **Tâche(s) réalisée(s) :** Application iOS « School Manager » (version 1.0, build 35) publiée
 sur l'App Store — lien : https://apps.apple.com/app/id6822008457. Mise à jour de la

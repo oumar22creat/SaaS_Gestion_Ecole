@@ -296,7 +296,8 @@ Hors périmètre inchangé : QR/NFC, reçus PDF, mobile money gateway, portail p
 ## Publication sur les stores
 
 - [x] Publication sur l'App Store iOS (version 1.0, build 35, le 22/10/2026)
-- [ ] Publication sur Google Play Android
+- [ ] Publication sur Google Play Android — test fermé « Alpha » envoyé en examen le 22/10/2026 ;
+      production après 12 testeurs inscrits pendant 14 jours (compte personnel)
 
 ---
 

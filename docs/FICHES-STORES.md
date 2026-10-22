@@ -14,7 +14,8 @@ reviennent donc.
 | Élément | État |
 |---|---|
 | Bundle Android `.aab` signé | ✅ `mobile/android/app/build/outputs/bundle/release/app-release.aab`, 4,4 Mo, reconstruit le 14/10/2026 à 11 h 45 — canal et icône de notification, et nom « School Manager » |
-| Build iOS | ✅ TestFlight n° 32, « Prêt à soumettre » |
+| Publi­cation iOS sur l'App Store | ✅ Publié le 22/10/2026 (version 1.0, build 35) — lien : https://apps.apple.com/app/id6822008457 |
+| Build Google Play | ⏳ en attente de téléchargement sur Play Console |
 | Politique de confidentialité en ligne | ✅ https://schoolmanager.tech/confidentialite.html (HTTP 200) |
 | Textes de fiche | ✅ ci-dessous |
 | Captures d'écran | ⏳ à prendre sur un appareil — voir §4 |
@@ -333,6 +334,14 @@ Le certificat attendu est `CN=oumar, OU=logilab, O=logilab, L=Mali, ST=Bamako, C
 `versionCode` vaut **1** et `versionName` **1.0**, dans `mobile/android/app/build.gradle`.
 Play refuse un `versionCode` déjà téléversé : à partir de la deuxième livraison, l'incrémenter
 avant de reconstruire.
+
+### Versions iOS
+
+La version publiée le 22/10/2026 est **1.0 (build 35)**. Attention : `CURRENT_PROJECT_VERSION`
+dans `mobile/ios/App/App.xcodeproj/project.pbxproj` vaut encore **1** — le numéro réel a été
+saisi au moment de l'archivage. App Store Connect refuse un build déjà téléversé : la prochaine
+livraison doit porter un build **≥ 36** (régler `CURRENT_PROJECT_VERSION` avant l'archive).
+Si la version commerciale change (1.0 → 1.1), incrémenter aussi **`MARKETING_VERSION`**.
 
 ---
 

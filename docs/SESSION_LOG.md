@@ -15,6 +15,15 @@ Format d'une entrée :
 
 ---
 
+## [2026-10-22] — Publication App Store iOS
+**Tâche(s) réalisée(s) :** Application iOS « School Manager » (version 1.0, build 35) publiée
+sur l'App Store — lien : https://apps.apple.com/app/id6822008457. Mise à jour de la
+documentation (FICHES-STORES.md, ROADMAP.md, SESSION_LOG.md).
+**Décisions prises (et pourquoi) :** Aucune — simple enregistrement d'un fait accompli.
+**Problèmes rencontrés / points de vigilance :** Aucun.
+**Prochaine étape :** Ajouter le badge App Store sur la page vitrine (landing/). Préparer
+la publication Google Play (bundle Android existant, captures d'écran à adapter pour Play).
+
 ## [2026-09-11] — Session
 **Tâche(s) réalisée(s) :** Squelette Spring Boot (Maven, Java 21, structure par domaine) +
 `docker-compose.yml` racine avec services PostgreSQL et Redis.

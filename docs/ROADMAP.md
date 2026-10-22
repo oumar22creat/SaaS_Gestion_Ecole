@@ -293,6 +293,13 @@ Hors périmètre inchangé : QR/NFC, reçus PDF, mobile money gateway, portail p
 
 ---
 
+## Publication sur les stores
+
+- [x] Publication sur l'App Store iOS (version 1.0, build 35, le 22/10/2026)
+- [ ] Publication sur Google Play Android
+
+---
+
 ## Notes de priorisation
 - Ne pas commencer la Phase 2 tant que la Phase 1 n'est pas testée de bout en bout par un
   scénario complet (créer un établissement → l'utiliser → payer → suspendre → réactiver).

@@ -175,13 +175,15 @@ Questionnaire Play, section « Référence, actualités ou éducation » :
 | Question | Réponse |
 |---|---|
 | Violence, sexualité, grossièretés, drogues | Non à tout |
-| L'application permet-elle aux utilisateurs d'interagir entre eux ? | **Oui** — messagerie entre l'école et les familles |
+| L'application permet-elle aux utilisateurs d'interagir entre eux ? | **Non** — la messagerie n'existe que sur le web ; l'application mobile n'en contient pas (vérifié le 22/10/2026) |
 | Partage de la position de l'utilisateur ? | Non |
 | Achats dans l'application ? | Non — l'abonnement est facturé à l'établissement, hors application |
-| Contenu généré par les utilisateurs ? | Oui, limité aux messages entre comptes d'un même établissement |
+| Contenu généré par les utilisateurs ? | Non, pour la même raison |
 
-Résultat attendu : **PEGI 3 / Tout public** sur Play, **4+** sur l'App Store.
+Résultat obtenu le 22/10/2026 : **PEGI 3 / Tout public** sur Play, **4+** sur l'App Store.
 
+> **Le jour où la messagerie arrive dans l'application mobile**, refaire le questionnaire Play
+> (interaction entre utilisateurs : Oui) et ajouter « Messages » à la sécurité des données.
 > Répondre « Oui » à l'interaction entre utilisateurs est obligatoire dès qu'une messagerie
 > existe, même interne et cloisonnée. Une réponse « Non » découverte plus tard entraîne un
 > retrait.
@@ -196,7 +198,6 @@ Données **collectées** et **liées à l'identité** de l'utilisateur :
 | Informations personnelles | Adresse e-mail | Identification du compte | Oui |
 | Informations personnelles | Numéro de téléphone | Alertes d'absence par SMS | Oui |
 | Identifiants | Identifiant de compte | Fonctionnement de l'application | Oui |
-| Messages | Messages entre l'école et les familles | Fonctionnement de l'application | Non |
 | Informations financières | Historique des paiements de scolarité | Fonctionnement de l'application | Oui |
 | Photos | Portrait de l'élève | Carte d'identité scolaire | Non |
 

@@ -19,10 +19,27 @@ if (fichierSignature.exists()) {
 }
 
 android {
+    /*
+     * namespace et applicationId sont volontairement différents.
+     *
+     * - applicationId est l'identité publique : celle que Google Play et Firebase connaissent,
+     *   et celle que renvoie getPackageName() à l'exécution. « com.schoolsaas.mobile » était
+     *   déjà pris sur Google Play, d'où « tech.schoolmanager.app ».
+     * - namespace ne sert qu'à la compilation : il fixe le paquet de la classe R générée et
+     *   résout le « .MainActivity » du manifeste. Il reste aligné sur le paquet Java de
+     *   MainActivity (com.schoolsaas.mobile), ce qui évite de déplacer le code source.
+     *
+     * Android autorise cet écart. Ce qui dépend de l'identité publique passe par
+     * ${applicationId} (autorité du FileProvider dans le manifeste) ou par getPackageName()
+     * côté Capacitor : rien n'est à renommer à la main.
+     *
+     * iOS n'est pas concerné : l'application publiée sur l'App Store garde son bundle
+     * com.schoolsaas.mobile (projet Xcode), tout comme appId dans capacitor.config.ts.
+     */
     namespace = "com.schoolsaas.mobile"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.schoolsaas.mobile"
+        applicationId "tech.schoolmanager.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -15,7 +15,7 @@ reviennent donc.
 |---|---|
 | Bundle Android `.aab` signé | ✅ `mobile/android/app/build/outputs/bundle/release/app-release.aab`, 4,4 Mo, reconstruit le 14/10/2026 à 11 h 45 — canal et icône de notification, et nom « School Manager » |
 | Publi­cation iOS sur l'App Store | ✅ Publié le 22/10/2026 (version 1.0, build 35) — lien : https://apps.apple.com/app/id6822008457 |
-| Build Google Play | ⏳ en attente de téléchargement sur Play Console |
+| Build Google Play | ⏳ bloqué : `google-services.json` à régénérer pour `tech.schoolmanager.app` (voir §5, « Identifiant Android ») avant de reconstruire le `.aab` |
 | Politique de confidentialité en ligne | ✅ https://schoolmanager.tech/confidentialite.html (HTTP 200) |
 | Textes de fiche | ✅ ci-dessous |
 | Captures d'écran | ⏳ à prendre sur un appareil — voir §4 |
@@ -34,7 +34,8 @@ reviennent donc.
 | Nom (Play, 30 car. max) | `School Manager` |
 | Nom (App Store, 30 car. max) | `School Manager Tech` — 19 caractères. Le nom simple était indisponible : sur l'App Store il doit être unique sur toute la boutique |
 | Nom affiché sur l'appareil | `School Manager` (`CFBundleDisplayName`) — aucune contrainte d'unicité ici. L'écart avec le nom de fiche est admis par Apple tant que les deux restent manifestement liés, et « Tech » n'est qu'un suffixe |
-| Identifiant de paquet | `com.schoolsaas.mobile` |
+| Identifiant de paquet Android | `tech.schoolmanager.app` (`applicationId`). `com.schoolsaas.mobile` était déjà pris sur Google Play — l'identifiant est unique sur toute la boutique et définitif une fois l'application créée |
+| Identifiant de bundle iOS | `com.schoolsaas.mobile` — **inchangé** : c'est celui de l'application publiée sur l'App Store le 22/10/2026, qu'on ne peut plus modifier sans publier une autre application |
 | Version | 1.0 |
 | Éditeur | logilab — Bamako, Mali |
 | Langue par défaut | Français (France) |
@@ -328,6 +329,60 @@ ls -l mobile/android/app/build/outputs/bundle/release/app-release.aab
 ```
 
 Le certificat attendu est `CN=oumar, OU=logilab, O=logilab, L=Mali, ST=Bamako, C=ML`.
+
+### Identifiant Android : `tech.schoolmanager.app`
+
+Le nom de paquet `com.schoolsaas.mobile` étant déjà pris sur Google Play, l'application
+Android s'appelle `tech.schoolmanager.app`. iOS garde `com.schoolsaas.mobile`.
+
+Ce qui a changé, et ce qui n'a volontairement pas changé :
+
+| Élément | Valeur | Pourquoi |
+|---|---|---|
+| `applicationId` (`mobile/android/app/build.gradle`) | `tech.schoolmanager.app` | identité vue par Play et Firebase |
+| `namespace` et paquet Java de `MainActivity` | `com.schoolsaas.mobile` | interne à la compilation (classe `R`) ; Android autorise l'écart, et on évite de déplacer le code |
+| `appId` (`mobile/capacitor.config.ts`) | `com.schoolsaas.mobile` | commun à iOS. Capacitor ne le recopie dans les projets natifs qu'au `cap add` : `cap sync` ne touche ni l'`applicationId` ni le bundle iOS |
+| Projet Xcode, `Info.plist`, `GoogleService-Info.plist` | inchangés | application iOS déjà publiée |
+| Autorités des `provider` (FileProvider, Firebase) | `tech.schoolmanager.app.*` | dérivées automatiquement de `${applicationId}` |
+| Canal de notification `vie-scolaire` | inchangé | ne dépend pas du paquet |
+
+**Conséquence : le `google-services.json` actuel ne convient plus.** Il ne déclare que
+`com.schoolsaas.mobile`, et le build échoue sur `No matching client found for package name
+'tech.schoolmanager.app'`. À faire dans la console Firebase 🔑 :
+
+1. [console.firebase.google.com](https://console.firebase.google.com) → projet
+   **schoolmanager-60a0f** → ⚙ **Paramètres du projet** → **Vos applications** →
+   **Ajouter une application** → **Android**.
+2. **Nom du package** : `tech.schoolmanager.app`, à l'identique. Surnom : « School Manager
+   Android ».
+3. Empreinte SHA-1 : **facultative**. Les notifications push (FCM) ne l'utilisent pas ; elle
+   ne servirait qu'à une connexion Google ou à App Check. Pour la renseigner quand même
+   (empreintes de la clé de téléversement) :
+
+   ```bash
+   cd mobile/android
+   export JAVA_HOME="/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home"
+   STORE=$(grep '^storeFile=' keystore.properties | cut -d= -f2-)
+   ALIAS=$(grep '^keyAlias=' keystore.properties | cut -d= -f2-)
+   "$JAVA_HOME/bin/keytool" -list -v -keystore "$STORE" -alias "$ALIAS" | grep -E 'SHA1|SHA256'
+   ```
+
+   `keytool` demande le mot de passe du magasin sans l'afficher ; il n'est jamais lu depuis
+   `keystore.properties`. Avec Play App Signing, l'application distribuée est signée par la
+   clé de Google : ses empreintes sont dans Play Console → **Test et publication** →
+   **Intégrité de l'application**, à ajouter aussi le jour où un service les exige.
+4. **Télécharger `google-services.json`** et **remplacer**
+   `mobile/android/app/google-services.json`. Le nouveau fichier contient les deux clients
+   (`com.schoolsaas.mobile` et `tech.schoolmanager.app`) : c'est attendu, et sans effet sur iOS.
+   Le committer (identifiants publics, pas de secret).
+5. Ignorer les étapes Gradle proposées par Firebase : le plugin est déjà branché.
+6. Reconstruire le bundle avec la commande ci-dessus.
+
+Côté serveur, rien à changer : le backend envoie aux jetons d'appareil avec le compte de
+service du projet, sans restriction de paquet. Les éventuelles installations de test sous
+`com.schoolsaas.mobile` continuent de recevoir tant qu'elles restent installées (leur client
+existe toujours dans le projet) ; une fois désinstallées, FCM répond `UNREGISTERED` et le
+backend oublie leur jeton de lui-même.
 
 ### Numéro de version
 

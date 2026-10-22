@@ -2,8 +2,14 @@
 <resources>
     <string name="app_name">School Manager</string>
     <string name="title_activity_main">School Manager</string>
-    <string name="package_name">com.schoolsaas.mobile</string>
-    <string name="custom_url_scheme">com.schoolsaas.mobile</string>
+    <!--
+        Hérités du modèle Capacitor : aucun code (ni Capacitor 8, ni greffon, ni manifeste)
+        ne les lit aujourd'hui. Ils sont alignés sur l'applicationId Android
+        (tech.schoolmanager.app, voir app/build.gradle) pour qu'un futur lien profond
+        construit sur custom_url_scheme ne reprenne pas l'ancien identifiant.
+    -->
+    <string name="package_name">tech.schoolmanager.app</string>
+    <string name="custom_url_scheme">tech.schoolmanager.app</string>
 
     <!--
         Canal de notification. Son identifiant est technique et ne doit jamais changer :

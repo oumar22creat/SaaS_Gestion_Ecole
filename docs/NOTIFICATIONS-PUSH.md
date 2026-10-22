@@ -29,12 +29,16 @@ identifiants publics de projet. Les deux derniers sont des secrets.
 
 ### Identifiant de l'application
 
-Les deux plateformes partagent le même identifiant, à saisir à l'identique dans les consoles
-(`mobile/capacitor.config.ts`, `PRODUCT_BUNDLE_IDENTIFIER` du projet Xcode) :
+Les deux plateformes n'ont **pas** le même identifiant, à saisir à l'identique dans les
+consoles :
 
-```
-com.schoolsaas.mobile
-```
+| Plateforme | Identifiant | Où il est défini |
+|---|---|---|
+| Android | `tech.schoolmanager.app` | `applicationId` de `mobile/android/app/build.gradle` |
+| iOS | `com.schoolsaas.mobile` | `PRODUCT_BUNDLE_IDENTIFIER` du projet Xcode, `appId` de `mobile/capacitor.config.ts` |
+
+`com.schoolsaas.mobile` était déjà pris sur Google Play ; l'application iOS, déjà publiée,
+garde le sien. Détails dans `docs/FICHES-STORES.md` §5.
 
 ---
 
@@ -56,8 +60,8 @@ Le plan gratuit (Spark) suffit : FCM n'est pas facturé, quel que soit le volume
 ## 2. Déclarer l'application Android
 
 1. Sur la page d'accueil du projet, bouton **Android**.
-2. **Nom du package** : `com.schoolsaas.mobile` — doit correspondre exactement, sinon les
-   jetons sont refusés à l'exécution.
+2. **Nom du package** : `tech.schoolmanager.app` — doit correspondre exactement à
+   l'`applicationId`, sinon le build échoue (`No matching client found`).
 3. Surnom et empreinte SHA-1 : facultatifs. Le SHA-1 ne sert qu'à la connexion Google, que
    l'application n'utilise pas.
 4. **Télécharger `google-services.json`** et le déposer dans :
@@ -74,7 +78,7 @@ mobile/android/app/google-services.json
 ## 3. Déclarer l'application iOS
 
 1. Page d'accueil du projet → **Ajouter une application** → **iOS**.
-2. **ID du bundle** : `com.schoolsaas.mobile`, identique à Android.
+2. **ID du bundle** : `com.schoolsaas.mobile` (différent d'Android, voir plus haut).
 3. **Télécharger `GoogleService-Info.plist`** et le déposer dans :
 
 ```

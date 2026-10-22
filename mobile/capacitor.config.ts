@@ -15,6 +15,17 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const surEmulateur = process.env['CAP_EMULATEUR'] === '1';
 
 const config: CapacitorConfig = {
+  /*
+   * appId reste « com.schoolsaas.mobile » : c'est le bundle de l'application iOS déjà
+   * publiée sur l'App Store, et ce champ est commun aux deux plateformes.
+   *
+   * Android utilise un autre identifiant (tech.schoolmanager.app, l'ancien étant pris sur
+   * Google Play), fixé par applicationId dans android/app/build.gradle. Capacitor ne
+   * recopie appId dans les projets natifs qu'au `cap add` ; `cap sync` ne touche ni
+   * l'applicationId Android ni le PRODUCT_BUNDLE_IDENTIFIER iOS. Modifier ce champ ne
+   * renommerait donc pas l'application Android, mais risquerait de désaligner iOS
+   * (`cap build ios` s'en sert pour la signature manuelle).
+   */
   appId: 'com.schoolsaas.mobile',
   appName: 'School Manager',
   webDir: 'dist/app/browser',

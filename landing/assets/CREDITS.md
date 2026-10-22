@@ -20,3 +20,9 @@ banque d'images.
 
 Pour remplacer une image, conserver le nom de fichier et mettre à jour les attributs
 `width` et `height` dans `index.html` afin d'éviter tout décalage de mise en page.
+
+## Badge App Store
+
+| Ressource | Source | Licence / conditions |
+|---|---|---|
+| Badge « Télécharger dans l'App Store » (noir, FR), SVG inline dans `index.html` | Reproduction du badge officiel Apple (logo Apple + texte), aucun fichier téléchargé | Marque Apple Inc. Usage autorisé uniquement pour renvoyer vers la fiche App Store de l'application (id6822008457), selon les règles marketing App Store d'Apple : badge non modifié (couleurs, proportions), sans effet au survol, avec un espace libre autour. Pour une conformité stricte, il peut être remplacé par le fichier officiel du kit « App Store Marketing Tools ». |

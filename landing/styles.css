@@ -883,3 +883,43 @@ img { display: block; max-width: 100%; }
   .tile:hover,
   .plan:hover { transform: none; }
 }
+
+/* ---------- Badge App Store ---------- */
+/* Badge officiel Apple (noir, liseré gris #a6a6a6) : aucune modification de couleur
+   ni d'effet au survol, conformément aux règles marketing Apple. Seul le focus clavier
+   reçoit l'anneau de la page. */
+.store-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-top: 1.5rem;
+}
+
+.store-row-duo { margin-top: 2rem; }
+
+.store-badge {
+  display: inline-block;
+  flex: 0 0 auto;
+  line-height: 0;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.store-badge svg {
+  display: block;
+  width: auto;
+  height: 44px;
+}
+
+.store-badge:focus-visible { border-radius: 8px; }
+
+.store-note {
+  color: var(--bone-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .store-badge svg { height: 40px; }
+}

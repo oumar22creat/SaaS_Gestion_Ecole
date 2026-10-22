@@ -407,9 +407,10 @@ Si la version commerciale change (1.0 → 1.1), incrémenter aussi **`MARKETING_
    « Gratuite ».
 2. **Configuration du tableau de bord**, dans l'ordre que la console impose :
    accès à l'application (y coller les identifiants du §3.5), publicités (**non**),
-   classification du contenu (§3.1), public cible (**18 ans et plus** : l'application
-   s'adresse aux parents et au personnel, et les comptes élèves sont créés par l'école, ce qui
-   évite le régime « conçu pour les enfants » et son examen renforcé), sécurité des données
+   classification du contenu (§3.1), public cible (**13-15, 16-17 et 18 ans et plus**,
+   choix d'Oumar du 22/10/2026 : les collégiens ont leur propre compte, mais exclure les moins
+   de 13 ans évite le programme « Familles » et son examen renforcé ; les plus jeunes passent
+   par le compte de leurs parents), sécurité des données
    (§3.2), politique de confidentialité (§3.4).
 3. **Fiche principale du store** — textes du §2, captures du §4.
 4. **Production → Créer une version** — téléverser le `.aab`, coller les notes de version.

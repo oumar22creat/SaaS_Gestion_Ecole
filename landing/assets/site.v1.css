@@ -374,16 +374,16 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
 
 /* < 440 px : « Menu » masqué visuellement (nom accessible conservé), en-tête resserré. */
 @media (max-width: 27.4375em) {
-  .topbar-inner { gap: var(--s-3); }
+  .topbar-inner { gap: var(--s-2); }
   .topbar-actions { gap: var(--s-2); }
-  .brand { gap: 8px; font-size: 1rem; }
+  .brand { gap: 8px; font-size: .9375rem; }
   .brand img { width: 30px; height: 30px; }
   .nav-mobile summary { padding: 0; width: 44px; }
   .nav-mobile .menu-label {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
-  .topbar .btn-sm { padding: .5rem .8rem; font-size: .875rem; }
+  .topbar .btn-sm { padding: .5rem .8rem; font-size: .875rem; white-space: nowrap; }
 }
 /* < 360 px : le nom visible disparaît, l'icône reste et le nom reste lu. */
 @media (max-width: 22.4375em) {
@@ -514,8 +514,6 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
   aspect-ratio: 9 / 15;
   opacity: .55;
   transform: translateY(-48px);
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
 }
 .shot-figure figcaption,
 .shots-rail figcaption {
@@ -682,7 +680,7 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
 .store-badge-soon { opacity: .6; cursor: default; }
 .store-note { flex: 1 1 100%; font-size: .9375rem; line-height: 1.5; color: var(--ink-2); }
 @media (max-width: 22.4375em) {
-  .store-badge { flex: 1 1 100%; }
+  .store-row { flex-direction: column; align-items: flex-start; }
 }
 
 .share { margin-top: var(--s-4); }
@@ -748,7 +746,7 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
 .steps-vertical > li::before { top: 20px; left: 20px; }
 
 /* ----------------------------------------------------------- Confiance */
-.trust-item h3 { margin: 14px 0 6px; font-size: 1.125rem; }
+.trust-item h3 { margin: 14px 0 6px; }
 .trust-item p { font-size: .96875rem; color: var(--ink-2); }
 .trust-item p + p { margin-top: var(--s-3); }
 .trust-wide { gap: var(--s-6) var(--s-7); }
@@ -800,6 +798,8 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
 /* position: relative : les textes masqués (.sr-only, en absolu) restent dans le conteneur
    défilant au lieu d'élargir la page. */
 .table-scroll { position: relative; overflow-x: auto; border-radius: var(--r-md); }
+/* Anneau dessiné vers l'intérieur : le conteneur peut toucher les bords de l'écran. */
+.table-scroll:focus-visible { outline-offset: -3px; }
 .compare, .roles-table {
   width: 100%;
   border-collapse: collapse;
@@ -838,10 +838,16 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
   .compare th:first-child { padding-left: 10px; width: 40%; }
   .compare thead th { font-size: .75rem; }
   .compare .cur { display: block; }
+  .compare .row-price td { font-size: .75rem; }
   .compare-wrap .table-scroll { margin-inline: calc(-1 * var(--pad)); border-radius: 0; }
+  /* Tableau des rôles : tient sans défilement à 320 / 375 px. */
+  .roles-table { font-size: .8125rem; }
+  .roles-table th, .roles-table td { padding: 10px 6px; }
+  .roles-table th:first-child { padding-left: 10px; }
+  .roles-table td:nth-child(2) { white-space: normal; }
+  .roles-table td:last-child { hyphens: auto; }
 }
 @media (min-width: 37.5em) {
-  .compare thead th { position: sticky; top: 0; }
   .compare th, .compare td, .roles-table th, .roles-table td { padding: 12px 16px; }
 }
 
@@ -880,6 +886,7 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
 .faq .answer p + p { margin-top: var(--s-2); }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .after-faq { margin-top: var(--s-5); }
+.after-faq a { display: inline-flex; align-items: center; gap: var(--s-2); padding-block: 8px; }
 
 /* --------------------------------------------------------- Appel final (§6.20) */
 .closer {
@@ -900,7 +907,7 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
   border-bottom: 1px solid var(--line);
 }
 .page-intro h1 { margin-bottom: var(--s-4); }
-.page-intro .btn-row { margin-top: var(--s-5); }
+.page-intro .btn-row { margin-top: var(--s-5); } /* 24 px du chapô (SPEC §6.7) */
 .intro-grid { display: grid; grid-template-columns: 1fr; gap: var(--s-6); }
 .intro-grid > * { min-width: 0; }
 .intro-visual-md { display: none; }
@@ -996,7 +1003,7 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
 .legal .toc li + li { margin-top: 0; }
 .legal .toc a { text-decoration: none; }
 .legal .notice { max-width: none; }
-.legal address { font-style: normal; }
+.legal address { font-style: normal; margin: var(--s-3) 0 var(--s-4); }
 @media (max-width: 37.4375em) {
   .legal th, .legal td { min-width: 9rem; }
 }
@@ -1027,7 +1034,8 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
 @media print {
   .topbar, .skip-link, .nav-mobile, .btn-row, .closer, .store-row, .share, .rail-hint { display: none !important; }
   body, .section-tint, .page-intro, .hero, .footer { background: #fff !important; color: #000 !important; }
-  .hero h1 .gold, .hero .lede, .micro, .footer, .footer a { color: #000 !important; }
+  .hero h1 .gold, .hero .lede, .micro, .footer, .footer a, .footer-title, .eyebrow-dark { color: #000 !important; }
+  .compare thead th, .roles-table thead th { background: #fff !important; color: #000 !important; border-bottom: 2px solid #000; }
   .legal a[href^="http"]::after { content: " (" attr(href) ")"; }
   .shot { box-shadow: none; }
 }

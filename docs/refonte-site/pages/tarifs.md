@@ -96,7 +96,7 @@ et prix en texte visible. Dernière ligne (prix) en Outfit 600.
 | Largeur | Disposition |
 |---|---|
 | 320 | 4 colonnes : libellé ≈ 120 px (retour à la ligne), 3 colonnes de 56 px centrées ; « En option » en 13 px sur deux lignes ; aucun défilement attendu. Si le contenu déborde (police agrandie), le conteneur défile, pas la page. |
-| 375 / 768 | Tableau pleine largeur, en-tête collant dans le conteneur dès 600 px. |
+| 375 / 768 | Tableau pleine largeur (pas d'en-tête collant, voir SPEC §6.16). |
 | 1280 | `max-width: 900px`, centré. |
 
 ## 4. Comment se passe l'essai (`aria-labelledby="titre-essai"`)

@@ -282,7 +282,7 @@ Comportement par largeur :
 | ≥ 900 px | Marque + 4 liens + « Se connecter » + « Essai gratuit ». Menu masqué (`display: none`). |
 | 600 à 899 px (768) | Marque + « Se connecter » + « Essai gratuit » + bouton « Menu » (icône + texte). Liens bureau masqués. |
 | 440 à 599 px | Marque + « Essai gratuit » + « Menu ». « Se connecter » passe dans le menu (déjà présent). |
-| 360 à 439 px (375) | Idem ; texte « Menu » masqué **visuellement** (`.sr-only`, pas `display:none`, pour garder le nom accessible) ; icône 30 px ; bouton « Essai gratuit » `padding: .5rem .8rem`, 14 px. |
+| 360 à 439 px (375) | Idem ; texte « Menu » masqué **visuellement** (`.sr-only`, pas `display:none`, pour garder le nom accessible) ; icône 30 px, marque en 15 px ; écart de 8 px entre la marque et les actions ; bouton « Essai gratuit » `padding: .5rem .8rem`, 14 px, `white-space: nowrap` (toujours sur une ligne). |
 | < 360 px (320) | Idem ; texte « School Manager » masqué visuellement (l'icône reste, le nom reste lu). |
 
 `html { scroll-padding-top: calc(var(--header-h) + 1rem) }` : les ancres et le focus ne passent
@@ -356,7 +356,8 @@ vert 60 % en haut à gauche), comme la maquette. Grille `1.1fr .9fr` à partir d
 
 Fond `--paper`, `padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(2rem, 5vw, 3.5rem)`, filet bas
 `--line`. Contenu : surtitre, `h1`, chapô, rangée de boutons ou badges (selon la page), visuel
-facultatif à droite (≥ 900 px, grille `1.15fr .85fr`, aligné en bas). Pas de fond nuit sur les
+facultatif à droite (≥ 900 px, grille `1.15fr .85fr`, aligné en bas). Exception au §6.3 :
+la rangée de boutons est à 24 px (`--s-5`) du chapô, et non à 32 px, le chapô étant déjà aéré. Pas de fond nuit sur les
 pages intérieures : le nuit reste réservé à l'accueil, aux appels finaux et au pied de page.
 
 ### 6.8 Sommaire de page (`.toc`)
@@ -450,8 +451,10 @@ plans, `<th scope="row">` pour les lignes. Conteneur `.table-scroll` : `overflow
 coche `#i-check` verte + `<span class="sr-only">Inclus</span>` ; tiret `#i-minus` `--ink-2` +
 `<span class="sr-only">Non inclus</span>` ; texte en clair pour « En option », effectifs et prix.
 Les lignes non incluses ne sont **jamais** atténuées par opacité (défaut du site actuel).
-Lignes alternées `--paper` / `--surface`, en-tête de colonnes collant à l'intérieur du conteneur
-(`position: sticky; top: 0`) à partir de 600 px.
+Lignes alternées `--paper` / `--surface`. Pas d'en-tête de colonnes collant : le conteneur en
+`overflow-x: auto` devient la référence du positionnement collant et ne défile pas verticalement,
+la règle serait sans effet (le tableau ne fait que 12 lignes). Anneau de focus du conteneur
+dessiné vers l'intérieur (`outline-offset: -3px`), car il peut toucher les bords de l'écran.
 
 ### 6.17 Carte tarif (`.plan`)
 

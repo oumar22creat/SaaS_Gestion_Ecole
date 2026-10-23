@@ -798,8 +798,10 @@ Configuration actuelle : `deploy/nginx/conf.d/app.conf.template`, bloc « Site v
    des jetons d'appareil et le contenu des notifications. La politique dit le contraire
    (« Si un service de notifications est ajouté, ce tableau sera mis à jour avant toute mise en
    service ») et affirme que « la seule permission demandée […] est l'accès à Internet », alors
-   qu'iOS demande l'autorisation des notifications. Le texte de la politique n'est **pas modifié**
-   par cette refonte (contenu juridique) : à corriger par Oumar ou sur sa demande. Le site promet
+   qu'iOS demande l'autorisation des notifications. **Corrigé** par le commit 6c6963b
+   (`fix/parcours-mobile-et-web`), reporté mot pour mot dans la nouvelle page : date au
+   23 octobre 2026, permission de notification, jeton de notification, sous-traitant Google
+   (Firebase Cloud Messaging) ; `/securite` le mentionne aussi. Le site promet
    « prévenu dès que l'absence est saisie » (repris de la fiche App Store publiée) : à confirmer
    en production.
 3. **Localisation du serveur** : « Union européenne » vient de la politique de confidentialité ;
@@ -807,8 +809,8 @@ Configuration actuelle : `deploy/nginx/conf.d/app.conf.template`, bloc « Site v
 4. **Essai sur le plan Essentiel** : le site actuel (même après l'étape 0) dit « L'essai couvre
    l'intégralité des modules » et « Essai de 30 jours sur tous les plans ». Le code démarre
    l'essai sur Essentiel, sans cantine, transport ni bibliothèque. La nouvelle spec dit la
-   vérité ; **le site en ligne devrait être corrigé dès maintenant** (petit correctif dans
-   `landing/index.html`, hors de mon périmètre).
+   vérité. **Corrigé** en ligne par le commit 6c6963b ; dans le nouveau site, le bouton du plan
+   Standard devient « Choisir Standard » (→ `/register`) pour ne pas suggérer un essai Standard.
 5. **« Cantine, transport, bibliothèque en option » (Standard)** : repris du site actuel. Dans
    le code, ces modules sont inclus dès que le plan Standard est souscrit, sans prix d'option.
    Si une option payante existe, en donner le prix ; sinon écrire « inclus ».

@@ -7,9 +7,10 @@ fiches App Store et Google Play. Pas de redirection vers une URL sans extension.
 
 **Objectif** : même texte juridique, nouvelle présentation (fond clair, en-tête et pied de page
 communs, sommaire). **Le contenu juridique n'est pas modifié** par cette refonte : mot pour mot
-identique à `landing/confidentialite.html` actuel, date « En vigueur au 6 octobre 2026 »
-conservée. Les corrections de fond éventuelles (notifications, voir SPEC §11, point 2) relèvent
-d'Oumar et changeront alors la date.
+identique à `landing/confidentialite.html` en ligne après le correctif 6c6963b
+(branche `fix/parcours-mobile-et-web`), date « En vigueur au 23 octobre 2026 ». Ce correctif
+ajoute la permission de notification, la ligne « Jeton de notification » des données collectées
+et le sous-traitant « Google (Firebase Cloud Messaging) ».
 
 ## Balises
 
@@ -32,7 +33,7 @@ page commun. Fond papier sur toute la page.
 
 Ordre :
 
-1. `h1` « Politique de confidentialité » + date `.maj` « En vigueur au 6 octobre 2026. »
+1. `h1` « Politique de confidentialité » + date `.maj` « En vigueur au 23 octobre 2026. »
 2. Paragraphe d'introduction (inchangé).
 3. Encadré « L'école reste maîtresse de ses données… » en `.notice` (filet vert ; plus d'or).
 4. **Sommaire ajouté** (`.toc`, `<nav aria-label="Sommaire">`), une pastille par section :

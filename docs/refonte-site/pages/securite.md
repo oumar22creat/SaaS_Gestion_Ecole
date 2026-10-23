@@ -59,11 +59,12 @@ pas 4 colonnes comme sur l'accueil), `gap: 32px 48px`.
 |---|---|
 | Icône | `i-server` |
 | `h2` | Où sont hébergées les données. |
-| Paragraphe 1 | Le serveur et la base de données sont hébergés chez Hostinger, dans l'Union européenne. Cloudflare gère le nom de domaine et le chiffrement des échanges. |
+| Paragraphe 1 | Le serveur et la base de données sont hébergés chez Hostinger, dans l'Union européenne. Cloudflare gère le nom de domaine et le chiffrement des échanges. Les notifications envoyées sur le téléphone passent par Google (Firebase Cloud Messaging). |
 | Paragraphe 2 | Les serveurs étant situés hors du Mali, les données y sont transférées. La liste complète des prestataires et des durées de conservation figure dans la politique de confidentialité. |
 | Lien `.more` | Lire la politique de confidentialité → `/confidentialite.html` |
 
-Ne pas écrire « aucun autre prestataire » sur cette page (voir SPEC §11, point 2 : notifications).
+Ne pas écrire « aucun autre prestataire » sur cette page : la liste complète des sous-traitants
+(dont Google Firebase Cloud Messaging pour les notifications) est dans la politique de confidentialité.
 
 ## 4. Ce que nous ne collectons pas
 

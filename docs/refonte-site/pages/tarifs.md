@@ -48,7 +48,7 @@ Pas de bouton dans l'introduction : les cartes suivent immédiatement.
 | Prix | 180 000 / FCFA par an | 750 000 / FCFA par an | dès 1 800 000 / FCFA par an |
 | Équivalences | Soit 15 000 FCFA par mois, ou 1 200 FCFA par élève et par an. | Soit 62 500 FCFA par mois, ou environ 940 FCFA par élève et par an. | Tarif dégressif selon l'effectif, défini avec vous. |
 | Coches | Scolarité, notes et bulletins · Absences et emploi du temps · Application mobile pour les enseignants, les parents et les élèves · Support par e-mail | Tout le plan Essentiel · Frais de scolarité et facturation · Statistiques de direction · Cantine, transport, bibliothèque en option | Tous les modules, cantine, transport et bibliothèque compris · Statistiques avancées et exports · Accompagnement à la reprise de vos données · Support par e-mail |
-| Bouton `.btn-outline` pleine largeur | Démarrer l'essai gratuit → `/register` | Démarrer l'essai gratuit → `/register` | icône WhatsApp + « Demander un devis » → W5 (texte masqué « (WhatsApp, nouvel onglet) ») |
+| Bouton `.btn-outline` pleine largeur | Démarrer l'essai gratuit → `/register` | Choisir Standard → `/register` | icône WhatsApp + « Demander un devis » → W5 (texte masqué « (WhatsApp, nouvel onglet) ») |
 
 Sous les cartes, paragraphe `.note` (15,5 px, `--ink-2`, `max-width: 70ch`) :
 

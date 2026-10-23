@@ -209,7 +209,7 @@ Trois cartes `.plan` **allégées** (sans liste de coches, le détail est sur `/
 | `h3` | Effectif | Prix | Équivalence | Bouton `.btn-outline` |
 |---|---|---|---|---|
 | Essentiel | Jusqu'à 150 élèves | 180 000 FCFA par an | Soit 15 000 FCFA par mois. | Démarrer l'essai → `/register` |
-| Standard | Jusqu'à 800 élèves | 750 000 FCFA par an | Soit 62 500 FCFA par mois. | Démarrer l'essai → `/register` |
+| Standard | Jusqu'à 800 élèves | 750 000 FCFA par an | Soit 62 500 FCFA par mois. | Choisir Standard → `/register` |
 | Premium | Effectif illimité | dès 1 800 000 FCFA par an | Tarif dégressif selon l'effectif. | Voir le plan Premium → `/tarifs#plan-premium` |
 
 Note (`.note`) : « Abonnement annuel. 30 jours d'essai gratuit, sans engagement. » + lien

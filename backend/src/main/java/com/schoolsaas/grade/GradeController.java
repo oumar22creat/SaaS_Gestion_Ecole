@@ -44,7 +44,8 @@ public class GradeController {
     public ApiResponse<List<GradeResponse>> submit(@PathVariable Long examId, @Valid @RequestBody GradeSubmissionRequest request) {
         Exam exam = requireExam(examId);
         // Même garde que la feuille d'appel : pas de note pour un élève d'une autre classe.
-        request.entries().forEach(entry -> teacherScope.requireStudentInClass(entry.studentId(), exam.getSchoolClassId()));
+        teacherScope.requireStudentsInClass(
+                request.entries().stream().map(GradeEntryRequest::studentId).toList(), exam.getSchoolClassId());
         List<GradeResponse> data = gradeService.submit(examId, request.entries()).stream().map(GradeResponse::from).toList();
         return ApiResponse.of(data);
     }

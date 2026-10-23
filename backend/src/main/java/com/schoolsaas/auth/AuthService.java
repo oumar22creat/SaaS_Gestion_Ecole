@@ -1,6 +1,7 @@
 package com.schoolsaas.auth;
 
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.common.EmailNormalizer;
 import com.schoolsaas.tenant.Tenant;
 import com.schoolsaas.tenant.TenantContext;
 import com.schoolsaas.tenant.TenantRepository;
@@ -63,7 +64,7 @@ public class AuthService {
             // Adresse telle que saisie d'abord (comptes antérieurs à la normalisation, jamais
             // réécrits), puis sous sa forme canonique (comptes créés depuis, voir EmailNormalizer).
             User user = userRepository.findByEmail(email)
-                    .or(() -> userRepository.findByEmail(com.schoolsaas.common.EmailNormalizer.normalize(email)))
+                    .or(() -> userRepository.findByEmail(EmailNormalizer.normalize(email)))
                     .filter(User::isActive)
                     .orElseThrow(AuthService::invalidCredentials);
             if (!passwordEncoder.matches(password, user.getPasswordHash())) {

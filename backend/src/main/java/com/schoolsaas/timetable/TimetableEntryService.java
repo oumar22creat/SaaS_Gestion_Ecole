@@ -5,6 +5,7 @@ import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.subject.SubjectRepository;
 import com.schoolsaas.teacher.TeacherRepository;
 import com.schoolsaas.timetable.dto.TimetableEntryRequest;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,7 @@ public class TimetableEntryService {
     }
 
     /** Créneaux de plusieurs fiches enseignant (un compte peut en avoir plusieurs, voir TeacherScope). */
-    public List<TimetableEntry> listForTeachers(java.util.Collection<Long> teacherIds) {
+    public List<TimetableEntry> listForTeachers(Collection<Long> teacherIds) {
         return teacherIds.isEmpty() ? List.of() : timetableEntryRepository.findAllByTeacherIdIn(teacherIds);
     }
 

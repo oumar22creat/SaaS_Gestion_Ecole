@@ -3,6 +3,7 @@ package com.schoolsaas.schoolclass;
 import com.schoolsaas.common.ApiException;
 import com.schoolsaas.schoolclass.dto.SchoolClassRequest;
 import com.schoolsaas.teacher.TeacherRepository;
+import java.util.Collection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class SchoolClassService {
     }
 
     /** Classes d'un périmètre enseignant (voir TeacherScope). */
-    public Page<SchoolClass> listByIds(java.util.Collection<Long> ids, Pageable pageable) {
+    public Page<SchoolClass> listByIds(Collection<Long> ids, Pageable pageable) {
         return ids.isEmpty() ? Page.empty(pageable) : schoolClassRepository.findAllByIdIn(ids, pageable);
     }
 

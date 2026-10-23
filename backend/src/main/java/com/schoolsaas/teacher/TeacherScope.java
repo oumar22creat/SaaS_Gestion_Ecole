@@ -8,9 +8,11 @@ import com.schoolsaas.schoolclass.ClassSubjectAssignment;
 import com.schoolsaas.schoolclass.ClassSubjectAssignmentRepository;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
+import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
 import com.schoolsaas.timetable.TimetableEntry;
 import com.schoolsaas.timetable.TimetableEntryRepository;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -81,11 +83,6 @@ public class TeacherScope {
         this.studentRepository = studentRepository;
     }
 
-    /** Vrai si l'utilisateur courant est un enseignant, donc soumis au périmètre. */
-    public boolean isRestricted() {
-        return currentPrincipal().map(p -> Role.TEACHER.name().equals(p.role())).orElse(false);
-    }
-
     /**
      * Périmètre de l'enseignant connecté, ou vide si l'utilisateur courant n'est pas restreint
      * (direction, vie scolaire… ou traitement hors requête HTTP).
@@ -108,11 +105,6 @@ public class TeacherScope {
         Perimeter perimeter = perimeterFor(principal.get().email());
         attributes.setAttribute(REQUEST_ATTRIBUTE, perimeter, RequestAttributes.SCOPE_REQUEST);
         return Optional.of(perimeter);
-    }
-
-    /** Utilisable en SpEL : {@code @teacherScope.canAccessClass(#id)}. */
-    public boolean canAccessClass(Long classId) {
-        return currentPerimeter().map(p -> p.canAccessClass(classId)).orElse(true);
     }
 
     public void requireClass(Long classId) {
@@ -141,14 +133,26 @@ public class TeacherScope {
     }
 
     /**
-     * Pour un enseignant : l'élève doit être inscrit dans CETTE classe (et la classe dans son
-     * périmètre). Empêche de glisser dans l'appel de sa classe un élève d'une autre classe.
+     * Pour un enseignant : chaque élève doit être inscrit dans CETTE classe (et la classe dans
+     * son périmètre). Empêche de glisser dans l'appel, la saisie de notes ou un incident de sa
+     * classe un élève d'une autre classe. Une seule requête pour toute la liste ; un élève
+     * introuvable (ou d'un autre établissement) est hors périmètre.
      */
-    public void requireStudentInClass(Long studentId, Long classId) {
+    public void requireStudentsInClass(Collection<Long> studentIds, Long classId) {
         currentPerimeter().ifPresent(p -> {
-            Long studentClassId = classOfStudent(studentId);
-            if (!p.canAccessClass(classId) || studentClassId == null || !studentClassId.equals(classId)) {
-                deny("élève " + studentId + " hors de la classe " + classId);
+            if (!p.canAccessClass(classId)) {
+                deny("classe " + classId);
+            }
+            Set<Long> wanted = new HashSet<>(studentIds);
+            Set<Long> inClass = new HashSet<>();
+            for (Student student : studentRepository.findAllById(wanted)) {
+                if (classId.equals(student.getSchoolClassId())) {
+                    inClass.add(student.getId());
+                }
+            }
+            wanted.removeAll(inClass);
+            if (!wanted.isEmpty()) {
+                deny("élèves " + wanted + " hors de la classe " + classId);
             }
         });
     }
@@ -171,7 +175,7 @@ public class TeacherScope {
     }
 
     private Long classOfStudent(Long studentId) {
-        return studentRepository.findById(studentId).map(s -> s.getSchoolClassId()).orElse(null);
+        return studentRepository.findById(studentId).map(Student::getSchoolClassId).orElse(null);
     }
 
     private Perimeter perimeterFor(String principalEmail) {

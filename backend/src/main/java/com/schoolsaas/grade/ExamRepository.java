@@ -1,6 +1,7 @@
 package com.schoolsaas.grade;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,7 +14,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findAllBySchoolClassId(Long schoolClassId);
 
     /** Évaluations des classes d'un enseignant, avant filtrage par matière (TeacherScope). */
-    List<Exam> findAllBySchoolClassIdInOrderByIdAsc(java.util.Collection<Long> schoolClassIds);
+    List<Exam> findAllBySchoolClassIdInOrderByIdAsc(Collection<Long> schoolClassIds);
 
     /**
      * Les évaluations d'une classe dans une matière, bornées à une période et dans l'ordre où

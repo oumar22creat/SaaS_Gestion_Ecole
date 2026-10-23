@@ -44,10 +44,11 @@ public class AttendanceController {
     @PostMapping("/roll-call")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<List<AttendanceRecordResponse>> submitRollCall(@Valid @RequestBody RollCallRequest request) {
-        teacherScope.requireClass(request.schoolClassId());
-        // La classe seule ne suffit pas : sans ce contrôle, un enseignant pourrait glisser dans
-        // l'appel de SA classe un élève d'une autre classe et modifier sa présence du jour.
-        request.entries().forEach(entry -> teacherScope.requireStudentInClass(entry.studentId(), request.schoolClassId()));
+        // Classe du périmètre ET chaque élève inscrit dans cette classe : la classe seule ne
+        // suffit pas, un enseignant pourrait glisser dans l'appel de SA classe un élève d'une
+        // autre classe et modifier sa présence du jour.
+        teacherScope.requireStudentsInClass(
+                request.entries().stream().map(RollCallRequest.Entry::studentId).toList(), request.schoolClassId());
         List<AttendanceRecordResponse> data =
                 attendanceService.submitRollCall(request).stream().map(AttendanceRecordResponse::from).toList();
         return ApiResponse.of(data);

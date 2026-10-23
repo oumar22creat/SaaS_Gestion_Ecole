@@ -11,6 +11,7 @@ import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.subject.SubjectRepository;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
@@ -74,7 +75,7 @@ public class LessonService {
     }
 
     /** Séances des seules classes données (liste vue par un enseignant). */
-    public Page<Lesson> listForClasses(java.util.Collection<Long> schoolClassIds, Pageable pageable) {
+    public Page<Lesson> listForClasses(Collection<Long> schoolClassIds, Pageable pageable) {
         if (schoolClassIds.isEmpty()) {
             return Page.empty(pageable);
         }

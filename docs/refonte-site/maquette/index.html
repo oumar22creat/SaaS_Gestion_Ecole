@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- MAQUETTE de la refonte (docs/refonte-site/PROPOSITION.md). Non déployée. -->
+<title>Logiciel de gestion scolaire pour les écoles du Mali | School Manager</title>
+<meta name="description" content="Notes, bulletins, absences et frais de scolarité au même endroit. Plateforme web et application mobile pour les écoles privées du Mali, de la 1ère à la 9ème année. Essai gratuit de 30 jours.">
+<meta name="theme-color" content="#0b231e">
+<link rel="icon" href="../../../marketing/play-store/icone-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Sprite d'icônes au trait : remplace le script Phosphor (aucune requête tierce). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M4 20l1.2-4.1A8 8 0 1 1 8.3 19z"/><path d="M9 9.2c.2 2.6 2.6 5 5.4 5.6l1.3-1.3-1.9-1-1 .8a4.6 4.6 0 0 1-2.3-2.3l.8-1-1-1.9z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v15H5.5A1.5 1.5 0 0 0 4 20.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v15h5.5a1.5 1.5 0 0 1 1.5 1.5z"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 14l2 2 4-4"/></symbol>
+    <symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="9" cy="7" rx="5" ry="2.5"/><path d="M4 7v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V7M10 16.5c.9 1.2 3 2 5 2 2.8 0 5-1.1 5-2.5v-4c0-1.4-2.2-2.5-5-2.5"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3v-3H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></symbol>
+    <symbol id="i-bus" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="13" rx="2"/><path d="M5 11h14M8 17v2.5M16 17v2.5M8.5 14h.01M15.5 14h.01"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20h16M7 16v-4M12 16V8M17 16v-7"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.5M17.5 14a5.5 5.5 0 0 1 3 5"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M5 14v5h14v-5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip-link" href="#contenu">Aller au contenu principal</a>
+
+<header class="topbar">
+  <div class="shell topbar-inner">
+    <a class="brand" href="#contenu">
+      <img src="../../../marketing/play-store/icone-512.png" width="36" height="36" alt="">
+      <span>School Manager</span>
+    </a>
+
+    <nav class="nav-desktop" aria-label="Navigation principale">
+      <a href="#modules">Fonctionnalités</a>
+      <a href="#tarifs">Tarifs</a>
+      <a href="#parents">Parents</a>
+      <a href="#securite">Sécurité</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <a class="link-quiet hide-sm" href="/login">Se connecter</a>
+      <a class="btn btn-gold btn-sm" href="/register">Essai gratuit</a>
+      <!-- Menu mobile sans JS : <details> natif, ouvrable au clavier. -->
+      <details class="nav-mobile">
+        <summary aria-label="Menu">
+          <svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg>
+          <span class="hide-xs">Menu</span>
+        </summary>
+        <nav aria-label="Navigation principale (mobile)">
+          <a href="#modules">Fonctionnalités</a>
+          <a href="#tarifs">Tarifs</a>
+          <a href="#parents">Parents</a>
+          <a href="#securite">Sécurité</a>
+          <a href="/login">Se connecter</a>
+          <a href="https://wa.me/22379827979?text=Bonjour%2C%20je%20souhaite%20une%20d%C3%A9mo%20de%20School%20Manager%20(site)" target="_blank" rel="noopener">Écrire sur WhatsApp<span class="sr-only"> (nouvel onglet)</span></a>
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>
+
+<main id="contenu">
+
+  <!-- 1. Haut de page -->
+  <section class="hero" aria-labelledby="titre-hero">
+    <div class="shell hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow eyebrow-dark">Pour les écoles privées du Mali</p>
+        <h1 id="titre-hero">Notes, absences et frais de scolarité. <span class="gold">Au même endroit, sans cahier ni tableur.</span></h1>
+        <p class="lede">Une plateforme web pour la direction et une application mobile pour les enseignants et les parents. Pensée pour l'enseignement fondamental, de la 1ère à la 9ème année, entièrement en français et en FCFA.</p>
+        <div class="btn-row">
+          <a class="btn btn-gold" href="/register">Essayer gratuitement 30&nbsp;jours</a>
+          <a class="btn btn-outline-light" href="https://wa.me/22379827979?text=Bonjour%2C%20je%20souhaite%20une%20d%C3%A9mo%20de%20School%20Manager%20(site)" target="_blank" rel="noopener">
+            <svg class="ico" aria-hidden="true"><use href="#i-whatsapp"/></svg>
+            Demander une démo sur WhatsApp<span class="sr-only"> (nouvel onglet)</span>
+          </a>
+        </div>
+        <p class="micro">Sans engagement. Tarifs affichés, à partir de 180&nbsp;000&nbsp;FCFA par an.</p>
+      </div>
+
+      <div class="hero-visual">
+        <figure class="shot shot-main">
+          <img src="../../../marketing/play-store/capture-1-feuille-appel.png" width="1080" height="1920" alt="Capture de l'application : feuille d'appel de la classe de 6ème année A, chaque élève avec les boutons Présent, Absent, Retard et Départ anticipé.">
+        </figure>
+        <figure class="shot shot-back" aria-hidden="true">
+          <img src="../../../marketing/play-store/capture-4-accueil.png" width="1080" height="1920" alt="" loading="lazy">
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Aiguillage parents -->
+  <div class="switch">
+    <div class="shell">
+      <p>Vous êtes parent d'élève ? <a href="#parents">Voir ce que l'application vous montre <svg class="ico ico-sm" aria-hidden="true"><use href="#i-arrow"/></svg></a></p>
+    </div>
+  </div>
+
+  <!-- 3. Faits vérifiables -->
+  <section class="facts" aria-label="En bref">
+    <ul class="shell facts-list">
+      <li>Entièrement en français</li>
+      <li>Montants en FCFA</li>
+      <li>Fondamental, 1ère à 9ème année</li>
+      <li>Pensée pour les connexions lentes</li>
+      <li>Édité à Bamako par LOGILAB</li>
+    </ul>
+  </section>
+
+  <!-- 4. La réalité du terrain -->
+  <section class="section" aria-labelledby="titre-terrain">
+    <div class="shell">
+      <p class="eyebrow">Le constat</p>
+      <h2 id="titre-terrain">Les écoles ne manquent pas de rigueur. Elles manquent d'outils.</h2>
+      <div class="cards-3">
+        <article class="card">
+          <p class="card-problem">« Trois semaines pour sortir les bulletins. »</p>
+          <p>Les notes saisies pendant le trimestre alimentent directement le bulletin : moyennes, coefficients, rang et absences de la période. Il sort en PDF, à l'en-tête de votre école.</p>
+        </article>
+        <article class="card">
+          <p class="card-problem">« Le cahier d'appel a encore disparu. »</p>
+          <p>L'enseignant fait l'appel sur son téléphone, toute la classe sur un seul écran. Les familles concernées sont prévenues dès que l'absence est saisie.</p>
+        </article>
+        <article class="card">
+          <p class="card-problem">« Qui a payé ce trimestre ? »</p>
+          <p>Grille tarifaire par classe, échéanciers, facture par élève. Les impayés sont sur un seul écran, et chaque famille voit ses reçus.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Une plateforme, trois publics -->
+  <section class="section section-tint" aria-labelledby="titre-publics">
+    <div class="shell">
+      <p class="eyebrow">Une plateforme, trois publics</p>
+      <h2 id="titre-publics">Chacun voit ce qui le concerne, et seulement cela.</h2>
+      <div class="roles">
+        <article class="role">
+          <!-- Aucune capture web n'existe encore : emplacement réservé, rien d'inventé. -->
+          <div class="placeholder" role="img" aria-label="Emplacement réservé pour une capture du tableau de bord web de la direction">
+            <span>Capture web à produire<br><small>Tableau de bord de la direction, données de démonstration</small></span>
+          </div>
+          <h3>Direction et secrétariat <span class="tag">Web</span></h3>
+          <ul class="ticks">
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Élèves, classes et matières, import par fichier CSV</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Bulletins PDF à l'en-tête de l'école</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Frais de scolarité et suivi des impayés</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Annonces et messagerie (sur le web)</li>
+          </ul>
+        </article>
+        <article class="role">
+          <figure class="shot shot-card">
+            <img src="../../../marketing/play-store/capture-2-notes.png" width="1080" height="1920" alt="Capture de l'application : liste des évaluations de l'enseignant, avec la date et le barème sur 20." loading="lazy">
+          </figure>
+          <h3>Enseignants <span class="tag">Application</span></h3>
+          <ul class="ticks">
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Feuille d'appel tactile</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Saisie des notes depuis le téléphone</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Emploi du temps de la journée</li>
+          </ul>
+        </article>
+        <article class="role">
+          <div class="placeholder" role="img" aria-label="Emplacement réservé pour une capture de l'écran parent">
+            <span>Capture parent à produire<br><small>Notification d'absence, notes par matière</small></span>
+          </div>
+          <h3>Parents et élèves <span class="tag">Application</span></h3>
+          <ul class="ticks">
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Absences et retards, le jour même</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Notes, moyenne et rang</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Échéancier et reçus</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Les modules -->
+  <section class="section" id="modules" aria-labelledby="titre-modules">
+    <div class="shell">
+      <p class="eyebrow">Fonctionnalités</p>
+      <h2 id="titre-modules">20 modules, 8 rôles. L'essentiel, ici.</h2>
+      <div class="modules">
+        <article class="module">
+          <svg class="ico ico-lg" aria-hidden="true"><use href="#i-book"/></svg>
+          <h3>Scolarité, notes et bulletins</h3>
+          <p>Moyennes calculées automatiquement, appréciations, coefficients, bulletins PDF.</p>
+        </article>
+        <article class="module">
+          <svg class="ico ico-lg" aria-hidden="true"><use href="#i-calendar"/></svg>
+          <h3>Absences et emploi du temps</h3>
+          <p>Feuille d'appel, motifs et justificatifs, conflits de salle ou d'enseignant détectés.</p>
+        </article>
+        <article class="module">
+          <svg class="ico ico-lg" aria-hidden="true"><use href="#i-coins"/></svg>
+          <h3>Frais de scolarité</h3>
+          <p>Grille par classe, échéanciers, factures, suivi des impayés. Plans Standard et Premium.</p>
+        </article>
+        <article class="module">
+          <svg class="ico ico-lg" aria-hidden="true"><use href="#i-chat"/></svg>
+          <h3>Communication aux familles</h3>
+          <p>Annonces, messagerie sur le web, notification du parent dès qu'une absence est saisie.</p>
+        </article>
+        <article class="module">
+          <svg class="ico ico-lg" aria-hidden="true"><use href="#i-bus"/></svg>
+          <h3>Cantine, transport, bibliothèque</h3>
+          <p>Menus, lignes et arrêts, catalogue et emprunts. Selon le plan choisi.</p>
+        </article>
+        <article class="module">
+          <svg class="ico ico-lg" aria-hidden="true"><use href="#i-chart"/></svg>
+          <h3>Statistiques de direction</h3>
+          <p>Effectifs, taux de présence, moyennes par classe, exports.</p>
+        </article>
+      </div>
+      <!-- Maquette : les liens vers les futures pages (/fonctionnalites, /tarifs, /parents, /securite,
+           /mentions-legales) pointent vers des ancres de cette page. -->
+      <p class="more"><a href="#modules">Voir toutes les fonctionnalités <svg class="ico ico-sm" aria-hidden="true"><use href="#i-arrow"/></svg></a></p>
+    </div>
+  </section>
+
+  <!-- 7. Côté parents -->
+  <section class="section section-tint" id="parents" aria-labelledby="titre-parents">
+    <div class="shell split">
+      <div>
+        <p class="eyebrow">Pour les parents</p>
+        <h2 id="titre-parents">La vie scolaire de votre enfant, sur votre téléphone.</h2>
+        <ul class="ticks ticks-lg">
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Vous êtes prévenu d'une absence dès que l'école la saisit, avec la date et le motif.</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Notes matière par matière, moyenne et rang dans la classe.</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Ce qui a été payé, ce qui reste dû, le reçu de chaque paiement.</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Plusieurs enfants sous un seul compte.</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Vous choisissez les notifications que vous recevez.</li>
+        </ul>
+        <div class="notice">
+          <p><strong>L'application est gratuite pour les parents.</strong> Elle fonctionne avec le compte que votre école vous remet. Si votre école n'est pas encore inscrite, parlez-en à votre directeur.</p>
+        </div>
+        <div class="store-row">
+          <a class="store-badge" href="https://apps.apple.com/app/id6822008457" target="_blank" rel="noopener" aria-label="Télécharger School Manager dans l'App Store (nouvel onglet)">
+            <!-- Badge App Store officiel (repris du site actuel) : en production, fichier du kit Apple. -->
+            <svg viewBox="0 0 135 40" width="135" height="40" aria-hidden="true" focusable="false">
+              <rect x="0.5" y="0.5" width="134" height="39" rx="6.5" fill="#000" stroke="#a6a6a6"/>
+              <path transform="translate(8 7.5) scale(1.04)" fill="#fff" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+              <text x="37" y="15.5" fill="#fff" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="8.2" textLength="64" lengthAdjust="spacingAndGlyphs">Télécharger dans</text>
+              <text x="36.5" y="30.5" fill="#fff" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15.5" font-weight="600" letter-spacing="-0.3" textLength="89" lengthAdjust="spacingAndGlyphs">l’App Store</text>
+            </svg>
+          </a>
+          <span class="pill-muted">Android&nbsp;: en test sur Google Play</span>
+        </div>
+        <p class="share"><a href="https://wa.me/?text=Notre%20%C3%A9cole%20pourrait%20utiliser%20School%20Manager%20%3A%20https%3A%2F%2Fschoolmanager.tech" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-whatsapp"/></svg>Envoyer cette page à mon directeur<span class="sr-only"> (WhatsApp, nouvel onglet)</span></a></p>
+      </div>
+      <figure class="photo">
+        <img src="../../../landing/assets/scolarite.jpg" width="1280" height="900" alt="Deux écolières en uniforme lisent un cahier devant leur école." loading="lazy">
+        <figcaption>Photo d'illustration (Wikimedia Commons, CC0).</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 8. Démarrer en trois étapes -->
+  <section class="section" aria-labelledby="titre-etapes">
+    <div class="shell">
+      <p class="eyebrow">Mise en place</p>
+      <h2 id="titre-etapes">Ouvrir votre espace en trois étapes.</h2>
+      <ol class="steps">
+        <li>
+          <h3>Créez votre école</h3>
+          <p>Sur schoolmanager.tech, en quelques minutes. Votre école a son propre espace.</p>
+        </li>
+        <li>
+          <h3>Importez classes et élèves</h3>
+          <p>Par fichier CSV, sans tout ressaisir à la main.</p>
+        </li>
+        <li>
+          <h3>Invitez votre équipe</h3>
+          <p>Les enseignants reçoivent leur accès. Vous remettez aux parents leurs identifiants.</p>
+        </li>
+      </ol>
+      <div class="btn-row">
+        <a class="btn btn-green" href="/register">Ouvrir mon espace d'essai</a>
+        <a class="btn btn-outline" href="https://wa.me/22379827979?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20d%C3%A9marrer%20School%20Manager%20(site)" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-whatsapp"/></svg>Besoin d'aide ? WhatsApp<span class="sr-only"> (nouvel onglet)</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Sécurité -->
+  <section class="section section-tint" id="securite" aria-labelledby="titre-securite">
+    <div class="shell">
+      <p class="eyebrow">Confiance</p>
+      <h2 id="titre-securite">Les données de votre école restent les vôtres.</h2>
+      <div class="trust">
+        <div class="trust-item">
+          <svg class="ico ico-lg" aria-hidden="true"><use href="#i-shield"/></svg>
+          <h3>Un espace par école</h3>
+          <p>Aucune autre école ne peut voir vos données. L'isolation est imposée par la base de données elle-même.</p>
+        </div>
+        <div class="trust-item">
+          <svg class="ico ico-lg" aria-hidden="true"><use href="#i-users"/></svg>
+          <h3>Chacun son périmètre</h3>
+          <p>Un enseignant voit ses classes, la comptabilité les règlements, la direction l'ensemble.</p>
+        </div>
+        <div class="trust-item">
+          <svg class="ico ico-lg" aria-hidden="true"><use href="#i-lock"/></svg>
+          <h3>Connexions protégées</h3>
+          <p>HTTPS obligatoire, mots de passe jamais stockés en clair, journal des opérations sensibles, sauvegardes régulières.</p>
+        </div>
+        <div class="trust-item">
+          <svg class="ico ico-lg" aria-hidden="true"><use href="#i-export"/></svg>
+          <h3>Vos données vous suivent</h3>
+          <p>Si vous arrêtez, vos données sont exportées avant toute suppression.</p>
+        </div>
+      </div>
+      <p class="more"><a href="../../../landing/confidentialite.html">Lire la politique de confidentialité <svg class="ico ico-sm" aria-hidden="true"><use href="#i-arrow"/></svg></a></p>
+    </div>
+  </section>
+
+  <!-- 10. Tarifs -->
+  <section class="section" id="tarifs" aria-labelledby="titre-tarifs">
+    <div class="shell">
+      <p class="eyebrow">Tarifs</p>
+      <h2 id="titre-tarifs">Des prix affichés. Choisissez selon votre nombre d'élèves.</h2>
+      <div class="plans">
+        <article class="plan">
+          <h3>Essentiel</h3>
+          <p class="plan-scale">Jusqu'à 150 élèves</p>
+          <p class="plan-price">180&nbsp;000 <span>FCFA par an</span></p>
+          <p class="plan-eq">Soit 15&nbsp;000&nbsp;FCFA par mois.</p>
+          <ul class="ticks">
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Scolarité, notes et bulletins</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Absences et emploi du temps</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Application mobile incluse</li>
+          </ul>
+          <a class="btn btn-outline" href="/register">Démarrer l'essai</a>
+        </article>
+        <article class="plan">
+          <h3>Standard</h3>
+          <p class="plan-scale">Jusqu'à 800 élèves</p>
+          <p class="plan-price">750&nbsp;000 <span>FCFA par an</span></p>
+          <p class="plan-eq">Soit 62&nbsp;500&nbsp;FCFA par mois.</p>
+          <ul class="ticks">
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Tout le plan Essentiel</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Frais de scolarité et facturation</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Statistiques de direction</li>
+          </ul>
+          <a class="btn btn-outline" href="/register">Démarrer l'essai</a>
+        </article>
+        <article class="plan">
+          <h3>Premium</h3>
+          <p class="plan-scale">Effectif illimité</p>
+          <p class="plan-price"><small>dès</small> 1&nbsp;800&nbsp;000 <span>FCFA par an</span></p>
+          <p class="plan-eq">Tarif selon l'effectif.</p>
+          <ul class="ticks">
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Tous les modules</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Accompagnement à la reprise des données</li>
+            <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Statistiques avancées et exports</li>
+          </ul>
+          <a class="btn btn-outline" href="/register">Démarrer l'essai</a>
+        </article>
+      </div>
+      <p class="note">Paiement annuel, à la rentrée. Essai gratuit de 30 jours sur tous les plans, sans engagement. <a href="#tarifs">Comparer les plans en détail</a></p>
+    </div>
+  </section>
+
+  <!-- 11. Questions fréquentes -->
+  <section class="section section-tint" aria-labelledby="titre-faq">
+    <div class="shell narrow">
+      <p class="eyebrow">Questions fréquentes</p>
+      <h2 id="titre-faq">Vos questions, nos réponses.</h2>
+      <div class="faq">
+        <details>
+          <summary>Les parents doivent-ils payer ?</summary>
+          <p>Non. C'est l'école qui s'abonne. L'application est gratuite à télécharger pour les parents, qui utilisent les identifiants remis par l'école.</p>
+        </details>
+        <details>
+          <summary>L'application est-elle disponible sur Android ?</summary>
+          <p>Pas encore pour tout le monde. Elle est en test sur Google Play et sera annoncée ici dès sa sortie publique. Elle est déjà disponible sur iPhone.</p>
+        </details>
+        <details>
+          <summary>Que se passe-t-il après les 30 jours d'essai ?</summary>
+          <p>Vous choisissez un plan pour continuer. Sinon, l'essai s'arrête, sans engagement.</p>
+        </details>
+        <details>
+          <summary>Faut-il une bonne connexion internet ?</summary>
+          <p>Non. L'application ne télécharge que ce qu'elle affiche : quand vous ouvrez les notes, elle charge les notes, rien de plus.</p>
+        </details>
+        <details>
+          <summary>Que deviennent nos données si nous arrêtons ?</summary>
+          <p>Elles sont exportées et vous sont remises avant toute suppression définitive.</p>
+        </details>
+        <details>
+          <summary>Qui édite School Manager ?</summary>
+          <p>LOGILAB, une entreprise basée à Bamako. Vous pouvez nous écrire sur WhatsApp au +223&nbsp;79&nbsp;82&nbsp;79&nbsp;79.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12. Appel final -->
+  <section class="closer" aria-labelledby="titre-closer">
+    <div class="shell closer-inner">
+      <h2 id="titre-closer">Ouvrez votre espace avant le prochain trimestre.</h2>
+      <p>Tous les modules pendant 30 jours. Sans engagement.</p>
+      <div class="btn-row btn-row-center">
+        <a class="btn btn-gold" href="/register">Essayer gratuitement 30&nbsp;jours</a>
+        <a class="btn btn-outline-light" href="https://wa.me/22379827979?text=Bonjour%2C%20je%20souhaite%20une%20d%C3%A9mo%20de%20School%20Manager%20(site)" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-whatsapp"/></svg>Écrire sur WhatsApp<span class="sr-only"> (nouvel onglet)</span></a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="shell footer-grid">
+    <div class="footer-about">
+      <p class="brand brand-footer">
+        <img src="../../../marketing/play-store/icone-512.png" width="32" height="32" alt="">
+        <span>School Manager</span>
+      </p>
+      <p>Gestion scolaire pour les écoles privées du Mali, sur le web et sur mobile. Édité par LOGILAB, Bamako, Mali.</p>
+      <p><a href="https://wa.me/22379827979" target="_blank" rel="noopener">WhatsApp : +223&nbsp;79&nbsp;82&nbsp;79&nbsp;79<span class="sr-only"> (nouvel onglet)</span></a></p>
+    </div>
+    <div>
+      <h2 class="footer-title">Produit</h2>
+      <ul>
+        <li><a href="#modules">Fonctionnalités</a></li>
+        <li><a href="#tarifs">Tarifs</a></li>
+        <li><a href="#parents">Parents</a></li>
+        <li><a href="https://apps.apple.com/app/id6822008457" target="_blank" rel="noopener">App Store<span class="sr-only"> (nouvel onglet)</span></a></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="footer-title">Confiance</h2>
+      <ul>
+        <li><a href="#securite">Sécurité</a></li>
+        <li><a href="../../../landing/confidentialite.html">Politique de confidentialité</a></li>
+        <li><a href="#contenu">Mentions légales</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="footer-title">Accès</h2>
+      <ul>
+        <li><a href="/login">Se connecter</a></li>
+        <li><a href="/register">Inscrire mon école</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="shell footer-base">
+    <span>© 2026 LOGILAB</span>
+    <span>Photos d'illustration : Wikimedia Commons, CC0</span>
+  </div>
+</footer>
+
+</body>
+</html>

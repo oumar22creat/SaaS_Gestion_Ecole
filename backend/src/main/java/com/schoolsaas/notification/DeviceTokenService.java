@@ -55,10 +55,15 @@ public class DeviceTokenService {
      * <p>Sans cela, le téléphone d'un enseignant qui quitte l'établissement continuerait de
      * recevoir les absences de ses anciennes classes jusqu'à ce que FCM le déclare inconnu —
      * ce qui n'arrive jamais tant que l'application reste installée.
+     *
+     * <p>Borné au compte courant : un utilisateur ne retire que ses propres appareils. Sans
+     * cette borne, quiconque connaît le jeton d'un collègue du même établissement pourrait le
+     * priver de ses notifications. Un jeton déjà réattribué à un autre compte n'est donc pas
+     * touché — il appartient désormais à ce compte-là.
      */
     @Transactional
-    public void retirer(String token) {
-        deviceTokenRepository.deleteByToken(token);
+    public void retirer(Long userId, String token) {
+        deviceTokenRepository.deleteByTokenAndUserId(token, userId);
     }
 
     /** Les appareils à joindre pour ces destinataires. */

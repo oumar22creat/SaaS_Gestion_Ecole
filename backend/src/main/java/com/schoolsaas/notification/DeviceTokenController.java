@@ -39,7 +39,7 @@ public class DeviceTokenController {
     @DeleteMapping("/{token}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unregister(@PathVariable String token) {
-        deviceTokenService.retirer(token);
+        deviceTokenService.retirer(currentUserId(), token);
     }
 
     private Long currentUserId() {

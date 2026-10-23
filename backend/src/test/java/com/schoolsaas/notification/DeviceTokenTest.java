@@ -145,6 +145,68 @@ class DeviceTokenTest extends AbstractIntegrationTest {
         assertThat(appareilsDe(tenant)).isEmpty();
     }
 
+    private void retirer(Tenant tenant, String jwt, String token) throws Exception {
+        mockMvc.perform(delete("/api/v1/device-tokens/{token}", token)
+                        .header("Authorization", "Bearer " + jwt)
+                        .header(TenantResolver.TENANT_HEADER, tenant.getId()))
+                .andExpect(status().isNoContent());
+    }
+
+    /** Chacun ne retire que ses propres appareils, même au sein de son établissement. */
+    @Test
+    void doesNotLetAnotherAccountOfTheSameSchoolRemoveTheDevice() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Voisins");
+        String jwtProprietaire = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "prof-proprio@ecole.example", Role.TEACHER);
+        String jwtCollegue = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "prof-collegue@ecole.example", Role.TEACHER);
+        enregistrer(tenant, jwtProprietaire, "jeton-du-proprietaire", "ANDROID");
+
+        retirer(tenant, jwtCollegue, "jeton-du-proprietaire");
+
+        assertThat(appareilsDe(tenant)).singleElement()
+                .extracting(DeviceToken::getToken)
+                .isEqualTo("jeton-du-proprietaire");
+    }
+
+    /**
+     * Le téléphone partagé, vu de la déconnexion : une fois l'appareil passé au parent, la
+     * déconnexion tardive de l'enseignant (une requête rejouée, par exemple) ne doit pas
+     * priver le parent de ses notifications.
+     */
+    @Test
+    void aFormerOwnerCannotRemoveADeviceHandedOverToSomeoneElse() throws Exception {
+        Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Relais");
+        String jwtEnseignant = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "prof-relais@ecole.example", Role.TEACHER);
+        String jwtParent = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "parent-relais@ecole.example", Role.PARENT);
+        enregistrer(tenant, jwtEnseignant, "jeton-relais", "IOS");
+        enregistrer(tenant, jwtParent, "jeton-relais", "IOS");
+
+        retirer(tenant, jwtEnseignant, "jeton-relais");
+
+        assertThat(appareilsDe(tenant)).hasSize(1);
+    }
+
+    /** Isolation tenant : un compte d'un autre établissement ne voit ni ne retire la ligne. */
+    @Test
+    void doesNotLetAnotherSchoolRemoveTheDevice() throws Exception {
+        Tenant premiere = TestAuthSupport.createActiveTenant(tenantRepository, "École Gardée");
+        Tenant seconde = TestAuthSupport.createActiveTenant(tenantRepository, "École Intruse");
+        String jwtProprietaire = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, premiere, "prof-garde@ecole.example", Role.TEACHER);
+        String jwtIntrus = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, seconde, "prof-intrus@ecole.example", Role.TEACHER);
+        enregistrer(premiere, jwtProprietaire, "jeton-garde", "ANDROID");
+
+        retirer(seconde, jwtIntrus, "jeton-garde");
+
+        assertThat(appareilsDe(premiere)).singleElement()
+                .extracting(DeviceToken::getToken)
+                .isEqualTo("jeton-garde");
+    }
+
     /** Un appareil appartient à son établissement, comme toute donnée métier (ADR-001). */
     @Test
     void stampsTheDeviceWithItsOwnEstablishment() throws Exception {

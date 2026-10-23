@@ -394,12 +394,18 @@ Play refuse un `versionCode` déjà téléversé : l'incrémenter avant chaque n
 
 ### Versions iOS
 
-La version publiée le 22/10/2026 est **1.0 (build 35)** — numéro saisi à la main au moment
-de l'archivage, le projet portant alors encore `1`. `CURRENT_PROJECT_VERSION` vaut désormais
-**36** dans `mobile/ios/App/App.xcodeproj/project.pbxproj` (`MARKETING_VERSION` reste
-**1.0**) : c'est le build de la prochaine livraison. App Store Connect refuse un build déjà
-téléversé : l'incrémenter avant chaque nouvelle archive.
-Si la version commerciale change (1.0 → 1.1), incrémenter aussi **`MARKETING_VERSION`**.
+- **1.0 (build 35)** : publiée le 22/10/2026.
+- **1.0.1 (build 40)** : correctif du jeton push à la déconnexion, envoyée en examen le
+  23/10/2026. Disponibilité étendue le même jour à 174 pays et régions (tous sauf la Chine
+  continentale, qui exige une licence ICP).
+
+Les builds iOS sont produits par GitHub Actions (`.github/workflows/ios.yml`, lancement manuel
+avec « publier ») : le numéro de build y est **le numéro d'exécution du workflow**
+(`CURRENT_PROJECT_VERSION=${{ github.run_number }}`), la valeur du projet n'est pas utilisée.
+**Une version publiée est fermée** : App Store Connect refuse tout nouveau build portant la même
+`MARKETING_VERSION`. Avant chaque livraison, incrémenter `MARKETING_VERSION` dans
+`mobile/ios/App/App.xcodeproj/project.pbxproj` puis créer la version correspondante dans
+App Store Connect avant d'y associer le build.
 
 ---
 

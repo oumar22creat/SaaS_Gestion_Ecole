@@ -15,6 +15,10 @@ FROM nginx:1.27-alpine AS runtime
 # Application (sous-domaines) et site vitrine (domaine principal).
 COPY --from=build /build/dist/web/browser /usr/share/nginx/html/app
 COPY landing/ /usr/share/nginx/html/site/
+# Notes internes (CREDITS.md : provenance des photos et polices) : utiles dans le dépôt, pas
+# en ligne. Retirées de l'image plutôt que masquées seulement par Nginx. OFL.txt reste : la
+# licence des polices impose de la distribuer avec elles, il est servi en text/plain.
+RUN find /usr/share/nginx/html/site -name '*.md' -delete
 
 # Le serveur par défaut de l'image répondrait à n'importe quel nom d'hôte non prévu par la
 # page d'accueil de Nginx. Rien ne doit être servi pour un hôte que nous ne connaissons pas.

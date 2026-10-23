@@ -78,6 +78,17 @@ server {
         return 301 /$is_args$args;
     }
 
+    # /index servirait l'accueil (try_files $uri.html) : doublon de /.
+    location = /index {
+        return 301 /$is_args$args;
+    }
+
+    # /404 servirait la page 404 en 200 (« soft 404 ») : on répond un vrai 404. Le corps vient
+    # de error_page → /404.html, qui porte ses propres en-têtes (always).
+    location = /404 {
+        return 404;
+    }
+
     # Exception : URL citée telle quelle dans les fiches App Store et Google Play.
     location = /confidentialite.html {
         add_header Cache-Control "no-cache";
@@ -128,6 +139,13 @@ server {
     }
 
     # ---------------------------------------------------------------------- Ressources
+    # Défense en profondeur : les .md sont déjà retirés de l'image (Dockerfile.web), mais un
+    # fichier de notes ajouté sous landing/ ne doit jamais partir en ligne, même monté en volume.
+    # Placée avant les autres regex : la première qui correspond l'emporte.
+    location ~* \.md$ {
+        return 404;
+    }
+
     # Feuille de style et script versionnés par leur nom (site.v1.css → site.v2.css à chaque
     # modification) et polices (jamais modifiées sous le même nom) : cache d'un an, immutable.
     location ~ ^/assets/fonts/.+\.woff2$ {

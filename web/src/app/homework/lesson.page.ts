@@ -8,6 +8,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { extractErrorMessage } from '../core/http-error.util';
 import { toIsoDate } from '../core/iso-date.util';
+import { TeachingScope, TeachingScopeService } from '../core/teaching-scope.service';
 import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
 import { Subject } from '../subject/subject.model';
@@ -32,40 +33,47 @@ import { Lesson, LessonService } from './lesson.service';
     <div class="filters-row">
       <mat-form-field appearance="outline">
         <mat-label>Classe</mat-label>
-        <mat-select [(ngModel)]="schoolClassId" (ngModelChange)="load()">
+        <mat-select [(ngModel)]="schoolClassId" (ngModelChange)="onClassChange()">
           @for (schoolClass of classes(); track schoolClass.id) {
             <mat-option [value]="schoolClass.id">{{ schoolClass.name }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
     </div>
-    <form class="stack-form" (submit)="create($event)">
-      <mat-form-field appearance="outline">
-        <mat-label>Matière</mat-label>
-        <mat-select [(ngModel)]="subjectId" name="subjectId">
-          @for (subject of subjects(); track subject.id) {
-            <mat-option [value]="subject.id">{{ subject.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Date de séance</mat-label>
-        <input matInput type="date" [(ngModel)]="sessionDate" name="sessionDate" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Contenu</mat-label>
-        <textarea matInput [(ngModel)]="content" name="content" rows="3"></textarea>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Devoir</mat-label>
-        <textarea matInput [(ngModel)]="homework" name="homework" rows="2"></textarea>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>À rendre le</mat-label>
-        <input matInput type="date" [(ngModel)]="homeworkDueDate" name="homeworkDueDate" />
-      </mat-form-field>
-      <button mat-flat-button type="submit"><mat-icon>add</mat-icon> Ajouter la séance</button>
-    </form>
+    @if (schoolClassId !== null && subjectOptions().length === 0) {
+      <p class="empty-state" data-testid="no-subject-in-class">
+        Vous n’enseignez aucune matière dans cette classe : le cahier de textes y est en lecture
+        seule.
+      </p>
+    } @else {
+      <form class="stack-form" (submit)="create($event)">
+        <mat-form-field appearance="outline">
+          <mat-label>Matière</mat-label>
+          <mat-select [(ngModel)]="subjectId" name="subjectId">
+            @for (subject of subjectOptions(); track subject.id) {
+              <mat-option [value]="subject.id">{{ subject.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Date de séance</mat-label>
+          <input matInput type="date" [(ngModel)]="sessionDate" name="sessionDate" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Contenu</mat-label>
+          <textarea matInput [(ngModel)]="content" name="content" rows="3"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Devoir</mat-label>
+          <textarea matInput [(ngModel)]="homework" name="homework" rows="2"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>À rendre le</mat-label>
+          <input matInput type="date" [(ngModel)]="homeworkDueDate" name="homeworkDueDate" />
+        </mat-form-field>
+        <button mat-flat-button type="submit"><mat-icon>add</mat-icon> Ajouter la séance</button>
+      </form>
+    }
     @if (errorMessage()) {
       <p class="flash-error">{{ errorMessage() }}</p>
     }
@@ -86,7 +94,11 @@ import { Lesson, LessonService } from './lesson.service';
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let lesson">
-            <button mat-button (click)="remove(lesson)"><mat-icon>delete</mat-icon></button>
+            @if (scope().teaches(lesson.schoolClassId, lesson.subjectId)) {
+              <button mat-button (click)="remove(lesson)" aria-label="Supprimer la séance">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
@@ -99,6 +111,10 @@ export class LessonPage {
   private readonly lessonService = inject(LessonService);
   private readonly schoolClassService = inject(SchoolClassService);
   private readonly subjectService = inject(SubjectService);
+  private readonly teachingScopeService = inject(TeachingScopeService);
+
+  /** Périmètre d'affichage (ADR-030) ; fermé tant qu'il n'est pas chargé. */
+  protected readonly scope = signal(new TeachingScope(null, true));
 
   protected readonly classes = signal<SchoolClass[]>([]);
   protected readonly subjects = signal<Subject[]>([]);
@@ -115,15 +131,37 @@ export class LessonPage {
   constructor() {
     void this.schoolClassService.list().then((classes) => this.classes.set(classes));
     void this.subjectService.list().then((subjects) => this.subjects.set(subjects));
+    void this.teachingScopeService.current().then((scope) => this.scope.set(scope));
+  }
+
+  /**
+   * Écriture réservée au couple (classe, matière) enseigné (ADR-030) : un enseignant ne se
+   * voit proposer que ses matières de la classe choisie. La lecture reste ouverte à toute
+   * classe de son périmètre.
+   */
+  protected subjectOptions(): Subject[] {
+    return this.scope().subjectsFor(this.schoolClassId, this.subjects());
+  }
+
+  async onClassChange(): Promise<void> {
+    if (!this.subjectOptions().some((subject) => subject.id === this.subjectId)) {
+      this.subjectId = null;
+    }
+    await this.load();
   }
 
   async load(): Promise<void> {
     if (this.schoolClassId === null) {
       return;
     }
+    this.errorMessage.set(null);
     const from = toIsoDate(new Date(Date.now() - 30 * 86400000));
     const to = toIsoDate(new Date(Date.now() + 30 * 86400000));
-    this.lessons.set(await this.lessonService.list(this.schoolClassId, from, to));
+    try {
+      this.lessons.set(await this.lessonService.list(this.schoolClassId, from, to));
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    }
   }
 
   async create(event: Event): Promise<void> {
@@ -131,6 +169,7 @@ export class LessonPage {
     if (this.schoolClassId === null || this.subjectId === null) {
       return;
     }
+    this.errorMessage.set(null);
     try {
       await this.lessonService.create({
         schoolClassId: this.schoolClassId,
@@ -150,7 +189,12 @@ export class LessonPage {
   }
 
   async remove(lesson: Lesson): Promise<void> {
-    await this.lessonService.remove(lesson.id);
-    await this.load();
+    this.errorMessage.set(null);
+    try {
+      await this.lessonService.remove(lesson.id);
+      await this.load();
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    }
   }
 }

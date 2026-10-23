@@ -18,6 +18,9 @@
           <mat-option [value]="subject.id">{{ subject.name }}</mat-option>
         }
       </mat-select>
+      @if (restricted() && form.controls.schoolClassId.value === null) {
+        <mat-hint>Choisissez d’abord la classe.</mat-hint>
+      }
       <mat-error>{{ fieldError(form.controls.subjectId) }}</mat-error>
     </mat-form-field>
 

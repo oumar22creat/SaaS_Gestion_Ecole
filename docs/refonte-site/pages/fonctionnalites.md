@@ -11,8 +11,8 @@ en ligne », « feuille d'appel »).
 
 | Balise | Valeur |
 |---|---|
-| `title` | Fonctionnalités : bulletins, absences, frais de scolarité \| School Manager |
-| `meta description` | Les modules de School Manager rôle par rôle : bulletins PDF, feuille d'appel, emploi du temps, frais de scolarité, cantine, statistiques. Sur le web et sur mobile. |
+| `title` | Bulletins, absences, frais de scolarité \| School Manager |
+| `meta description` | Les modules rôle par rôle : bulletins PDF, feuille d'appel, emploi du temps, frais de scolarité, cantine, statistiques. Sur le web et sur mobile. |
 | `canonical` / `og:url` | `https://schoolmanager.tech/fonctionnalites` |
 | `og:title` | Toutes les fonctionnalités de School Manager |
 | `og:description` | 20 modules et 8 rôles : ce que fait chacun, sur la plateforme web et sur l'application. |
@@ -211,7 +211,7 @@ Futur (SPEC §9) : écrans parents.
 | `h2` | 8 rôles, chacun son périmètre. |
 | Chapô | Les droits sont vérifiés sur le serveur, pas dans le navigateur. Un compte ne voit que ce que son rôle autorise. |
 
-Tableau `<table class="roles-table">` dans `.table-scroll`, `<caption class="sr-only">Les 8 rôles et ce que chacun voit</caption>`,
+Tableau `<table class="roles-table">` dans `.table-scroll` (`role="region"`, `aria-label="Tableau : rôles et périmètres"`, distinct du nom de la section), `<caption class="sr-only">Les 8 rôles et ce que chacun voit</caption>`,
 colonnes « Rôle » (`th scope="row"`) · « Où » · « Ce qu'il voit » :
 
 | Rôle | Où | Ce qu'il voit |

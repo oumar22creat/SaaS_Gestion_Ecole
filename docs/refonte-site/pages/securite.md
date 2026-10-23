@@ -13,7 +13,7 @@ confidentialité reste le texte de référence : cette page la résume et y renv
 | Balise | Valeur |
 |---|---|
 | `title` | Sécurité et confidentialité des données scolaires \| School Manager |
-| `meta description` | Chaque école a son espace, isolé par la base de données. Accès par rôle, échanges et sauvegardes chiffrés, export de vos données. Ce que nous faisons, concrètement. |
+| `meta description` | Concrètement : chaque école a son espace, isolé par la base de données. Accès par rôle, échanges et sauvegardes chiffrés, export de vos données. |
 | `canonical` / `og:url` | `https://schoolmanager.tech/securite` |
 | `og:title` | Les données de votre école restent les vôtres |
 | `og:description` | Isolation par école, accès par rôle, sauvegardes chiffrées, export avant suppression. |

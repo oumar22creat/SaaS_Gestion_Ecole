@@ -1,6 +1,6 @@
-/* School Manager - site vitrine, feuille de style commune (v1).
+/* School Manager - site vitrine, feuille de style commune (v2).
    Référence : docs/refonte-site/SPEC.md (tokens §4, composants §6, accessibilité §7).
-   Toute modification : renommer en site.v2.css et mettre à jour les 8 pages dans le même commit.
+   Toute modification : renommer en site.v3.css et mettre à jour les 8 pages dans le même commit.
    Mobile d'abord : styles de base pour 320 px, puis paliers en em (sm 600, md 900, lg 1200). */
 
 /* ------------------------------------------------------------------ Polices (§8.3) */
@@ -1005,7 +1005,8 @@ h2 + .lede { margin-top: calc(-1 * var(--s-4)); margin-bottom: var(--s-6); }
 .legal .notice { max-width: none; }
 .legal address { font-style: normal; margin: var(--s-3) 0 var(--s-4); }
 @media (max-width: 37.4375em) {
-  .legal th, .legal td { min-width: 9rem; }
+  /* 8,5rem (136 px) : deux colonnes tiennent dans 286 px à 320 px ; les tableaux plus larges défilent */
+  .legal th, .legal td { min-width: 8.5rem; }
 }
 
 /* ------------------------------------------------------------------ Paliers */

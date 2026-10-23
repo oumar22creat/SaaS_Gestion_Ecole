@@ -12,7 +12,7 @@ moyen de paiement.
 | Balise | Valeur |
 |---|---|
 | `title` | Tarifs en FCFA, à partir de 180 000 FCFA par an \| School Manager |
-| `meta description` | Trois plans selon le nombre d'élèves : Essentiel 180 000 FCFA, Standard 750 000 FCFA, Premium dès 1 800 000 FCFA par an. 30 jours d'essai gratuit, sans engagement. |
+| `meta description` | Trois plans selon le nombre d'élèves : Essentiel 180 000, Standard 750 000, Premium dès 1 800 000 FCFA par an. 30 jours d'essai gratuit, sans engagement. |
 | `canonical` / `og:url` | `https://schoolmanager.tech/tarifs` |
 | `og:title` | Les tarifs de School Manager, en FCFA |
 | `og:description` | Choisissez selon votre nombre d'élèves. 30 jours d'essai gratuit, sans engagement. |
@@ -70,7 +70,7 @@ Puis une ligne : « Le support par e-mail se fait à l'adresse » + lien `oumarc
 |---|---|
 | `h2` (`id="titre-comparer"`) | Comparer les plans en détail. |
 
-Tableau `.compare` (SPEC §6.16) dans `.table-scroll` (`aria-labelledby="titre-comparer"`).
+Tableau `.compare` (SPEC §6.16) dans `.table-scroll` (`role="region"`, `aria-label="Tableau : comparaison des plans"`, distinct du nom de la section).
 `<caption class="sr-only">Fonctionnalités incluses dans chaque plan</caption>`.
 En-têtes de colonnes : « Fonctionnalité » · « Essentiel » · « Standard » · « Premium ».
 

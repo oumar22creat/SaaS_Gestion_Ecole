@@ -63,7 +63,7 @@ Mise en forme :
   collecté »). Fini le `white-space: nowrap` actuel.
 - En-têtes de tableau fond `--paper-2`, texte `--ink` ; lignes paires fond `--surface`.
 - Liens `--green` soulignés (plus d'or sur fond clair).
-- Le bloc `<style>` inline actuel est **supprimé** (CSP) : tout passe dans `site.v1.css`
+- Le bloc `<style>` inline actuel est **supprimé** (CSP) : tout passe dans `site.v2.css`
   (classe `.legal`).
 - Plus aucun chargement de Google Fonts ni de Phosphor.
 

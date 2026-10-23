@@ -6,8 +6,6 @@ import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
 import { Subject } from '../subject/subject.model';
 import { SubjectService } from '../subject/subject.service';
-import { Teacher } from '../teacher/teacher.model';
-import { TeacherService } from '../teacher/teacher.service';
 import { Room } from './room.model';
 import { RoomService } from './room.service';
 import { DayOfWeek, TimetableEntry } from './timetable-entry.model';
@@ -36,6 +34,12 @@ const JOURS_OUVRES: JourOnglet[] = [
   { value: 'FRIDAY', numero: 5, abrege: 'VEN' },
   { value: 'SATURDAY', numero: 6, abrege: 'SAM' },
 ];
+
+/** Une classe du sélecteur : seuls l'identifiant et le libellé servent ici. */
+interface ClasseOnglet {
+  id: number;
+  name: string;
+}
 
 const DIMANCHE: JourOnglet = { value: 'SUNDAY', numero: 7, abrege: 'DIM' };
 
@@ -138,8 +142,8 @@ function jourCourant(): DayOfWeek {
                 <span class="rangee-puce" aria-hidden="true"></span>
                 <article class="carte">
                   <p class="carte-titre">
-                    {{ subjectName(creneau.subjectId) }}
-                    @if (roomName(creneau.roomId); as salle) {
+                    {{ subjectName(creneau) }}
+                    @if (roomName(creneau); as salle) {
                       <span class="carte-salle">({{ salle }})</span>
                     }
                   </p>
@@ -147,12 +151,15 @@ function jourCourant(): DayOfWeek {
                     <ion-icon aria-hidden="true" name="time-outline"></ion-icon>
                     {{ hourMinute(creneau.startTime) }} – {{ hourMinute(creneau.endTime) }}
                     @if (classeChoisie() === null) {
-                      <span class="carte-classe">· {{ className(creneau.schoolClassId) }}</span>
+                      <span class="carte-classe">· {{ className(creneau.schoolClassId, creneau.schoolClassName) }}</span>
                     }
                   </p>
-                  <span class="carte-prof" [attr.title]="teacherName(creneau.teacherId)">
-                    {{ teacherInitials(creneau.teacherId) }}
-                  </span>
+                  <!-- Sans nom d'enseignant, pas de pastille : un « ? » ne dirait rien. -->
+                  @if (creneau.teacherName; as nom) {
+                    <span class="carte-prof" [attr.title]="nom" [attr.aria-label]="nom">
+                      {{ initials(nom) }}
+                    </span>
+                  }
                 </article>
               </li>
             }
@@ -328,8 +335,8 @@ function jourCourant(): DayOfWeek {
       white-space: nowrap;
     }
     /*
-     * Initiales plutôt qu'une photo : l'application ne stocke aucun portrait, et une pastille
-     * vide ne dirait rien. Le nom complet reste accessible par le titre.
+     * Initiales plutôt qu'une photo : l'application ne stocke aucun portrait. Le nom complet
+     * reste accessible par le titre ; sans nom connu, la pastille n'est pas rendue.
      */
     .carte-prof {
       position: absolute;
@@ -354,13 +361,12 @@ export class TimetablePage {
   private readonly schoolClassService = inject(SchoolClassService);
   private readonly subjectService = inject(SubjectService);
   private readonly roomService = inject(RoomService);
-  private readonly teacherService = inject(TeacherService);
 
-  protected readonly classes = signal<SchoolClass[]>([]);
+  /** Référentiels de repli, chargés seulement si l'API n'a pas joint les libellés. */
+  private readonly referenceClasses = signal<SchoolClass[]>([]);
   protected readonly entries = signal<TimetableEntry[]>([]);
   protected readonly subjects = signal<Subject[]>([]);
   protected readonly rooms = signal<Room[]>([]);
-  protected readonly teachers = signal<Teacher[]>([]);
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly jourChoisi = signal<DayOfWeek>(jourCourant());
@@ -372,6 +378,22 @@ export class TimetablePage {
       ? [...JOURS_OUVRES, DIMANCHE]
       : JOURS_OUVRES,
   );
+
+  /**
+   * Les classes du sélecteur, tirées des créneaux eux-mêmes : une puce ne mène jamais à une
+   * semaine vide, et l'écran ne dépend plus d'un second appel pour proposer le filtre.
+   */
+  protected readonly classes = computed<ClasseOnglet[]>(() => {
+    const parId = new Map<number, string>();
+    for (const entry of this.entries()) {
+      if (!parId.has(entry.schoolClassId)) {
+        parId.set(entry.schoolClassId, this.className(entry.schoolClassId, entry.schoolClassName));
+      }
+    }
+    return [...parId.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }));
+  });
 
   /** Les créneaux du jour et de la classe retenus, du plus matinal au plus tardif. */
   protected readonly creneaux = computed(() =>
@@ -389,21 +411,45 @@ export class TimetablePage {
   );
   private readonly roomsById = computed(() => new Map(this.rooms().map((room) => [room.id, room.name])));
   private readonly classesById = computed(
-    () => new Map(this.classes().map((schoolClass) => [schoolClass.id, schoolClass.name])),
+    () => new Map(this.referenceClasses().map((schoolClass) => [schoolClass.id, schoolClass.name])),
   );
-  private readonly teachersById = computed(() => new Map(this.teachers().map((teacher) => [teacher.id, teacher])));
 
   constructor() {
-    // Un seul catch pour les cinq chargements : sans lui, un échec (session expirée, réseau
-    // coupé, droits refusés) affichait « Aucun cours », ce qui se lit comme une journée libre
-    // alors que rien n'a pu être chargé.
-    void Promise.all([
-      this.schoolClassService.list().then((classes) => this.classes.set(classes)),
-      this.timetableService.list().then((entries) => this.entries.set(entries)),
-      this.subjectService.list().then((subjects) => this.subjects.set(subjects)),
-      this.roomService.list().then((rooms) => this.rooms.set(rooms)),
-      this.teacherService.list().then((teachers) => this.teachers.set(teachers)),
-    ]).catch((error) => this.errorMessage.set(extractErrorMessage(error)));
+    void this.load();
+  }
+
+  /**
+   * Seul l'échec des créneaux est une erreur d'écran : sans lui, « Aucun cours » se lirait
+   * comme une journée libre alors que rien n'a pu être chargé.
+   *
+   * <p>Le reste est accessoire. L'écran appelait aussi GET /teachers, réservé à la direction :
+   * pour un enseignant, ce 403 faisait échouer l'ensemble et masquait des créneaux pourtant
+   * bien reçus. Les libellés viennent désormais de la réponse des créneaux ; les référentiels
+   * ne sont interrogés qu'en repli (serveur antérieur), et leur échec laisse un libellé
+   * générique au lieu d'un écran d'erreur. Moins d'appels, aussi, sur un réseau mobile lent.
+   */
+  private async load(): Promise<void> {
+    let entries: TimetableEntry[];
+    try {
+      entries = await this.timetableService.list();
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+      return;
+    }
+    this.entries.set(entries);
+
+    const replis: Promise<void>[] = [];
+    if (entries.some((entry) => !entry.schoolClassName)) {
+      replis.push(this.schoolClassService.list().then((classes) => this.referenceClasses.set(classes)));
+    }
+    if (entries.some((entry) => !entry.subjectName)) {
+      replis.push(this.subjectService.list().then((subjects) => this.subjects.set(subjects)));
+    }
+    if (entries.some((entry) => entry.roomId !== null && !entry.roomName)) {
+      replis.push(this.roomService.list().then((rooms) => this.rooms.set(rooms)));
+    }
+    // allSettled : un référentiel refusé ou injoignable n'emporte ni les autres ni les créneaux.
+    await Promise.allSettled(replis);
   }
 
   /** « lundi », « ce mardi »… tel que l'état vide l'emploie : « Aucun cours le lundi. » */
@@ -420,26 +466,23 @@ export class TimetablePage {
     return abreges[this.jourChoisi()];
   }
 
-  protected subjectName(subjectId: number): string {
-    return this.subjectsById().get(subjectId) ?? `Matière #${subjectId}`;
+  protected subjectName(entry: TimetableEntry): string {
+    return entry.subjectName || this.subjectsById().get(entry.subjectId) || `Matière #${entry.subjectId}`;
   }
 
-  protected className(schoolClassId: number): string {
-    return this.classesById().get(schoolClassId) ?? `Classe #${schoolClassId}`;
+  protected className(schoolClassId: number, joint?: string | null): string {
+    return joint || this.classesById().get(schoolClassId) || `Classe #${schoolClassId}`;
   }
 
-  protected teacherName(teacherId: number): string {
-    const teacher = this.teachersById().get(teacherId);
-    return teacher ? `${teacher.firstName} ${teacher.lastName}` : `Enseignant #${teacherId}`;
-  }
-
-  /** Deux lettres au plus : la pastille fait 34 px et doit rester lisible. */
-  protected teacherInitials(teacherId: number): string {
-    const teacher = this.teachersById().get(teacherId);
-    if (!teacher) {
-      return '?';
+  /** Deux lettres au plus — prénom puis nom de famille : la pastille fait 34 px. */
+  protected initials(fullName: string): string {
+    const mots = fullName.trim().split(/\s+/).filter((mot) => mot.length > 0);
+    if (mots.length === 0) {
+      return '';
     }
-    return `${teacher.firstName.charAt(0)}${teacher.lastName.charAt(0)}`.toUpperCase();
+    const premier = mots[0].charAt(0);
+    const dernier = mots.length > 1 ? mots[mots.length - 1].charAt(0) : '';
+    return `${premier}${dernier}`.toUpperCase();
   }
 
   /**
@@ -448,11 +491,11 @@ export class TimetablePage {
    * salle se lit mieux sans la parenthèse qu'avec un tiret, contrairement au tableau du web
    * où la colonne doit rester alignée.
    */
-  protected roomName(roomId: number | null): string | null {
-    if (roomId === null) {
+  protected roomName(entry: TimetableEntry): string | null {
+    if (entry.roomId === null) {
       return null;
     }
-    return this.roomsById().get(roomId) ?? `Salle #${roomId}`;
+    return entry.roomName || this.roomsById().get(entry.roomId) || `Salle #${entry.roomId}`;
   }
 
   /**

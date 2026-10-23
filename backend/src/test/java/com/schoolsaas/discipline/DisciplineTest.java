@@ -39,6 +39,9 @@ class DisciplineTest extends AbstractIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private com.schoolsaas.teacher.TeacherRepository teacherRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -53,8 +56,12 @@ class DisciplineTest extends AbstractIntegrationTest {
     @Test
     void reportsAnIncidentDecidesASanctionAndFeedsHistoryAndStatistics() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Vie Scolaire");
-        SchoolClass schoolClass = schoolClassRepository.save(TestAuthSupport.withTenant(new SchoolClass("6ème A", null), tenant.getId()));
-        Student student = studentRepository.save(TestAuthSupport.withTenant(new Student("D1", "Tom", "Dupont", null, null, null), tenant.getId()));
+        // L'enseignant qui signale est professeur principal de la classe : il doit l'avoir dans
+        // son périmètre (ADR-030), fiche rattachée au compte par l'e-mail.
+        com.schoolsaas.teacher.Teacher headTeacher = teacherRepository.save(TestAuthSupport.withTenant(
+                new com.schoolsaas.teacher.Teacher("Paul", "Principal", "teacher-discipline@ecole.example", null), tenant.getId()));
+        SchoolClass schoolClass = schoolClassRepository.save(TestAuthSupport.withTenant(new SchoolClass("6ème A", headTeacher.getId()), tenant.getId()));
+        Student student = studentRepository.save(TestAuthSupport.withTenant(new Student("D1", "Tom", "Dupont", null, null, schoolClass.getId()), tenant.getId()));
         String teacherToken = TestAuthSupport.createUserAndLogin(
                 mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-discipline@ecole.example", Role.TEACHER);
         String vieScolaireToken = TestAuthSupport.createUserAndLogin(

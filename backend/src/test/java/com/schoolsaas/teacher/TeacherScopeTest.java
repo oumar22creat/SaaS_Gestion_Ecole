@@ -81,6 +81,7 @@ class TeacherScopeTest extends AbstractIntegrationTest {
     @Autowired private ReportCardRepository reportCardRepository;
     @Autowired private LessonRepository lessonRepository;
     @Autowired private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+    @Autowired private com.schoolsaas.discipline.IncidentRepository incidentRepository;
 
     private Tenant tenant;
     private SchoolClass c1;
@@ -372,6 +373,93 @@ class TeacherScopeTest extends AbstractIntegrationTest {
         perform(get("/api/v1/timetable-entries"), orphan)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    // ---------------------------------------------------------------- Discipline, élèves, classe
+
+    @Test
+    void disciplineIsLimitedToTheTeachersStudentsAndClasses() throws Exception {
+        com.schoolsaas.discipline.Incident incident = incidentRepository.save(TestAuthSupport.withTenant(
+                new com.schoolsaas.discipline.Incident(c1.getId(), LocalDate.of(2026, 10, 7),
+                        com.schoolsaas.discipline.IncidentSeverity.values()[0], "Bavardage", 1L), tenant.getId()));
+        String severity = com.schoolsaas.discipline.IncidentSeverity.values()[0].name();
+        String incidentC1 = "{\"schoolClassId\":" + c1.getId() + ",\"occurredAt\":\"2026-10-08\",\"severity\":\"" + severity
+                + "\",\"description\":\"Retard répété\",\"studentIds\":[" + studentC1.getId() + "]}";
+        String incidentSmuggled = "{\"schoolClassId\":" + c1.getId() + ",\"occurredAt\":\"2026-10-08\",\"severity\":\"" + severity
+                + "\",\"description\":\"x\",\"studentIds\":[" + studentC2.getId() + "]}";
+
+        perform(post("/api/v1/discipline/incidents").contentType(MediaType.APPLICATION_JSON).content(incidentC1), tokenIn)
+                .andExpect(status().isCreated());
+        perform(get("/api/v1/discipline/incidents/" + incident.getId()), tokenIn).andExpect(status().isOk());
+        perform(get("/api/v1/discipline/incidents").param("schoolClassId", c1.getId().toString())
+                .param("from", "2026-10-01").param("to", "2026-10-31"), tokenIn)
+                .andExpect(status().isOk());
+        perform(get("/api/v1/discipline/students/" + studentC1.getId() + "/history"), tokenIn).andExpect(status().isOk());
+        perform(post("/api/v1/discipline/observations").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"studentId\":" + studentC1.getId() + ",\"positive\":true,\"description\":\"Très bien\"}"), tokenIn)
+                .andExpect(status().isCreated());
+
+        perform(post("/api/v1/discipline/incidents").contentType(MediaType.APPLICATION_JSON).content(incidentSmuggled), tokenIn)
+                .andExpect(status().isForbidden());
+        perform(post("/api/v1/discipline/incidents").contentType(MediaType.APPLICATION_JSON).content(incidentC1), tokenOut)
+                .andExpect(status().isForbidden());
+        perform(get("/api/v1/discipline/incidents/" + incident.getId()), tokenOut).andExpect(status().isForbidden());
+        perform(get("/api/v1/discipline/incidents/" + incident.getId() + "/sanctions"), tokenOut).andExpect(status().isForbidden());
+        perform(get("/api/v1/discipline/incidents").param("schoolClassId", c1.getId().toString())
+                .param("from", "2026-10-01").param("to", "2026-10-31"), tokenOut)
+                .andExpect(status().isForbidden());
+        perform(get("/api/v1/discipline/students/" + studentC1.getId() + "/history"), tokenOut).andExpect(status().isForbidden());
+        perform(post("/api/v1/discipline/observations").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"studentId\":" + studentC1.getId() + ",\"positive\":false,\"description\":\"x\"}"), tokenOut)
+                .andExpect(status().isForbidden());
+
+        perform(get("/api/v1/discipline/students/" + studentC1.getId() + "/history"), tokenVieScolaire).andExpect(status().isOk());
+        perform(get("/api/v1/discipline/incidents/" + incident.getId()), tokenDirection).andExpect(status().isOk());
+    }
+
+    @Test
+    void studentsAndClassDetailsAreLimitedToTheTeachersClasses() throws Exception {
+        perform(get("/api/v1/students"), tokenIn)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(studentC1.getId()));
+        perform(get("/api/v1/students").param("search", "Durand"), tokenIn)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+        perform(get("/api/v1/students").param("search", "Martin"), tokenIn)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1));
+        perform(get("/api/v1/students/" + studentC1.getId()), tokenIn).andExpect(status().isOk());
+        perform(get("/api/v1/students/" + studentC2.getId()), tokenIn).andExpect(status().isForbidden());
+        perform(get("/api/v1/students/" + studentC2.getId() + "/photo"), tokenIn).andExpect(status().isForbidden());
+        perform(get("/api/v1/classes/" + c1.getId()), tokenIn).andExpect(status().isOk());
+        perform(get("/api/v1/classes/" + c2.getId()), tokenIn).andExpect(status().isForbidden());
+
+        perform(get("/api/v1/students"), tokenDirection)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2));
+        perform(get("/api/v1/students/" + studentC2.getId()), tokenDirection).andExpect(status().isOk());
+        perform(get("/api/v1/classes/" + c2.getId()), tokenDirection).andExpect(status().isOk());
+    }
+
+    @Test
+    void studentsDisciplineAndClassesOfAnotherTenantStayInvisible() throws Exception {
+        Tenant other = TestAuthSupport.createActiveTenant(tenantRepository, "École Voisine Élèves " + UUID.randomUUID());
+        String tokenOther = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, other, inEmail, Role.TEACHER);
+        String directionOther = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, other, "dir-el-" + UUID.randomUUID() + "@ecole.example", Role.DIRECTION);
+
+        perform(get("/api/v1/students/" + studentC1.getId()), tokenOther).andExpect(status().isNotFound());
+        perform(get("/api/v1/classes/" + c1.getId()), tokenOther).andExpect(status().isNotFound());
+        perform(get("/api/v1/students"), tokenOther)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+        perform(get("/api/v1/discipline/students/" + studentC1.getId() + "/history"), tokenOther)
+                .andExpect(status().isForbidden());
+        perform(get("/api/v1/students/" + studentC1.getId()), directionOther).andExpect(status().isNotFound());
+        perform(get("/api/v1/discipline/students/" + studentC1.getId() + "/history"), directionOther)
+                .andExpect(status().isNotFound());
     }
 
     // ---------------------------------------------------------------- Rattachement compte / fiche

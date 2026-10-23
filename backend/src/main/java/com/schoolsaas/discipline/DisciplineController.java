@@ -2,6 +2,7 @@ package com.schoolsaas.discipline;
 
 import com.schoolsaas.auth.AuthenticatedPrincipal;
 import com.schoolsaas.common.ApiResponse;
+import com.schoolsaas.teacher.TeacherScope;
 import com.schoolsaas.discipline.dto.ConvocationCreateRequest;
 import com.schoolsaas.discipline.dto.ConvocationResponse;
 import com.schoolsaas.discipline.dto.ConvocationStatusUpdateRequest;
@@ -30,21 +31,30 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Vie scolaire — cahier-des-charges.md §17, ROADMAP.md 3.1. */
+/**
+ * Vie scolaire — cahier-des-charges.md §17, ROADMAP.md 3.1.
+ *
+ * <p>Un enseignant ne signale un incident, n'écrit une observation et ne consulte un dossier
+ * disciplinaire que pour les élèves et classes de son périmètre ({@link TeacherScope},
+ * ADR-030). La vie scolaire et la direction gardent tout l'établissement.
+ */
 @RestController
 @RequestMapping("/api/v1/discipline")
 public class DisciplineController {
 
     private final DisciplineService disciplineService;
+    private final TeacherScope teacherScope;
 
-    public DisciplineController(DisciplineService disciplineService) {
+    public DisciplineController(DisciplineService disciplineService, TeacherScope teacherScope) {
         this.disciplineService = disciplineService;
+        this.teacherScope = teacherScope;
     }
 
     @PostMapping("/incidents")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'VIE_SCOLAIRE')")
     public ApiResponse<IncidentResponse> createIncident(@Valid @RequestBody IncidentCreateRequest request) {
+        teacherScope.requireStudentsInClass(request.studentIds(), request.schoolClassId());
         Incident incident = disciplineService.createIncident(request, currentUserId());
         return ApiResponse.of(IncidentResponse.from(incident, disciplineService.studentIdsOfIncident(incident.getId())));
     }
@@ -53,6 +63,7 @@ public class DisciplineController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'VIE_SCOLAIRE')")
     public ApiResponse<IncidentResponse> getIncident(@PathVariable Long id) {
         Incident incident = disciplineService.getIncident(id);
+        teacherScope.requireClass(incident.getSchoolClassId());
         return ApiResponse.of(IncidentResponse.from(incident, disciplineService.studentIdsOfIncident(id)));
     }
 
@@ -62,6 +73,7 @@ public class DisciplineController {
             @RequestParam Long schoolClassId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        teacherScope.requireClass(schoolClassId);
         List<IncidentResponse> data = disciplineService.listIncidentsForClass(schoolClassId, from, to).stream()
                 .map(incident -> IncidentResponse.from(incident, disciplineService.studentIdsOfIncident(incident.getId())))
                 .toList();
@@ -79,6 +91,7 @@ public class DisciplineController {
     @GetMapping("/incidents/{incidentId}/sanctions")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'VIE_SCOLAIRE')")
     public ApiResponse<List<SanctionResponse>> listSanctions(@PathVariable Long incidentId) {
+        teacherScope.requireClass(disciplineService.getIncident(incidentId).getSchoolClassId());
         List<SanctionResponse> data = disciplineService.listSanctionsForIncident(incidentId).stream().map(SanctionResponse::from).toList();
         return ApiResponse.of(data);
     }
@@ -102,6 +115,7 @@ public class DisciplineController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'VIE_SCOLAIRE')")
     public ApiResponse<ObservationResponse> createObservation(@Valid @RequestBody ObservationCreateRequest request) {
+        teacherScope.requireStudent(request.studentId());
         Observation observation = disciplineService.createObservation(request, currentUserId());
         return ApiResponse.of(ObservationResponse.from(observation));
     }
@@ -109,6 +123,7 @@ public class DisciplineController {
     @GetMapping("/students/{studentId}/history")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'VIE_SCOLAIRE')")
     public ApiResponse<StudentDisciplineHistoryResponse> history(@PathVariable Long studentId) {
+        teacherScope.requireStudent(studentId);
         return ApiResponse.of(disciplineService.historyForStudent(studentId));
     }
 

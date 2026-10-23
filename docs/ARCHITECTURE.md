@@ -783,7 +783,8 @@ collègue (`?teacherId=`), simplement en changeant un identifiant dans la requê
 
 **Décision** : un composant unique, `teacher/TeacherScope`, calcule le périmètre de
 l'enseignant connecté et l'applique dans les contrôleurs `attendance`, `grade` (évaluations,
-notes, moyennes), `reportcard`, `timetable`, `homework` et dans la liste des classes. Refus
+notes, moyennes), `reportcard`, `timetable`, `homework`, `discipline`, `student` et
+`schoolclass` (lectures). Refus
 en **403 `OUT_OF_TEACHER_SCOPE`** (format d'erreur standard de API_CONVENTIONS.md). Seul le
 rôle TEACHER est restreint : ADMIN, DIRECTION, VIE_SCOLAIRE (et les autres rôles déjà admis
 par `@PreAuthorize`) gardent l'établissement entier. Une ressource d'un autre tenant reste
@@ -820,10 +821,13 @@ configuration ne passe pas par l'écran d'affectation) ; `school_classes.head_te
   collègue par identifiant → 403.
 - Cahier de textes : LECTURE pour les classes du périmètre (toutes matières, pour équilibrer
   la charge de devoirs) ; ÉCRITURE (création, modification, suppression) pour le couple.
-- Liste des classes (`GET /classes`) : un enseignant ne reçoit que ses classes.
-
-**Hors périmètre de ce correctif** (signalé, non traité) : `GET /students` (liste d'élèves par
-classe) et le module `discipline` restent au périmètre établissement pour un TEACHER.
+- Classes : `GET /classes` ne renvoie que ses classes ; `GET /classes/{id}` hors périmètre → 403.
+- Élèves : `GET /students` (avec ou sans recherche) ne renvoie que les élèves de ses classes ;
+  `GET /students/{id}` et `/photo` d'un autre élève → 403.
+- Discipline : incident créé seulement sur une classe du périmètre et pour des élèves de
+  cette classe ; lecture d'un incident, de ses sanctions et de la liste par classe sur ses
+  classes ; observation et historique disciplinaire sur ses élèves. Sanctions, convocations
+  et statistiques restaient déjà fermées au TEACHER.
 
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3, ADR-024)** — reste

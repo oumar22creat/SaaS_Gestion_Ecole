@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -73,6 +74,17 @@ public class StudentService {
 
     public Page<Student> list(Pageable pageable) {
         return studentRepository.findAll(pageable);
+    }
+
+    /** Élèves des seules classes données (liste vue par un enseignant), avec recherche libre. */
+    public Page<Student> listInClasses(Collection<Long> schoolClassIds, Pageable pageable, String search) {
+        if (schoolClassIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        if (search == null || search.isBlank()) {
+            return studentRepository.findAllBySchoolClassIdIn(schoolClassIds, pageable);
+        }
+        return studentRepository.searchInClasses(search.trim(), schoolClassIds, pageable);
     }
 
     @Transactional

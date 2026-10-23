@@ -1,6 +1,7 @@
 package com.schoolsaas.student;
 
 import com.schoolsaas.common.ApiResponse;
+import com.schoolsaas.teacher.TeacherScope;
 import com.schoolsaas.portal.FamilyAccountLookup;
 import com.schoolsaas.student.dto.StudentImportResult;
 import com.schoolsaas.student.dto.StudentRequest;
@@ -40,14 +41,17 @@ public class StudentController {
     private final StudentService studentService;
     private final StudentPhotoService studentPhotoService;
     private final FamilyAccountLookup familyAccountLookup;
+    private final TeacherScope teacherScope;
 
     public StudentController(
             StudentService studentService,
             StudentPhotoService studentPhotoService,
-            FamilyAccountLookup familyAccountLookup) {
+            FamilyAccountLookup familyAccountLookup,
+            TeacherScope teacherScope) {
         this.studentService = studentService;
         this.studentPhotoService = studentPhotoService;
         this.familyAccountLookup = familyAccountLookup;
+        this.teacherScope = teacherScope;
     }
 
     @PostMapping
@@ -87,7 +91,7 @@ public class StudentController {
     @GetMapping(value = "/{id}/photo", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ResponseEntity<byte[]> photo(@PathVariable Long id) {
-        return studentPhotoService.contenu(studentService.getById(id))
+        return studentPhotoService.contenu(requireStudent(id))
                 .map(contenu -> ResponseEntity.ok()
                         .contentType(estPng(contenu) ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG)
                         .body(contenu))
@@ -101,13 +105,17 @@ public class StudentController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ApiResponse<StudentResponse> getById(@PathVariable Long id) {
-        return ApiResponse.of(withPortalEmail(studentService.getById(id)));
+        return ApiResponse.of(withPortalEmail(requireStudent(id)));
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ApiResponse<List<StudentResponse>> list(Pageable pageable, @RequestParam(required = false) String search) {
-        Page<Student> page = studentService.list(pageable, search);
+        // Un enseignant ne reçoit que les élèves de ses classes (ADR-030).
+        var perimeter = teacherScope.currentPerimeter();
+        Page<Student> page = perimeter.isPresent()
+                ? studentService.listInClasses(perimeter.get().classIds(), pageable, search)
+                : studentService.list(pageable, search);
         Map<Long, String> portalEmails = familyAccountLookup.emailsOf(
                 page.getContent().stream().map(Student::getUserId).toList());
         List<StudentResponse> data = page.map(record -> StudentResponse.from(record, portalEmails.get(record.getUserId()))).getContent();
@@ -128,5 +136,12 @@ public class StudentController {
     /** Complète la réponse avec l'adresse de connexion du compte famille, s'il en existe un. */
     private StudentResponse withPortalEmail(Student record) {
         return StudentResponse.from(record, familyAccountLookup.emailOf(record.getUserId()));
+    }
+
+    /** Charge l'élève ; un enseignant doit l'avoir dans une classe de son périmètre. */
+    private Student requireStudent(Long id) {
+        Student student = studentService.getById(id);
+        teacherScope.requireClass(student.getSchoolClassId());
+        return student;
     }
 }

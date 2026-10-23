@@ -49,7 +49,9 @@ public class SchoolClassController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ApiResponse<SchoolClassResponse> getById(@PathVariable Long id) {
-        return ApiResponse.of(SchoolClassResponse.from(schoolClassService.getById(id)));
+        SchoolClass schoolClass = schoolClassService.getById(id);
+        teacherScope.requireClass(schoolClass.getId());
+        return ApiResponse.of(SchoolClassResponse.from(schoolClass));
     }
 
     @GetMapping

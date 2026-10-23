@@ -41,8 +41,10 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Bulletins scolaires — cahier-des-charges.md §12, ROADMAP.md 2.1.
  *
- * <p>Un enseignant n'accède qu'aux bulletins des classes de son périmètre ({@link TeacherScope},
- * ADR-030) ; l'appréciation d'une matière n'est modifiable que par qui l'enseigne à la classe.
+ * <p>Pour un enseignant ({@link TeacherScope}, ADR-030) : lecture et PDF des bulletins des
+ * classes de son périmètre ; appréciation d'une matière par qui l'enseigne à la classe ;
+ * génération, appréciation générale et décision du conseil réservées au professeur principal
+ * de la classe (ADMIN/DIRECTION gardent tout).
  */
 @RestController
 @RequestMapping("/api/v1/report-cards")
@@ -80,7 +82,8 @@ public class ReportCardController {
     @PostMapping("/generate")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<List<ReportCardResponse>> generate(@Valid @RequestBody GenerateReportCardsRequest request) {
-        teacherScope.requireClass(request.schoolClassId());
+        // Génération et régénération : professeur principal ou direction (ADR-030).
+        teacherScope.requireHeadTeacherOf(request.schoolClassId());
         List<ReportCardResponse> data = reportCardService.generate(request).stream().map(this::toResponse).toList();
         return ApiResponse.of(data);
     }
@@ -111,7 +114,8 @@ public class ReportCardController {
 
     @PutMapping("/{id}")
     public ApiResponse<ReportCardResponse> update(@PathVariable Long id, @RequestBody ReportCardUpdateRequest request) {
-        requireReportCard(id);
+        // Appréciation générale et décision du conseil : professeur principal ou direction.
+        teacherScope.requireHeadTeacherOf(reportCardService.getById(id).getSchoolClassId());
         return ApiResponse.of(toResponse(reportCardService.update(id, request)));
     }
 

@@ -312,6 +312,11 @@ les élèves — seule la saisie via API/JSON est couverte), historisation des n
 aux absences, pas de table de changements ici — non listée explicitement dans ROADMAP.md 1.8),
 `grade_items` (sous-questions/barème détaillé de docs/DATA_MODEL.md), rang de classe.
 
+**Périmètre enseignant (ADR-030)** : un enseignant ne crée, ne lit et ne note que les
+évaluations des couples (classe, matière) qu'il enseigne ; sur les bulletins, il ne saisit que
+l'appréciation de sa matière — génération, appréciation générale et décision du conseil
+reviennent au professeur principal (et à la direction).
+
 ### ADR-014 — Dashboard établissement (décidé, Phase 1.9 — fin de la Phase 1)
 **Décision** : un seul endpoint `GET /api/v1/dashboard/summary` (package `statistics`),
 paramètres `from`/`to` optionnels (30 derniers jours par défaut) pour le taux de présence.
@@ -408,6 +413,11 @@ n'existe pas encore (cahier §6, pas construit).
 **Refactor associé** : extraction de `com.schoolsaas.common.NumberUtils#round2` — le même
 arrondi à 2 décimales était dupliqué à l'identique dans `GradeService` et `DashboardService`
 avant l'ajout de ce troisième usage dans `ReportCardService`.
+
+**Droits (ADR-030, décision d'Oumar)** : génération/régénération, appréciation générale et
+décision du conseil → professeur principal de la classe, ADMIN, DIRECTION ; appréciation
+d'une matière → enseignant de ce couple (classe, matière) ; lecture et PDF → tout enseignant
+de la classe.
 
 ### ADR-017 — Bibliothèque de documents (décidé, Phase 2.2)
 **Décision** : `Document` (portée `SUBJECT`/`CLASS`/`SERVICE`, exactement une des trois
@@ -814,8 +824,12 @@ configuration ne passe pas par l'écran d'affectation) ; `school_classes.head_te
 - Évaluations / notes / moyennes : couple (classe, matière) enseigné, en lecture et en
   écriture ; chaque note saisie doit viser un élève de la classe de l'évaluation. La liste
   `GET /exams` ne renvoie que les évaluations de ces couples.
-- Bulletins : classe du périmètre (lecture, génération, appréciation générale, PDF) ;
-  l'appréciation d'une matière (`PUT /report-cards/{id}/entries/{subjectId}`) exige le couple.
+- Bulletins (décision d'Oumar) : **lecture et PDF** pour tout enseignant de la classe ;
+  **appréciation d'une matière** (`PUT /report-cards/{id}/entries/{subjectId}`) pour qui
+  enseigne ce couple (classe, matière) ; **génération/régénération** (`POST /generate`),
+  **appréciation générale et décision du conseil** (`PUT /report-cards/{id}`) réservées au
+  **professeur principal** de la classe (`head_teacher_id` de la fiche rattachée au compte),
+  ADMIN et DIRECTION gardant tout.
 - Emploi du temps : uniquement SES créneaux. Sans filtre → ses créneaux ; `schoolClassId` →
   ses créneaux dans cette classe ; `teacherId` différent du sien → 403 ; créneau d'un
   collègue par identifiant → 403.

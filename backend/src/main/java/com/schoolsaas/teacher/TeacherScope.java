@@ -165,6 +165,18 @@ public class TeacherScope {
         });
     }
 
+    /**
+     * Réservé au professeur principal de la classe (pour un enseignant) : génération des
+     * bulletins, appréciation générale, décision du conseil (décision produit, ADR-030/ADR-016).
+     */
+    public void requireHeadTeacherOf(Long classId) {
+        currentPerimeter().ifPresent(p -> {
+            if (classId == null || !p.headClassIds().contains(classId)) {
+                deny("bulletins de la classe " + classId + " (professeur principal requis)");
+            }
+        });
+    }
+
     /** Un enseignant ne consulte que son propre emploi du temps. */
     public void requireOwnTeacher(Long teacherId) {
         currentPerimeter().ifPresent(p -> {
@@ -187,10 +199,10 @@ public class TeacherScope {
             // d'un homonyme. À corriger dans les fiches enseignant (adresse unique par personne).
             log.warn("Rattachement enseignant ambigu : {} fiches actives pour le même e-mail (ids {}), périmètre vide",
                     matches.size(), matches.stream().map(Teacher::getId).sorted().toList());
-            return new Perimeter(Set.of(), Set.of(), Set.of());
+            return new Perimeter(Set.of(), Set.of(), Set.of(), Set.of());
         }
         if (matches.isEmpty()) {
-            return new Perimeter(Set.of(), Set.of(), Set.of());
+            return new Perimeter(Set.of(), Set.of(), Set.of(), Set.of());
         }
         Set<Long> teacherIds = Set.of(matches.get(0).getId());
 
@@ -204,9 +216,12 @@ public class TeacherScope {
             pairs.add(pairKey(e.getSchoolClassId(), e.getSubjectId()));
             classIds.add(e.getSchoolClassId());
         }
-        List<SchoolClass> headed = schoolClassRepository.findAllByHeadTeacherIdIn(teacherIds);
-        headed.forEach(c -> classIds.add(c.getId()));
-        return new Perimeter(teacherIds, Set.copyOf(classIds), Set.copyOf(pairs));
+        Set<Long> headClassIds = new HashSet<>();
+        for (SchoolClass headed : schoolClassRepository.findAllByHeadTeacherIdIn(teacherIds)) {
+            headClassIds.add(headed.getId());
+            classIds.add(headed.getId());
+        }
+        return new Perimeter(teacherIds, Set.copyOf(classIds), Set.copyOf(pairs), Set.copyOf(headClassIds));
     }
 
     private void deny(String resource) {
@@ -233,8 +248,10 @@ public class TeacherScope {
      * @param teacherIds fiches {@code teachers} rattachées au compte
      * @param classIds classes accessibles (affectation, créneau ou professeur principal)
      * @param classSubjectPairs couples « classe:matière » enseignés (affectation ou créneau)
+     * @param headClassIds classes dont l'enseignant est professeur principal
      */
-    public record Perimeter(Set<Long> teacherIds, Set<Long> classIds, Set<String> classSubjectPairs) {
+    public record Perimeter(
+            Set<Long> teacherIds, Set<Long> classIds, Set<String> classSubjectPairs, Set<Long> headClassIds) {
 
         public boolean canAccessClass(Long classId) {
             return classId != null && classIds.contains(classId);

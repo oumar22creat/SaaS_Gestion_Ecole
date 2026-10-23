@@ -285,6 +285,48 @@ class TeacherScopeTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    void generationAndGeneralAppraisalAreReservedToTheHeadTeacher() throws Exception {
+        String generate = "{\"schoolClassId\":" + c1.getId()
+                + ",\"periodLabel\":\"T2\",\"periodFrom\":\"2027-01-05\",\"periodTo\":\"2027-03-31\"}";
+        String general = "{\"generalComment\":\"Trimestre sérieux\",\"councilDecision\":\"Félicitations\"}";
+
+        // « in » enseigne en C1 sans en être professeur principal.
+        perform(post("/api/v1/report-cards/generate").contentType(MediaType.APPLICATION_JSON).content(generate), tokenIn)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value(TeacherScope.DENIED_CODE));
+        String created = perform(post("/api/v1/report-cards/generate").contentType(MediaType.APPLICATION_JSON).content(generate), tokenHead)
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long cardId = objectMapper.readTree(created).get("data").get(0).get("id").asLong();
+        perform(post("/api/v1/report-cards/generate").contentType(MediaType.APPLICATION_JSON).content(generate), tokenDirection)
+                .andExpect(status().isCreated());
+
+        perform(put("/api/v1/report-cards/" + cardId).contentType(MediaType.APPLICATION_JSON).content(general), tokenIn)
+                .andExpect(status().isForbidden());
+        perform(put("/api/v1/report-cards/" + cardId).contentType(MediaType.APPLICATION_JSON).content(general), tokenHead)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.councilDecision").value("Félicitations"));
+        perform(put("/api/v1/report-cards/" + cardId).contentType(MediaType.APPLICATION_JSON).content(general), tokenDirection)
+                .andExpect(status().isOk());
+
+        // Appréciation de SA matière : l'enseignant de la matière, pas le professeur principal.
+        String appraisal = "{\"teacherComment\":\"Bons progrès en calcul\"}";
+        perform(put("/api/v1/report-cards/" + cardId + "/entries/" + s1.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(appraisal), tokenIn)
+                .andExpect(status().isOk());
+        perform(put("/api/v1/report-cards/" + cardId + "/entries/" + s1.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(appraisal), tokenHead)
+                .andExpect(status().isForbidden());
+        perform(put("/api/v1/report-cards/" + cardId + "/entries/" + s1.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(appraisal), tokenDirection)
+                .andExpect(status().isOk());
+
+        // Lecture et PDF restent ouverts à tout enseignant de la classe.
+        perform(get("/api/v1/report-cards/" + cardId), tokenIn).andExpect(status().isOk());
+        perform(get("/api/v1/report-cards/" + cardId + "/pdf"), tokenIn).andExpect(status().isOk());
+    }
+
     // ---------------------------------------------------------------- Emploi du temps
 
     @Test

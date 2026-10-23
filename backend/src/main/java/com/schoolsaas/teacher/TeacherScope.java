@@ -322,5 +322,18 @@ public class TeacherScope {
         public boolean canAccessClassSubject(Long classId, Long subjectId) {
             return classId != null && subjectId != null && classSubjectPairs.contains(pairKey(classId, subjectId));
         }
+
+        /** Couples (classe, matière) enseignés, triés — exposés à l'enseignant lui-même par {@code GET /me/teaching-scope}. */
+        public List<ClassSubject> classSubjects() {
+            return classSubjectPairs.stream()
+                    .map(key -> key.split(":"))
+                    .map(parts -> new ClassSubject(Long.valueOf(parts[0]), Long.valueOf(parts[1])))
+                    .sorted(java.util.Comparator.comparing(ClassSubject::classId).thenComparing(ClassSubject::subjectId))
+                    .toList();
+        }
+    }
+
+    /** Un couple (classe, matière) enseigné. */
+    public record ClassSubject(Long classId, Long subjectId) {
     }
 }

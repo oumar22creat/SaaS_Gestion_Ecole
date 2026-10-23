@@ -844,6 +844,10 @@ configuration ne passe pas par l'écran d'affectation) ; `school_classes.head_te
 - Emploi du temps : uniquement SES créneaux. Sans filtre → ses créneaux ; `schoolClassId` →
   ses créneaux dans cette classe ; `teacherId` différent du sien → 403 ; créneau d'un
   collègue par identifiant → 403.
+  Les créneaux portent leurs libellés (`schoolClassName`, `subjectName`, `teacherName` —
+  prénom et nom seulement, jamais e-mail ni téléphone —, `roomName`), résolus par
+  `TimetableEntryMapper` sous filtre tenant : un client n'a pas à appeler `GET /teachers`
+  (qui reste réservé à ADMIN/DIRECTION) pour afficher un emploi du temps.
 - Cahier de textes : LECTURE pour les classes du périmètre (toutes matières, pour équilibrer
   la charge de devoirs) ; ÉCRITURE (création, modification, suppression) pour le couple.
 - Messagerie : un enseignant n'ouvre une conversation qu'avec les familles de ses classes

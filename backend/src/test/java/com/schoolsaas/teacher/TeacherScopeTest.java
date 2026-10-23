@@ -334,7 +334,18 @@ class TeacherScopeTest extends AbstractIntegrationTest {
         perform(get("/api/v1/timetable-entries"), tokenIn)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].id").value(entryIn.getId()));
+                .andExpect(jsonPath("$.data[0].id").value(entryIn.getId()))
+                // Tout ce que l'écran mobile affiche, sans appeler GET /teachers (403 pour TEACHER).
+                .andExpect(jsonPath("$.data[0].schoolClassName").value(c1.getName()))
+                .andExpect(jsonPath("$.data[0].subjectName").value("Maths"))
+                .andExpect(jsonPath("$.data[0].teacherName").value("Ina Dedans"))
+                .andExpect(jsonPath("$.data[0].roomName").doesNotExist())
+                // Le nom, pas les coordonnées de la fiche enseignant.
+                .andExpect(jsonPath("$.data[0].teacherEmail").doesNotExist())
+                .andExpect(jsonPath("$.data[0].email").doesNotExist())
+                .andExpect(jsonPath("$.data[0].phone").doesNotExist());
+        // La restriction d'accès au référentiel enseignants reste en place.
+        perform(get("/api/v1/teachers"), tokenIn).andExpect(status().isForbidden());
         perform(get("/api/v1/timetable-entries").param("teacherId", teacherIn.getId().toString()), tokenIn)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1));

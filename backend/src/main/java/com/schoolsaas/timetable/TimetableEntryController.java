@@ -8,6 +8,8 @@ import com.schoolsaas.timetable.dto.TimetableEntryResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,17 +39,22 @@ public class TimetableEntryController {
 
     private final TimetableEntryService timetableEntryService;
     private final TeacherScope teacherScope;
+    private final TimetableEntryMapper timetableEntryMapper;
 
-    public TimetableEntryController(TimetableEntryService timetableEntryService, TeacherScope teacherScope) {
+    public TimetableEntryController(
+            TimetableEntryService timetableEntryService,
+            TeacherScope teacherScope,
+            TimetableEntryMapper timetableEntryMapper) {
         this.timetableEntryService = timetableEntryService;
         this.teacherScope = teacherScope;
+        this.timetableEntryMapper = timetableEntryMapper;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
     public ApiResponse<TimetableEntryResponse> create(@Valid @RequestBody TimetableEntryRequest request) {
-        return ApiResponse.of(TimetableEntryResponse.from(timetableEntryService.create(request)));
+        return ApiResponse.of(timetableEntryMapper.toResponse(timetableEntryService.create(request)));
     }
 
     @GetMapping("/{id}")
@@ -55,7 +62,7 @@ public class TimetableEntryController {
     public ApiResponse<TimetableEntryResponse> getById(@PathVariable Long id) {
         TimetableEntry entry = timetableEntryService.getById(id);
         teacherScope.requireOwnTeacher(entry.getTeacherId());
-        return ApiResponse.of(TimetableEntryResponse.from(entry));
+        return ApiResponse.of(timetableEntryMapper.toResponse(entry));
     }
 
     @GetMapping
@@ -84,14 +91,16 @@ public class TimetableEntryController {
         // Filtré par classe ou par enseignant, le résultat tient dans une poignée de lignes.
         // Sans filtre, c'est toute la grille de l'établissement : trente classes font deux
         // cent quarante créneaux, qu'aucun écran n'affiche d'un bloc.
-        return PagedList.response(
-                PagedList.of(entries.stream().map(TimetableEntryResponse::from).toList(), pageable));
+        // Les libellés sont joints après pagination : on ne résout que les créneaux renvoyés.
+        Page<TimetableEntry> page = PagedList.of(entries, pageable);
+        return PagedList.response(new PageImpl<>(
+                timetableEntryMapper.toResponses(page.getContent()), page.getPageable(), page.getTotalElements()));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION')")
     public ApiResponse<TimetableEntryResponse> update(@PathVariable Long id, @Valid @RequestBody TimetableEntryRequest request) {
-        return ApiResponse.of(TimetableEntryResponse.from(timetableEntryService.update(id, request)));
+        return ApiResponse.of(timetableEntryMapper.toResponse(timetableEntryService.update(id, request)));
     }
 
     @DeleteMapping("/{id}")

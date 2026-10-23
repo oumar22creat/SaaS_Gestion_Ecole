@@ -134,7 +134,36 @@ class TimetableEntryTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(entryJson(f, f.classId(), "08:00", "09:00")))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.dayOfWeek").value("MONDAY"));
+                .andExpect(jsonPath("$.data.dayOfWeek").value("MONDAY"))
+                // Libellés joints : le client n'a pas à interroger les référentiels pour afficher le créneau.
+                .andExpect(jsonPath("$.data.schoolClassName").value("6ème A"))
+                .andExpect(jsonPath("$.data.subjectName").value("Maths"))
+                .andExpect(jsonPath("$.data.teacherName").value("Jean Dupont"))
+                .andExpect(jsonPath("$.data.roomName").value("Salle 1"));
+    }
+
+    /**
+     * Défense en profondeur : même un créneau qui pointerait (par erreur de données) vers une
+     * fiche d'un autre établissement ne fait pas fuiter son libellé — le filtre tenant s'applique
+     * aussi à la résolution des noms.
+     */
+    @Test
+    void labelsNeverCrossTheTenantBoundary() throws Exception {
+        Fixture fA = setUpFixture("École Libellés A");
+        Fixture fB = setUpFixture("École Libellés B");
+        Long tenantA = teacherRepository.findById(fA.teacherId()).orElseThrow().getSchoolId();
+        // Enseignant et salle de B rattachés à un créneau de A.
+        timetableEntryRepository.save(TestAuthSupport.withTenant(
+                new TimetableEntry(fA.classId(), fA.subjectId(), fB.teacherId(), fB.roomId(),
+                        java.time.DayOfWeek.FRIDAY, java.time.LocalTime.of(14, 0), java.time.LocalTime.of(15, 0)),
+                tenantA));
+
+        mockMvc.perform(get("/api/v1/timetable-entries").header("Authorization", "Bearer " + fA.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].schoolClassName").value("6ème A"))
+                .andExpect(jsonPath("$.data[0].teacherName").doesNotExist())
+                .andExpect(jsonPath("$.data[0].roomName").doesNotExist());
     }
 
     @Test

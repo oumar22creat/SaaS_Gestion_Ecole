@@ -11,7 +11,9 @@ import com.schoolsaas.TestAuthSupport;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.tenant.Tenant;
 import com.schoolsaas.tenant.TenantRepository;
+import com.schoolsaas.tenant.TenantContext;
 import com.schoolsaas.tenant.TenantResolver;
+import com.schoolsaas.tenant.TenantSessionConfigurer;
 import com.schoolsaas.auth.UserRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Enregistrement des appareils joignables par notification (docs/NOTIFICATIONS-PUSH.md).
@@ -47,6 +50,15 @@ class DeviceTokenTest extends AbstractIntegrationTest {
 
     @Autowired
     private DeviceTokenRepository deviceTokenRepository;
+
+    @Autowired
+    private DeviceTokenService deviceTokenService;
+
+    @Autowired
+    private TenantSessionConfigurer tenantSessionConfigurer;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
 
 
     private static final String CORPS = """
@@ -183,10 +195,15 @@ class DeviceTokenTest extends AbstractIntegrationTest {
                 mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "parent-relais@ecole.example", Role.PARENT);
         enregistrer(tenant, jwtEnseignant, "jeton-relais", "IOS");
         enregistrer(tenant, jwtParent, "jeton-relais", "IOS");
+        Long parent = appareilsDe(tenant).getFirst().getUserId();
 
         retirer(tenant, jwtEnseignant, "jeton-relais");
 
-        assertThat(appareilsDe(tenant)).hasSize(1);
+        assertThat(appareilsDe(tenant))
+                .singleElement()
+                .extracting(DeviceToken::getUserId)
+                .as("l'appareil doit rester au parent")
+                .isEqualTo(parent);
     }
 
     /** Isolation tenant : un compte d'un autre établissement ne voit ni ne retire la ligne. */
@@ -205,6 +222,39 @@ class DeviceTokenTest extends AbstractIntegrationTest {
         assertThat(appareilsDe(premiere)).singleElement()
                 .extracting(DeviceToken::getToken)
                 .isEqualTo("jeton-garde");
+    }
+
+    /**
+     * Isolation tenant au niveau du service, là où le test HTTP précédent ne peut pas
+     * trancher : le compte appelant y diffère du propriétaire, si bien que le seul filtre sur
+     * l'utilisateur suffirait à protéger la ligne. Ici l'identifiant passé est bien celui du
+     * propriétaire ; seul le contexte d'établissement diffère — c'est donc le filtre tenant,
+     * et lui seul, qui doit empêcher la suppression.
+     */
+    @Test
+    void theTenantFilterAloneProtectsTheDeviceOfAnotherSchool() throws Exception {
+        Tenant premiere = TestAuthSupport.createActiveTenant(tenantRepository, "École Filtrée");
+        Tenant seconde = TestAuthSupport.createActiveTenant(tenantRepository, "École Contexte");
+        String jwtProprietaire = TestAuthSupport.createUserAndLogin(
+                mockMvc, objectMapper, userRepository, passwordEncoder, premiere, "prof-filtre@ecole.example", Role.TEACHER);
+        enregistrer(premiere, jwtProprietaire, "jeton-garde-service", "ANDROID");
+        Long proprietaire = appareilsDe(premiere).getFirst().getUserId();
+
+        try {
+            transactionTemplate.executeWithoutResult(statut -> {
+                // Reproduit ce que fait TenantContextInterceptor pour une requête de l'école B.
+                TenantContext.set(seconde.getId());
+                tenantSessionConfigurer.applyTenant(seconde.getId());
+                deviceTokenService.retirer(proprietaire, "jeton-garde-service");
+            });
+        } finally {
+            TenantContext.clear();
+        }
+
+        assertThat(appareilsDe(premiere))
+                .singleElement()
+                .extracting(DeviceToken::getUserId)
+                .isEqualTo(proprietaire);
     }
 
     /** Un appareil appartient à son établissement, comme toute donnée métier (ADR-001). */

@@ -1,6 +1,8 @@
 # Refonte du site vitrine schoolmanager.tech : proposition
 
-Statut : **proposition à valider par Oumar**. Aucun fichier de `landing/` n'est modifié.
+Statut : **validée par Oumar le 23/10/2026**. Spécification finale, qui fait foi en cas
+d'écart avec ce document : `docs/refonte-site/SPEC.md` et `docs/refonte-site/pages/`.
+Aucun fichier de `landing/` n'est modifié.
 Maquette navigable de la nouvelle page d'accueil : `docs/refonte-site/maquette/index.html`
 (ouvrir directement dans le navigateur).
 

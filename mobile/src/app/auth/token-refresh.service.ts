@@ -20,6 +20,18 @@ import { AuthTokenService, TokenPair } from './auth-token.service';
  * quatre autres sur un jeton déjà révoqué — l'utilisateur serait déconnecté malgré la
  * correction. La promesse en cours est donc partagée entre tous les appelants.
  */
+/**
+ * La session a été fermée (ou remplacée) pendant le renouvellement : sa réponse est
+ * périmée et ne doit rien réécrire. Ce n'est pas un refus du serveur — l'appelant ne doit
+ * donc pas, à son tour, fermer la session ni rediriger.
+ */
+export class SessionChangeeError extends Error {
+  constructor() {
+    super('Session fermée ou remplacée pendant le renouvellement');
+    this.name = 'SessionChangeeError';
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class TokenRefreshService {
   private readonly http = inject(HttpClient);
@@ -41,11 +53,22 @@ export class TokenRefreshService {
     if (!tokens) {
       throw new Error('Aucune session à renouveler');
     }
+    const generation = this.authTokenService.generation();
     const response = await firstValueFrom(
       this.http.post<ApiResponse<TokenPair>>(`${environment.apiUrl}/auth/refresh`, {
         refreshToken: tokens.refreshToken,
       }),
     );
+    /*
+     * La réponse peut arriver après une déconnexion — qui n'attend pas un réseau lent — ou
+     * après la connexion d'un autre compte. La stocker ressusciterait la session effacée.
+     */
+    if (
+      this.authTokenService.generation() !== generation ||
+      this.authTokenService.read()?.refreshToken !== tokens.refreshToken
+    ) {
+      throw new SessionChangeeError();
+    }
     this.authTokenService.store(response.data);
     return response.data;
   }

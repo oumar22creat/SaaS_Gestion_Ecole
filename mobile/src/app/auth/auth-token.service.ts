@@ -40,6 +40,20 @@ export class AuthTokenService {
     return tokens ? decodeAccessToken(tokens.accessToken) : null;
   });
 
+  /*
+   * Génération de session, incrémentée à chaque effacement.
+   *
+   * Une requête lancée avant une déconnexion peut répondre après — le renouvellement du jeton
+   * d'accès surtout, que la déconnexion n'attend pas plus de quelques secondes. Sans ce
+   * repère, sa réponse réécrivait la session tout juste effacée, et la personne suivante
+   * rouvrait l'application sur le compte précédent (voir TokenRefreshService).
+   */
+  private generationCourante = 0;
+
+  generation(): number {
+    return this.generationCourante;
+  }
+
   store(tokens: TokenPair): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
     this.jetons.set(tokens);
@@ -50,6 +64,7 @@ export class AuthTokenService {
   }
 
   clear(): void {
+    this.generationCourante++;
     localStorage.removeItem(STORAGE_KEY);
     this.jetons.set(null);
   }

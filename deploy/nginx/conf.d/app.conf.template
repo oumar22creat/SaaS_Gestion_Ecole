@@ -14,18 +14,38 @@ server {
 }
 
 # ------------------------------------------------------------------ Site vitrine (domaine nu)
+# www → domaine nu : une seule adresse canonique pour les moteurs de recherche. Le certificat
+# générique *.${DOMAIN} couvre www.
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
     http2 on;
-    server_name ${DOMAIN} www.${DOMAIN};
+    server_name www.${DOMAIN};
 
     ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
     include /etc/nginx/ssl-params.conf;
 
+    return 301 https://${DOMAIN}$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    include /etc/nginx/ssl-params.conf;
+    # Hérité uniquement par les locations sans add_header (redirections) ; les autres
+    # l'incluent elles-mêmes, voir site-headers.conf.
+    include /etc/nginx/site-headers.conf;
+
     root /usr/share/nginx/html/site;
-    index index.html;
+
+    # Page 404 du site au lieu de celle de Nginx, pour toute ressource absente.
+    error_page 404 /404.html;
 
     # « Démarrer l'essai gratuit » et « Se connecter » pointent vers /register et /login, qui
     # sont des routes de l'application Angular, pas des pages du site vitrine. Sans ces deux
@@ -41,16 +61,100 @@ server {
         return 302 https://app.${DOMAIN}/login;
     }
 
-    location / {
-        try_files $uri $uri/ $uri.html =404;
+    # ------------------------------------------------------------------------ Pages HTML
+    # HTML en no-cache : le navigateur revalide à chaque visite (304 si inchangé), si bien
+    # qu'une page désigne toujours la version courante de site.vN.css / site.vN.js.
+    #
+    # Accueil servi par try_files et non par la directive index : index ferait une redirection
+    # interne vers /index.html, que la location suivante renverrait en 301 vers / (boucle).
+    location = / {
+        try_files /index.html =404;
+        add_header Cache-Control "no-cache";
+        include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
     }
 
-    # Les fichiers du site portent un nom stable : un cache court évite de servir une ancienne
-    # version pendant des semaines après une mise à jour du discours commercial.
-    location ~* \.(css|js|svg|jpg|jpeg|png|webp|woff2)$ {
-        expires 1h;
-        add_header Cache-Control "public";
+    location = /index.html {
+        return 301 /$is_args$args;
+    }
+
+    # Exception : URL citée telle quelle dans les fiches App Store et Google Play.
+    location = /confidentialite.html {
+        add_header Cache-Control "no-cache";
         include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
+    }
+
+    # Cible de error_page uniquement : demandée directement, elle répond elle aussi en 404.
+    # `always` car add_header ignore sinon les réponses 404.
+    location = /404.html {
+        internal;
+        add_header Cache-Control "no-cache" always;
+        include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
+    }
+
+    # URL propres : /tarifs.html → /tarifs (canoniques sans extension, voir SPEC §10.2).
+    # Ne concerne que les requêtes du visiteur : try_files ci-dessous sert tarifs.html sans
+    # repasser par la recherche de location, donc sans boucle.
+    location ~ ^/(.+)\.html$ {
+        return 301 /$1$is_args$args;
+    }
+
+    # Barre finale superflue : /tarifs/ → /tarifs (aucune page n'est un répertoire).
+    location ~ ^(.+)/$ {
+        return 301 $1$is_args$args;
+    }
+
+    location = /robots.txt {
+        add_header Cache-Control "public, max-age=3600";
+        include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
+    }
+
+    location = /sitemap.xml {
+        add_header Cache-Control "public, max-age=3600";
+        include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
+    }
+
+    # Pas de $uri/ : aucune page n'est un répertoire, et servir un répertoire sans index
+    # répondrait 403 au lieu de 404.
+    location / {
+        try_files $uri $uri.html =404;
+        add_header Cache-Control "no-cache";
+        include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
+    }
+
+    # ---------------------------------------------------------------------- Ressources
+    # Feuille de style et script versionnés par leur nom (site.v1.css → site.v2.css à chaque
+    # modification) et polices (jamais modifiées sous le même nom) : cache d'un an, immutable.
+    location ~ ^/assets/fonts/.+\.woff2$ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
+    }
+
+    location ~ \.v[0-9]+\.(?:css|js)$ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
+    }
+
+    # Images : noms non versionnés, donc 7 jours seulement (SPEC §10.5). Renommer le fichier
+    # pour imposer une nouvelle image avant ce délai.
+    location ~* \.(?:avif|webp|jpe?g|png|svg|ico)$ {
+        add_header Cache-Control "public, max-age=604800";
+        include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
+    }
+
+    # Toute autre ressource CSS/JS au nom non versionné : cache court.
+    location ~* \.(?:css|js|woff2)$ {
+        add_header Cache-Control "public, max-age=3600";
+        include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
     }
 }
 

@@ -262,3 +262,30 @@ appel anonyme, il serait cru sur parole.
 `deploy/nginx/proxy-params.conf` l'efface donc à l'entrée du reverse proxy. **Ne pas retirer
 cette ligne** : sans elle, un visiteur pourrait désigner l'établissement de son choix sur les
 endpoints publics.
+
+## Site vitrine — cache, CSP et URL
+
+Configuration : bloc « Site vitrine » de `deploy/nginx/conf.d/app.conf.template`, en-têtes
+propres au site dans `deploy/nginx/site-headers.conf`.
+
+- **Cache** : `site.vN.css` / `site.vN.js` et les polices sont en cache un an (`immutable`).
+  Toute modification de la feuille de style ou du script **doit** changer le numéro de version
+  dans le nom du fichier et dans les 8 pages, sinon les visiteurs garderont l'ancienne version
+  jusqu'à un an. Images : 7 jours (renommer pour forcer). HTML : `no-cache`. `robots.txt` et
+  `sitemap.xml` : 1 heure.
+- **CSP stricte** (`default-src 'self'`, aucun inline) : un attribut `style=""`, un script
+  inline ou une ressource externe (police Google, outil d'audience…) sera bloqué par le
+  navigateur. Les blocs `<script type="application/ld+json">` ne sont pas concernés.
+- **URL** : `www.` et `/page.html` redirigent en 301 vers le domaine nu et `/page`, sauf
+  `/confidentialite.html`, servie telle quelle car citée dans les fiches des stores. Toute
+  ressource absente répond avec `404.html`.
+- L'application (`*.domaine`) n'est pas concernée par ces règles.
+
+Vérification après mise à jour :
+
+```bash
+curl -sI https://schoolmanager.tech/ | grep -i -E 'cache-control|content-security'
+curl -sI https://schoolmanager.tech/tarifs.html | grep -i location      # → /tarifs
+curl -sI https://schoolmanager.tech/confidentialite.html | head -1      # → 200
+curl -sI https://schoolmanager.tech/inexistant | head -1                # → 404
+```

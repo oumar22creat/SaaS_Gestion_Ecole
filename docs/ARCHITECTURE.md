@@ -860,6 +860,14 @@ configuration ne passe pas par l'écran d'affectation) ; `school_classes.head_te
   classes ; observation et historique disciplinaire sur ses élèves. Sanctions, convocations
   et statistiques restaient déjà fermées au TEACHER.
 
+**Lecture du périmètre par l'interface** : `GET /api/v1/me/teaching-scope` (personnel
+uniquement, PARENT/STUDENT → 403, aucun paramètre) renvoie au compte connecté SON périmètre —
+`restricted` (vrai pour TEACHER seulement), `classIds`, `headClassIds`, `classSubjects`
+(`classId`/`subjectId`) — calculé par `TeacherScope`, sans identité d'aucun enseignant. Le
+web s'en sert pour masquer ce que le serveur refuserait (génération et appréciation générale
+des bulletins hors professeur principal, matières non enseignées à la création d'évaluation
+ou de séance) ; c'est de l'affichage, les contrôles restent ceux des contrôleurs.
+
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3, ADR-024)** — reste
   à trancher (réponse utilisateur : plus tard). Le modèle (`FeePaymentMethod.MOBILE_MONEY`)

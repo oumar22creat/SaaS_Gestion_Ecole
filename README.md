@@ -142,20 +142,28 @@ en dur dans le code partagé.
 
 ## Site vitrine (`landing/`)
 
-Page publique de présentation commerciale de **School Manager**, destinée à convertir des
-établissements en abonnés. Statique (HTML, CSS, un script), sans build ni dépendance npm.
+Site public de présentation commerciale de **School Manager** (8 pages : accueil,
+fonctionnalités, parents, tarifs, sécurité, confidentialité, mentions légales, 404).
+Statique (HTML, une feuille de style, un petit script), sans build ni dépendance npm.
+Spécification : `docs/refonte-site/SPEC.md`.
 
 ```bash
 cd landing && python3 -m http.server 5599
 ```
 
-Puis ouvrir `http://localhost:5599`. Les boutons d'appel à l'action pointent vers `/register`
-et `/login` de l'application Web : en production, le site vitrine et l'application doivent
-être servis sous le même domaine (reverse proxy Nginx) pour que ces liens fonctionnent.
+Puis ouvrir `http://localhost:5599`. Ce serveur de test ne gère pas les URL sans extension :
+ouvrir `/tarifs.html` plutôt que `/tarifs` (en production, Nginx fait `try_files $uri.html`).
+Les boutons d'appel à l'action pointent vers `/register` et `/login`, redirigés par Nginx vers
+l'application Web.
 
-Les photos de `landing/assets/` sont des images de substitution sous licence CC0
-(voir `landing/assets/CREDITS.md`) et doivent être remplacées par des photos des
-établissements clients avant toute mise en ligne commerciale.
+Les images (`landing/assets/photos`, `captures`, `brand`, `og`, favicons) sont générées à partir
+des sources du dépôt (Pillow avec AVIF et WebP requis) :
+
+```bash
+python3 marketing/site-vitrine/generer.py
+```
+
+Crédits et licences : `landing/assets/CREDITS.md`.
 
 ## Tests
 

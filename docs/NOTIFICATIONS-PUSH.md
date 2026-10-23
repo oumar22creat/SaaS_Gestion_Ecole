@@ -314,6 +314,40 @@ a plus rien à chercher du côté d'Apple, tout se joue dans le formulaire de la
 
 ---
 
+## 8. Cycle de vie du jeton d'appareil
+
+Code : `mobile/src/app/push/push-notification.service.ts`, côté serveur
+`backend/src/main/java/com/schoolsaas/notification/DeviceTokenService.java`.
+
+| Moment | Ce que fait l'application |
+|---|---|
+| **Connexion** | demande la permission (seul moment où elle l'est), `getToken()`, `POST /api/v1/device-tokens`, abonnement à `tokenReceived` |
+| **Lancement avec une session conservée** | si la permission est **déjà** accordée : même chemin, sans jamais la redemander (`reprendreAuDemarrage`, déclenché depuis `app.config.ts` sans bloquer le démarrage). Refusée ou jamais tranchée : rien |
+| **Renouvellement par Firebase** (`tokenReceived`) | redéclaré au serveur, **seulement si une session est ouverte** |
+| **Déconnexion** | jeton pris en mémoire, sinon redemandé à `getToken()` ; `DELETE /api/v1/device-tokens/{token}` **avant** l'effacement de la session (le JWT est nécessaire) ; puis `deleteToken()` chez Firebase. Chaque étape est bornée à 3 s : hors ligne, la déconnexion se fait quand même |
+| **Session perdue** (rafraîchissement refusé par le serveur) | plus de requête authentifiée possible : `deleteToken()` seul (intercepteur HTTP) |
+
+Côté serveur :
+
+- Un jeton déjà connu dans l'établissement est **réattribué** au compte qui l'enregistre
+  (unicité `(school_id, token)`) : pas de doublon entre deux comptes d'une même école.
+- Le `DELETE` ne retire que la ligne **du compte authentifié**, dans **son** établissement
+  (filtre Hibernate + RLS). Un collègue, ou un ancien propriétaire après réattribution, ne
+  peut pas priver un compte de ses notifications.
+
+Pourquoi `deleteToken()` en plus du `DELETE` : c'est le filet de sécurité. Si le retrait n'a
+pas atteint le serveur (réseau coupé), la ligne qui y reste désigne un jeton que Firebase ne
+connaît plus — il répond `UNREGISTERED` au premier envoi et la passerelle l'oublie (§7). La
+connexion suivante obtient un jeton neuf par `getToken()`. C'est aussi ce qui couvre le cas
+d'un même téléphone utilisé dans **deux établissements** : la ligne de la première école,
+invisible depuis la seconde, ne peut pas y être réattribuée.
+
+> **Historique.** Jusqu'à la version Android 1 / iOS build 35, le jeton n'était connu qu'en
+> mémoire, rempli par la seule page de connexion. La session survivant au redémarrage, une
+> déconnexion faite après réouverture de l'application n'envoyait aucun `DELETE` : sur un
+> téléphone partagé, le compte précédent continuait de recevoir ses notifications. Corrigé à
+> partir de la version Android 2 / iOS build 36.
+
 ## Récapitulatif
 
 - [ ] Projet Firebase créé, sans Google Analytics

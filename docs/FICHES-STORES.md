@@ -387,16 +387,18 @@ backend oublie leur jeton de lui-même.
 
 ### Numéro de version
 
-`versionCode` vaut **1** et `versionName` **1.0**, dans `mobile/android/app/build.gradle`.
-Play refuse un `versionCode` déjà téléversé : à partir de la deuxième livraison, l'incrémenter
-avant de reconstruire.
+`versionCode` vaut **2** et `versionName` **1.0**, dans `mobile/android/app/build.gradle`.
+Le `versionCode` 1 est celui du bundle du 22/10/2026 ; le 2 est réservé à la livraison
+suivante (retrait fiable du jeton push à la déconnexion, voir `docs/NOTIFICATIONS-PUSH.md` §8).
+Play refuse un `versionCode` déjà téléversé : l'incrémenter avant chaque nouveau bundle.
 
 ### Versions iOS
 
-La version publiée le 22/10/2026 est **1.0 (build 35)**. Attention : `CURRENT_PROJECT_VERSION`
-dans `mobile/ios/App/App.xcodeproj/project.pbxproj` vaut encore **1** — le numéro réel a été
-saisi au moment de l'archivage. App Store Connect refuse un build déjà téléversé : la prochaine
-livraison doit porter un build **≥ 36** (régler `CURRENT_PROJECT_VERSION` avant l'archive).
+La version publiée le 22/10/2026 est **1.0 (build 35)** — numéro saisi à la main au moment
+de l'archivage, le projet portant alors encore `1`. `CURRENT_PROJECT_VERSION` vaut désormais
+**36** dans `mobile/ios/App/App.xcodeproj/project.pbxproj` (`MARKETING_VERSION` reste
+**1.0**) : c'est le build de la prochaine livraison. App Store Connect refuse un build déjà
+téléversé : l'incrémenter avant chaque nouvelle archive.
 Si la version commerciale change (1.0 → 1.1), incrémenter aussi **`MARKETING_VERSION`**.
 
 ---

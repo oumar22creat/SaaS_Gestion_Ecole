@@ -19,7 +19,10 @@ const DELAI_TEST_MS = 30;
 
 type FauxMessaging = jasmine.SpyObj<MessagingPort>;
 
-function fauxMessaging(permission: 'granted' | 'denied' | 'prompt', jeton = 'jeton-fcm'): FauxMessaging {
+function fauxMessaging(
+  permission: 'granted' | 'denied' | 'prompt',
+  jeton = 'jeton-fcm',
+): FauxMessaging {
   const messaging = jasmine.createSpyObj<MessagingPort>('FirebaseMessaging', [
     'checkPermissions',
     'requestPermissions',

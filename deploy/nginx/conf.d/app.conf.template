@@ -90,6 +90,15 @@ server {
     }
 
     # Exception : URL citée telle quelle dans les fiches App Store et Google Play.
+    # La forme sans extension servirait la même page en 200 (try_files $uri.html) : doublon,
+    # renvoyé en 301 vers l'URL canonique. En-têtes inclus explicitement (HSTS compris), car
+    # le bloc server ne transmet que site-headers.conf.
+    location = /confidentialite {
+        include /etc/nginx/security-headers.conf;
+        include /etc/nginx/site-headers.conf;
+        return 301 /confidentialite.html$is_args$args;
+    }
+
     location = /confidentialite.html {
         add_header Cache-Control "no-cache";
         include /etc/nginx/security-headers.conf;
@@ -146,7 +155,7 @@ server {
         return 404;
     }
 
-    # Feuille de style et script versionnés par leur nom (site.v1.css → site.v2.css à chaque
+    # Feuille de style et script versionnés par leur nom (site.vN.css → site.vN+1.css à chaque
     # modification) et polices (jamais modifiées sous le même nom) : cache d'un an, immutable.
     location ~ ^/assets/fonts/.+\.woff2$ {
         add_header Cache-Control "public, max-age=31536000, immutable";

@@ -30,4 +30,15 @@ describe('role-access', () => {
     expect(canAccessMobilePath('TEACHER', '/exams')).toBe(true);
     expect(canAccessMobilePath('TEACHER', '/portal')).toBe(false);
   });
+
+  it('ne montre à chaque rôle du personnel que les tuiles que la garde laisse ouvrir', () => {
+    for (const role of ['ADMIN', 'DIRECTION', 'TEACHER', 'VIE_SCOLAIRE']) {
+      for (const tile of homeTilesForRole(role)) {
+        expect(tile.path === null || canAccessMobilePath(role, tile.path)).withContext(`${role} ${tile.path}`).toBe(true);
+      }
+    }
+    // La vie scolaire garde la feuille d'appel, sans notes ni emploi du temps.
+    expect(homeTilesForRole('VIE_SCOLAIRE').map((tile) => tile.path)).toEqual(['/attendance', '/notifications']);
+    expect(homeTilesForRole('TEACHER').map((tile) => tile.path)).toContain('/timetable');
+  });
 });

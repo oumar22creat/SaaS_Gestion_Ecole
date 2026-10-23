@@ -57,7 +57,11 @@ export function homeTilesForRole(role: string | null): HomeTile[] {
     return [...STUDENT_TILES, NOTIFICATION_TILE];
   }
   if (role && STAFF_PEDAGOGIE.includes(role)) {
-    return [...TEACHER_TILES, NOTIFICATION_TILE];
+    // Une tuile qui mène à une route refusée renvoie aussitôt à l'accueil : la vie scolaire
+    // voyait « Notes » et « Emploi du temps » sans pouvoir les ouvrir (réservés côté serveur
+    // à ADMIN, DIRECTION et TEACHER). On ne montre que ce que la garde laissera passer.
+    const tiles = TEACHER_TILES.filter((tile) => tile.path === null || canAccessMobilePath(role, tile.path));
+    return [...tiles, NOTIFICATION_TILE];
   }
   // Même sans tuile métier, le réglage des notifications reste accessible : un comptable
   // reçoit les alertes d'abonnement et doit pouvoir les couper.

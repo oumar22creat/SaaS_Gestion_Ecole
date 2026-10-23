@@ -8,6 +8,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { extractErrorMessage } from '../core/http-error.util';
 import { toIsoDate } from '../core/iso-date.util';
+import { TeachingScope, TeachingScopeService } from '../core/teaching-scope.service';
 import { SchoolClass } from '../schoolclass/school-class.model';
 import { SchoolClassService } from '../schoolclass/school-class.service';
 import { Student } from '../student/student.model';
@@ -51,9 +52,11 @@ import { ReportCard, ReportCardService } from './report-card.service';
         <input matInput type="date" [(ngModel)]="periodTo" />
       </mat-form-field>
       <button mat-stroked-button (click)="load()"><mat-icon>search</mat-icon> Afficher</button>
-      <button mat-flat-button (click)="generate()">
-        <mat-icon>auto_awesome</mat-icon> Générer
-      </button>
+      @if (canManage()) {
+        <button mat-flat-button (click)="generate()" data-testid="generate">
+          <mat-icon>auto_awesome</mat-icon> {{ cards().length > 0 ? 'Régénérer' : 'Générer' }}
+        </button>
+      }
       <button
         mat-stroked-button
         [disabled]="cards().length === 0 || printingAll()"
@@ -97,13 +100,21 @@ import { ReportCard, ReportCardService } from './report-card.service';
         <ng-container matColumnDef="comment">
           <th mat-header-cell *matHeaderCellDef>Appréciation</th>
           <td mat-cell *matCellDef="let card">
-            <input [(ngModel)]="card.generalComment" />
+            @if (canManage()) {
+              <input [(ngModel)]="card.generalComment" aria-label="Appréciation générale" />
+            } @else {
+              <span class="cell-muted">{{ card.generalComment || '—' }}</span>
+            }
           </td>
         </ng-container>
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let card">
-            <button mat-button (click)="save(card)"><mat-icon>more_horiz</mat-icon></button>
+            @if (canManage()) {
+              <button mat-button (click)="save(card)" data-testid="save-comment">
+                <mat-icon>save</mat-icon> Enregistrer
+              </button>
+            }
             <button mat-button (click)="pdf(card)"><mat-icon>download</mat-icon> PDF</button>
           </td>
         </ng-container>
@@ -114,12 +125,22 @@ import { ReportCard, ReportCardService } from './report-card.service';
     @if (cards().length === 0) {
       <p class="empty-state">Aucun bulletin pour cette période.</p>
     }
+    @if (schoolClassId !== null && !canManage()) {
+      <p class="cell-muted" data-testid="head-teacher-only">
+        La génération des bulletins, l’appréciation générale et la décision du conseil
+        reviennent au professeur principal de la classe et à la direction.
+      </p>
+    }
   `,
 })
 export class ReportCardPage {
   private readonly reportCardService = inject(ReportCardService);
   private readonly schoolClassService = inject(SchoolClassService);
   private readonly studentService = inject(StudentService);
+  private readonly teachingScopeService = inject(TeachingScopeService);
+
+  /** Périmètre d'affichage (ADR-030) ; fermé tant qu'il n'est pas chargé. */
+  protected readonly scope = signal(new TeachingScope(null, true));
 
   protected readonly classes = signal<SchoolClass[]>([]);
   protected readonly students = signal<Student[]>([]);
@@ -137,6 +158,15 @@ export class ReportCardPage {
   constructor() {
     void this.schoolClassService.list().then((classes) => this.classes.set(classes));
     void this.studentService.list().then((students) => this.students.set(students));
+    void this.teachingScopeService.current().then((scope) => this.scope.set(scope));
+  }
+
+  /**
+   * Génération, appréciation générale et décision du conseil : ADMIN, DIRECTION et
+   * professeur principal de la classe choisie (ADR-030). Le serveur reste juge (403).
+   */
+  protected canManage(): boolean {
+    return this.scope().canManageReportCards(this.schoolClassId);
   }
 
   studentLabel(id: number): string {
@@ -161,6 +191,7 @@ export class ReportCardPage {
       return;
     }
     this.errorMessage.set(null);
+    this.successMessage.set(null);
     try {
       this.cards.set(
         await this.reportCardService.generate({
@@ -177,12 +208,18 @@ export class ReportCardPage {
   }
 
   async save(card: ReportCard): Promise<void> {
-    await this.reportCardService.update(
-      card.id,
-      card.generalComment ?? '',
-      card.councilDecision ?? '',
-    );
-    this.successMessage.set('Appréciation enregistrée.');
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    try {
+      await this.reportCardService.update(
+        card.id,
+        card.generalComment ?? '',
+        card.councilDecision ?? '',
+      );
+      this.successMessage.set('Appréciation enregistrée.');
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    }
   }
 
   /** « 1er » et non « 1e » : c'est la forme attendue sur un bulletin. */
@@ -191,7 +228,12 @@ export class ReportCardPage {
   }
 
   async pdf(card: ReportCard): Promise<void> {
-    await this.reportCardService.downloadPdf(card.id);
+    this.errorMessage.set(null);
+    try {
+      await this.reportCardService.downloadPdf(card.id);
+    } catch (error) {
+      this.errorMessage.set(extractErrorMessage(error));
+    }
   }
 
   /** Un seul PDF pour la classe entière, un bulletin par page, en ordre alphabétique. */

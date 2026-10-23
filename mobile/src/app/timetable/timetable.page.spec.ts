@@ -57,7 +57,9 @@ describe('TimetablePage', () => {
     // Un tour de boucle : les promesses des services (firstValueFrom) se résolvent après le flush.
     await new Promise((resolve) => setTimeout(resolve));
     await fixture.whenStable();
-    (fixture.componentInstance as unknown as { jourChoisi: { set(v: string): void } }).jourChoisi.set('MONDAY');
+    (
+      fixture.componentInstance as unknown as { jourChoisi: { set(v: string): void } }
+    ).jourChoisi.set('MONDAY');
     fixture.detectChanges();
     await fixture.whenStable();
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -95,7 +97,9 @@ describe('TimetablePage', () => {
     httpMock
       .expectOne((r) => r.url === `${api}/classes`)
       .flush({ error: { code: 'FORBIDDEN' } }, { status: 403, statusText: 'Forbidden' });
-    httpMock.expectOne((r) => r.url === `${api}/subjects`).flush({ data: [{ id: 20, name: 'Physique' }] });
+    httpMock
+      .expectOne((r) => r.url === `${api}/subjects`)
+      .flush({ data: [{ id: 20, name: 'Physique' }] });
     httpMock.expectOne((r) => r.url === `${api}/rooms`).error(new ProgressEvent('error'));
 
     const texte = await rendreLundi();
@@ -113,7 +117,10 @@ describe('TimetablePage', () => {
   it('signale une erreur quand ce sont les créneaux eux-mêmes qui échouent', async () => {
     httpMock
       .expectOne((r) => r.url === `${api}/timetable-entries`)
-      .flush({ error: { code: 'INTERNAL', message: 'Panne' } }, { status: 500, statusText: 'Server Error' });
+      .flush(
+        { error: { code: 'INTERNAL', message: 'Panne' } },
+        { status: 500, statusText: 'Server Error' },
+      );
     await rendreLundi();
 
     expect(fixture.nativeElement.querySelector('.flash-error')).not.toBeNull();
@@ -133,9 +140,9 @@ describe('TimetablePage', () => {
     ]);
     await rendreLundi();
 
-    const puces = Array.from(fixture.nativeElement.querySelectorAll('.classe') as NodeListOf<HTMLElement>).map((b) =>
-      b.textContent?.trim(),
-    );
+    const puces = Array.from(
+      fixture.nativeElement.querySelectorAll('.classe') as NodeListOf<HTMLElement>,
+    ).map((b) => b.textContent?.trim());
     expect(puces).toEqual(['Toutes', '5ème B', '6ème A']);
   });
 });

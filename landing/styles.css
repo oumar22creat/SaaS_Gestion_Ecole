@@ -914,6 +914,14 @@ img { display: block; max-width: 100%; }
 
 .store-badge:focus-visible { border-radius: 8px; }
 
+/* Badge Google Play « Bientôt » : application Android en test fermé, badge non
+   cliquable et atténué pour signaler qu'il n'est pas encore actif. */
+.store-badge-soon {
+  opacity: 0.6;
+  cursor: default;
+  user-select: none;
+}
+
 .store-note {
   color: var(--bone-muted);
   font-size: 0.875rem;

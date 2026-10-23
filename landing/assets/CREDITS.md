@@ -26,3 +26,9 @@ Pour remplacer une image, conserver le nom de fichier et mettre à jour les attr
 | Ressource | Source | Licence / conditions |
 |---|---|---|
 | Badge « Télécharger dans l'App Store » (noir, FR), SVG inline dans `index.html` | Reproduction du badge officiel Apple (logo Apple + texte), aucun fichier téléchargé | Marque Apple Inc. Usage autorisé uniquement pour renvoyer vers la fiche App Store de l'application (id6822008457), selon les règles marketing App Store d'Apple : badge non modifié (couleurs, proportions), sans effet au survol, avec un espace libre autour. Pour une conformité stricte, il peut être remplacé par le fichier officiel du kit « App Store Marketing Tools ». |
+
+## Badge Google Play (« Bientôt »)
+
+| Ressource | Source | Licence / conditions |
+|---|---|---|
+| Badge « Bientôt sur Google Play » (noir), SVG inline dans `index.html` (hero et section `#terrain`) | Logo Google Play redessiné en SVG (triangle quatre couleurs) + texte, aucun fichier téléchargé | Google Play et le logo Google Play sont des marques de Google LLC. Badge volontairement non cliquable et atténué tant que l'application Android est en test fermé. À la publication publique, le remplacer par le badge officiel « Disponible sur Google Play » (générateur de badges Google Play) et le relier à la fiche de l'application, selon les règles d'utilisation de la marque Google Play. |

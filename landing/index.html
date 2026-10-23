@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=6">
 <script>document.documentElement.className += " js";</script>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1" defer></script>
 <script src="main.js?v=4" defer></script>
@@ -47,9 +47,9 @@
         <p class="lede">Inscriptions, notes, bulletins, absences, cantine, transport. Une seule plateforme, sur web et mobile, pensée pour les établissements francophones.</p>
         <div class="btn-row">
           <a class="btn btn-primary" href="/register">Démarrer l'essai gratuit</a>
-          <a class="btn btn-ghost" href="#tarifs">Demander une démo</a>
+          <a class="btn btn-ghost" href="https://wa.me/22379827979?text=Bonjour%2C%20je%20souhaite%20une%20d%C3%A9monstration%20de%20School%20Manager%20pour%20mon%20%C3%A9cole." target="_blank" rel="noopener"><i class="ph-bold ph-whatsapp-logo" aria-hidden="true"></i>Demander une démo</a>
         </div>
-        <!-- Application iOS publiée : lien direct vers la fiche App Store -->
+        <!-- Application iOS publiée : lien direct vers la fiche App Store. Android en test fermé : badge « Bientôt » -->
         <div class="store-row">
           <a class="store-badge" href="https://apps.apple.com/app/id6822008457" target="_blank" rel="noopener" aria-label="Télécharger School Manager dans l'App Store (nouvel onglet)">
             <!-- Badge App Store officiel (FR, noir) reproduit en SVG inline : marque Apple, voir assets/CREDITS.md -->
@@ -60,7 +60,21 @@
               <text x="36.5" y="30.5" fill="#fff" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15.5" font-weight="600" letter-spacing="-0.3" textLength="89" lengthAdjust="spacingAndGlyphs">l’App Store</text>
             </svg>
           </a>
-          <span class="store-note">Application mobile disponible sur iPhone</span>
+          <!-- Android en test fermé : badge Google Play non cliquable et atténué, marque Google, voir assets/CREDITS.md -->
+          <span class="store-badge store-badge-soon" role="img" aria-label="Bientôt disponible sur Google Play">
+            <svg viewBox="0 0 135 40" width="135" height="40" aria-hidden="true" focusable="false">
+              <rect x="0.5" y="0.5" width="134" height="39" rx="6.5" fill="#000" stroke="#a6a6a6"/>
+              <g transform="translate(10 8)">
+                <path fill="#4285F4" d="M0 0 L11.5 12 L0 24 Z"/>
+                <path fill="#34A853" d="M0 0 L14 8.4 L11.5 12 Z"/>
+                <path fill="#FBBC04" d="M14 8.4 L20 12 L14 15.6 L11.5 12 Z"/>
+                <path fill="#EA4335" d="M11.5 12 L14 15.6 L0 24 Z"/>
+              </g>
+              <text x="38" y="15.5" fill="#fff" font-family="Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="8.2">Bientôt sur</text>
+              <text x="37.5" y="30.5" fill="#fff" font-family="Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15.5" font-weight="600" letter-spacing="-0.2" textLength="86" lengthAdjust="spacingAndGlyphs">Google Play</text>
+            </svg>
+          </span>
+          <span class="store-note">Sur iPhone dès maintenant, bientôt sur Android</span>
         </div>
       </div>
       <!-- Photo de substitution CC0 (voir assets/CREDITS.md). À remplacer par une photo de votre établissement. -->
@@ -133,7 +147,7 @@
           <div class="tile-inner">
             <span class="tile-icon" aria-hidden="true"><i class="ph-bold ph-chats-circle"></i></span>
             <h3>Communication aux familles</h3>
-            <p>Messagerie interne, annonces de l'établissement, notification automatique du parent dès qu'une absence est saisie.</p>
+            <p>Messagerie interne (plateforme web), annonces de l'établissement, notification automatique du parent dès qu'une absence est saisie.</p>
           </div>
         </article>
 
@@ -176,7 +190,7 @@
         <ul class="duo-points">
           <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Feuille d'appel tactile, toute la classe validée d'un écran.</span></li>
           <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Saisie des notes et consultation de l'emploi du temps.</span></li>
-          <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Disponible sur Android et iOS, avec le logo de votre établissement.</span></li>
+          <li><i class="ph-bold ph-check" aria-hidden="true"></i><span>Disponible sur iPhone, bientôt sur Android, avec le logo de votre établissement.</span></li>
         </ul>
         <div class="store-row store-row-duo">
           <a class="store-badge" href="https://apps.apple.com/app/id6822008457" target="_blank" rel="noopener" aria-label="Télécharger School Manager dans l'App Store (nouvel onglet)">
@@ -188,6 +202,20 @@
               <text x="36.5" y="30.5" fill="#fff" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15.5" font-weight="600" letter-spacing="-0.3" textLength="89" lengthAdjust="spacingAndGlyphs">l’App Store</text>
             </svg>
           </a>
+          <!-- Android en test fermé : badge Google Play non cliquable et atténué, marque Google, voir assets/CREDITS.md -->
+          <span class="store-badge store-badge-soon" role="img" aria-label="Bientôt disponible sur Google Play">
+            <svg viewBox="0 0 135 40" width="135" height="40" aria-hidden="true" focusable="false">
+              <rect x="0.5" y="0.5" width="134" height="39" rx="6.5" fill="#000" stroke="#a6a6a6"/>
+              <g transform="translate(10 8)">
+                <path fill="#4285F4" d="M0 0 L11.5 12 L0 24 Z"/>
+                <path fill="#34A853" d="M0 0 L14 8.4 L11.5 12 Z"/>
+                <path fill="#FBBC04" d="M14 8.4 L20 12 L14 15.6 L11.5 12 Z"/>
+                <path fill="#EA4335" d="M11.5 12 L14 15.6 L0 24 Z"/>
+              </g>
+              <text x="38" y="15.5" fill="#fff" font-family="Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="8.2">Bientôt sur</text>
+              <text x="37.5" y="30.5" fill="#fff" font-family="Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15.5" font-weight="600" letter-spacing="-0.2" textLength="86" lengthAdjust="spacingAndGlyphs">Google Play</text>
+            </svg>
+          </span>
         </div>
       </div>
       <figure class="media duo-media reveal" style="--i:1; margin:0">
@@ -313,7 +341,7 @@
           <p>Créez l'établissement, importez vos classes et vos élèves, invitez vos enseignants. L'essai couvre l'intégralité des modules pendant 30 jours.</p>
           <div class="btn-row">
             <a class="btn btn-primary" href="/register">Démarrer l'essai gratuit</a>
-            <a class="btn btn-ghost" href="https://wa.me/22379827979" target="_blank" rel="noopener">Demander une démo</a>
+            <a class="btn btn-ghost" href="https://wa.me/22379827979?text=Bonjour%2C%20je%20souhaite%20une%20d%C3%A9monstration%20de%20School%20Manager%20pour%20mon%20%C3%A9cole." target="_blank" rel="noopener"><i class="ph-bold ph-whatsapp-logo" aria-hidden="true"></i>Demander une démo</a>
           </div>
         </div>
       </div>
@@ -362,7 +390,7 @@
     </div>
     <div class="footer-base">
       <span>School Manager</span>
-      <span>Mentions légales et politique de confidentialité à compléter avant mise en ligne</span>
+      <span>Éditeur : LOGILAB, Bamako (Mali) — contact : <a href="mailto:oumarcoulou44@gmail.com">oumarcoulou44@gmail.com</a>, WhatsApp <a href="https://wa.me/22379827979" target="_blank" rel="noopener">+223 79 82 79 79</a></span>
     </div>
   </div>
 </footer>

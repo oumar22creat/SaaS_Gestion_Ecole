@@ -24,6 +24,11 @@
     }
   </div>
 
-  <ion-button expand="block" fill="clear" class="logout" (click)="logout()"><ion-icon aria-hidden="true" name="log-out-outline"></ion-icon> Déconnexion
+  <ion-button expand="block" fill="clear" class="logout" [disabled]="deconnexionEnCours()" (click)="logout()">
+    @if (deconnexionEnCours()) {
+      <ion-spinner aria-hidden="true" name="dots"></ion-spinner> Déconnexion…
+    } @else {
+      <ion-icon aria-hidden="true" name="log-out-outline"></ion-icon> Déconnexion
+    }
   </ion-button>
 </ion-content>

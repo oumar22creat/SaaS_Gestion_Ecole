@@ -34,13 +34,23 @@ export const PUSH_MESSAGING = new InjectionToken<MessagingPort | null>('PUSH_MES
 });
 
 /**
- * Attente maximale de chaque étape réseau de la déconnexion. Au-delà, on abandonne : un
- * enseignant hors couverture doit pouvoir se déconnecter, et le jeton est de toute façon
- * invalidé côté Firebase juste après (voir {@link PushNotificationService#retirerAvantDeconnexion}).
+ * Attente maximale du retrait côté serveur à la déconnexion — reprise en cours, lecture du
+ * jeton et requête DELETE comprises. Au-delà, on abandonne : un enseignant hors couverture
+ * doit pouvoir se déconnecter, et le jeton est de toute façon invalidé chez Firebase juste
+ * après (voir {@link PushNotificationService#retirerAvantDeconnexion}).
  */
 export const PUSH_DELAI_MAX_MS = new InjectionToken<number>('PUSH_DELAI_MAX_MS', {
   providedIn: 'root',
   factory: () => 3000,
+});
+
+/**
+ * Attente maximale de l'invalidation du jeton chez Firebase. Avec {@link PUSH_DELAI_MAX_MS},
+ * borne la déconnexion à cinq secondes au total dans le pire cas.
+ */
+export const PUSH_DELAI_FIREBASE_MS = new InjectionToken<number>('PUSH_DELAI_FIREBASE_MS', {
+  providedIn: 'root',
+  factory: () => 2000,
 });
 
 /**
@@ -76,10 +86,13 @@ export class PushNotificationService {
   private readonly authTokenService = inject(AuthTokenService);
   private readonly messaging = inject(PUSH_MESSAGING);
   private readonly delaiMaxMs = inject(PUSH_DELAI_MAX_MS);
+  private readonly delaiFirebaseMs = inject(PUSH_DELAI_FIREBASE_MS);
 
   /** Dernier jeton déclaré au serveur, pour savoir quoi retirer à la déconnexion. */
   private readonly jetonAppareil = signal<string | null>(null);
   private ecouteurPose = false;
+  /** Enregistrement en cours, que la déconnexion attend pour retirer le bon jeton. */
+  private enregistrementEnCours: Promise<void> | null = null;
 
   /**
    * Demande la permission, récupère le jeton et le déclare au serveur.
@@ -118,8 +131,10 @@ export class PushNotificationService {
    *
    * <p>Le jeton est redemandé à Firebase s'il n'est pas en mémoire — c'est le cas après un
    * redémarrage de l'application, lorsque la reprise n'a pas abouti (hors ligne au
-   * lancement). Chaque étape est bornée par {@link PUSH_DELAI_MAX_MS} : hors couverture, la
-   * déconnexion se fait quand même.
+   * lancement). Un enregistrement encore en cours — reprise au démarrage sur réseau lent —
+   * est attendu d'abord : sans cela, sa déclaration pourrait arriver au serveur après le
+   * retrait. Le tout est borné par {@link PUSH_DELAI_MAX_MS}, puis l'invalidation par
+   * {@link PUSH_DELAI_FIREBASE_MS} : hors couverture, la déconnexion se fait quand même.
    *
    * <p>{@code deleteToken()} vient en dernier et en filet de sécurité : même si le retrait
    * n'a pas atteint le serveur, le jeton qui y reste ne désigne plus rien. Firebase répondra
@@ -132,7 +147,10 @@ export class PushNotificationService {
       return;
     }
     try {
-      await this.retirerDuServeur(messaging);
+      await avecDelai(
+        this.retirerDuServeur(messaging, this.authTokenService.generation()),
+        this.delaiMaxMs,
+      );
     } catch (erreur) {
       console.warn("Retrait de l'appareil non transmis au serveur", erreur);
     }
@@ -150,13 +168,23 @@ export class PushNotificationService {
       return;
     }
     try {
-      await avecDelai(messaging.deleteToken(), this.delaiMaxMs);
+      await avecDelai(messaging.deleteToken(), this.delaiFirebaseMs);
     } catch (erreur) {
       console.warn('Invalidation du jeton Firebase impossible', erreur);
     }
   }
 
-  private async enregistrer(demanderPermission: boolean): Promise<void> {
+  private enregistrer(demanderPermission: boolean): Promise<void> {
+    const enregistrement = this.enregistrerSansSuivi(demanderPermission).finally(() => {
+      if (this.enregistrementEnCours === enregistrement) {
+        this.enregistrementEnCours = null;
+      }
+    });
+    this.enregistrementEnCours = enregistrement;
+    return enregistrement;
+  }
+
+  private async enregistrerSansSuivi(demanderPermission: boolean): Promise<void> {
     const messaging = this.messaging;
     if (!messaging) {
       return;
@@ -181,15 +209,22 @@ export class PushNotificationService {
     }
   }
 
-  private async retirerDuServeur(messaging: MessagingPort): Promise<void> {
+  private async retirerDuServeur(messaging: MessagingPort, generation: number): Promise<void> {
+    if (this.enregistrementEnCours) {
+      await this.enregistrementEnCours;
+    }
     /*
      * Sans condition sur la permission : sur Android, un jeton FCM existe même sans le droit
      * d'afficher, et l'utilisateur a pu retirer ce droit après s'être enregistré — la ligne
      * serveur, elle, est toujours là.
      */
-    const jeton =
-      this.jetonAppareil() ?? (await avecDelai(messaging.getToken(), this.delaiMaxMs))?.token;
-    if (!jeton) {
+    const jeton = this.jetonAppareil() ?? (await messaging.getToken()).token;
+    /*
+     * Abandonné en route (délai dépassé), ce retrait continue en arrière-plan. Si la session
+     * a changé entre-temps — un autre compte s'est connecté —, la requête partirait avec son
+     * jeton et lui retirerait l'appareil qu'il vient de déclarer.
+     */
+    if (!jeton || this.authTokenService.generation() !== generation) {
       return;
     }
     await firstValueFrom(
@@ -210,18 +245,21 @@ export class PushNotificationService {
     }
     this.ecouteurPose = true;
     await messaging.addListener('tokenReceived', (evenement) => {
-      /*
-       * Hors session, on ne déclare rien. `deleteToken()` à la déconnexion pousse Firebase à
-       * émettre un jeton neuf : il appartiendra au prochain compte connecté, pas au précédent.
-       */
-      if (!this.authTokenService.isAuthenticated()) {
-        return;
-      }
+      // Hors session, `declarerAuServeur` ne déclare rien. `deleteToken()` à la déconnexion
+      // pousse Firebase à émettre un jeton neuf : il appartiendra au prochain compte connecté.
       void this.declarerAuServeur(evenement.token);
     });
   }
 
   private async declarerAuServeur(jeton: string): Promise<void> {
+    /*
+     * Revérifié ici, juste avant d'envoyer : entre la lecture du jeton et cet appel, la
+     * déconnexion a pu effacer la session. La déclaration partirait alors sans
+     * authentification — ou, après la connexion d'un autre compte, au mauvais nom.
+     */
+    if (!this.authTokenService.isAuthenticated()) {
+      return;
+    }
     this.jetonAppareil.set(jeton);
     try {
       await firstValueFrom(

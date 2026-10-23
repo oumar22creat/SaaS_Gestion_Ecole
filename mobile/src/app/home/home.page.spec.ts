@@ -67,6 +67,27 @@ describe('HomePage', () => {
     expect(authTokenService.read()).toBeNull();
   });
 
+  /** Hors ligne, le retrait peut durer : un second appui ne relance pas une déconnexion. */
+  it('ignores a second tap and disables the button while logging out', async () => {
+    const fixture = render('TEACHER');
+    let terminer!: () => void;
+    const retrait = spyOn(TestBed.inject(PushNotificationService), 'retirerAvantDeconnexion').and.returnValue(
+      new Promise<void>((resolve) => (terminer = resolve)),
+    );
+
+    const premier = fixture.componentInstance.logout();
+    const second = fixture.componentInstance.logout();
+    fixture.detectChanges();
+    const bouton = (fixture.nativeElement as HTMLElement).querySelector('ion-button.logout');
+    expect(bouton?.hasAttribute('disabled') || (bouton as HTMLIonButtonElement | null)?.disabled).toBeTrue();
+
+    terminer();
+    await Promise.all([premier, second]);
+
+    expect(retrait).toHaveBeenCalledTimes(1);
+    expect(navController.navigateRoot).toHaveBeenCalledTimes(1);
+  });
+
   /**
    * Le cas constaté sur émulateur : `ion-router-outlet` garde l'accueil monté dans sa pile,
    * si bien qu'une reconnexion réutilise l'instance précédente. L'accueil présentait alors au

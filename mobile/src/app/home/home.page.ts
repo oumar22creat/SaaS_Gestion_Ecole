@@ -1,6 +1,6 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { IonButton, IonContent, IonIcon, NavController } from '@ionic/angular';
+import { IonButton, IonContent, IonIcon, IonSpinner, NavController } from '@ionic/angular';
 import { AuthTokenService } from '../auth/auth-token.service';
 import { homeEyebrowForRole, homeTilesForRole } from '../core/role-access';
 
@@ -8,7 +8,7 @@ import { PushNotificationService } from '../push/push-notification.service';
 
 @Component({
   selector: 'app-home-page',
-  imports: [IonContent, IonButton, RouterLink, IonIcon],
+  imports: [IonContent, IonButton, RouterLink, IonIcon, IonSpinner],
   templateUrl: './home.page.html',
   styles: `
     .greeting {
@@ -114,7 +114,25 @@ export class HomePage {
   protected readonly eyebrow = computed(() => homeEyebrowForRole(this.role()));
   protected readonly tiles = computed(() => homeTilesForRole(this.role()));
 
+  /*
+   * Hors ligne, le retrait de l'appareil peut prendre jusqu'à cinq secondes. Sans retour
+   * visuel, l'utilisateur appuie de nouveau : deux déconnexions concurrentes, deux retraits.
+   */
+  protected readonly deconnexionEnCours = signal(false);
+
   async logout(): Promise<void> {
+    if (this.deconnexionEnCours()) {
+      return;
+    }
+    this.deconnexionEnCours.set(true);
+    try {
+      await this.deconnecter();
+    } finally {
+      this.deconnexionEnCours.set(false);
+    }
+  }
+
+  private async deconnecter(): Promise<void> {
     /*
      * Avant `clear()` : la requête de retrait a besoin du jeton de session, et sans elle
      * l'appareil resterait rattaché au compte qui part. Sur un téléphone partagé — celui

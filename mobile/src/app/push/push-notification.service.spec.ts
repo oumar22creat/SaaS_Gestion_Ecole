@@ -1,11 +1,14 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { TokenReceivedEvent } from '@capacitor-firebase/messaging';
 import { environment } from '../../environments/environment';
 import { AuthTokenService } from '../auth/auth-token.service';
+import { authInterceptor } from '../core/auth.interceptor';
 import {
   MessagingPort,
+  PUSH_DELAI_FIREBASE_MS,
   PUSH_DELAI_MAX_MS,
   PUSH_MESSAGING,
   PushNotificationService,
@@ -16,6 +19,14 @@ const laisserPasser = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 const URL_APPAREILS = `${environment.apiUrl}/device-tokens`;
 const DELAI_TEST_MS = 30;
+const DELAI_FIREBASE_TEST_MS = 20;
+
+/** Une promesse dont le test décide quand elle aboutit — un appel réseau lent. */
+function enAttente<T>(): { promesse: Promise<T>; resoudre: (valeur: T) => void } {
+  let resoudre!: (valeur: T) => void;
+  const promesse = new Promise<T>((r) => (resoudre = r));
+  return { promesse, resoudre };
+}
 
 type FauxMessaging = jasmine.SpyObj<MessagingPort>;
 
@@ -46,13 +57,20 @@ describe('PushNotificationService', () => {
    * Un service neuf, comme au lancement de l'application : rien en mémoire, seule la session
    * stockée dans `localStorage` a survécu.
    */
-  function demarrer(messaging: FauxMessaging | null): PushNotificationService {
+  function demarrer(
+    messaging: FauxMessaging | null,
+    { avecIntercepteur = false } = {},
+  ): PushNotificationService {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
+        provideRouter([]),
+        avecIntercepteur
+          ? provideHttpClient(withInterceptors([authInterceptor]))
+          : provideHttpClient(),
         provideHttpClientTesting(),
         { provide: PUSH_MESSAGING, useValue: messaging },
         { provide: PUSH_DELAI_MAX_MS, useValue: DELAI_TEST_MS },
+        { provide: PUSH_DELAI_FIREBASE_MS, useValue: DELAI_FIREBASE_TEST_MS },
       ],
     });
     httpMock = TestBed.inject(HttpTestingController);
@@ -102,7 +120,7 @@ describe('PushNotificationService', () => {
 
       expect(messaging.requestPermissions).not.toHaveBeenCalled();
       expect(messaging.getToken).not.toHaveBeenCalled();
-      httpMock.expectNone(URL_APPAREILS);
+      expect(httpMock.match(URL_APPAREILS)).toEqual([]);
     });
 
     it('does not ask for the permission at first launch either, while it is still undecided', async () => {
@@ -113,7 +131,7 @@ describe('PushNotificationService', () => {
       await service.reprendreAuDemarrage();
 
       expect(messaging.requestPermissions).not.toHaveBeenCalled();
-      httpMock.expectNone(URL_APPAREILS);
+      expect(httpMock.match(URL_APPAREILS)).toEqual([]);
     });
 
     it('does nothing without a session', async () => {
@@ -123,7 +141,7 @@ describe('PushNotificationService', () => {
       await service.reprendreAuDemarrage();
 
       expect(messaging.checkPermissions).not.toHaveBeenCalled();
-      httpMock.expectNone(URL_APPAREILS);
+      expect(httpMock.match(URL_APPAREILS)).toEqual([]);
     });
 
     it('does nothing on the web, where there is no device token', async () => {
@@ -133,7 +151,7 @@ describe('PushNotificationService', () => {
       await service.reprendreAuDemarrage();
       await service.retirerAvantDeconnexion();
 
-      httpMock.expectNone(() => true);
+      expect(httpMock.match(() => true)).toEqual([]);
     });
   });
 
@@ -218,6 +236,9 @@ describe('PushNotificationService', () => {
       const req = httpMock.expectOne(`${URL_APPAREILS}/jeton-fcm`);
 
       await expectAsync(retrait).toBeResolved();
+      expect(messaging.deleteToken).toHaveBeenCalled();
+      // La requête elle-même est annulée à son propre délai, sans rester ouverte.
+      await new Promise((resolve) => setTimeout(resolve, DELAI_TEST_MS + 10));
       expect(req.cancelled).toBeTrue();
       expect(messaging.deleteToken).toHaveBeenCalled();
     });
@@ -230,7 +251,7 @@ describe('PushNotificationService', () => {
       const service = demarrer(messaging);
 
       await expectAsync(service.retirerAvantDeconnexion()).toBeResolved();
-      httpMock.expectNone(() => true);
+      expect(httpMock.match(() => true)).toEqual([]);
     });
 
     /**
@@ -250,8 +271,122 @@ describe('PushNotificationService', () => {
 
       authTokenService.clear();
       ecouteur({ token: 'jeton-renouvele' } as TokenReceivedEvent);
+      await laisserPasser();
 
-      httpMock.expectNone(URL_APPAREILS);
+      expect(httpMock.match(URL_APPAREILS)).toEqual([]);
+      expect(authTokenService.read()).toBeNull();
+    });
+    it('caps the whole logout even when everything hangs', async () => {
+      sessionOuverte();
+      const messaging = fauxMessaging('granted');
+      messaging.getToken.and.returnValue(new Promise(() => undefined));
+      messaging.deleteToken.and.returnValue(new Promise(() => undefined));
+      const service = demarrer(messaging);
+
+      const debut = performance.now();
+      await service.retirerAvantDeconnexion();
+      const duree = performance.now() - debut;
+
+      // Plafond : retrait serveur + invalidation Firebase, et pas une attente par étape.
+      expect(duree).toBeLessThan(DELAI_TEST_MS + DELAI_FIREBASE_TEST_MS + 40);
+      expect(httpMock.match(() => true)).toEqual([]);
+    });
+
+    /**
+     * Reprise au démarrage encore en cours (réseau lent) quand l'utilisateur se déconnecte :
+     * la déconnexion l'attend, pour retirer le jeton qu'elle va déclarer et ne pas laisser sa
+     * déclaration arriver après le retrait.
+     */
+    it('waits for a registration in progress before removing the device', async () => {
+      sessionOuverte();
+      const messaging = fauxMessaging('granted');
+      const jeton = enAttente<{ token: string }>();
+      messaging.getToken.and.returnValue(jeton.promesse);
+      const service = demarrer(messaging);
+      void service.reprendreAuDemarrage();
+      await laisserPasser();
+
+      const retrait = service.retirerAvantDeconnexion();
+      await laisserPasser();
+      expect(httpMock.match(() => true)).toEqual([]);
+
+      jeton.resoudre({ token: 'jeton-lent' });
+      await laisserPasser();
+      httpMock.expectOne(URL_APPAREILS).flush(null, { status: 204, statusText: 'No Content' });
+      await laisserPasser();
+      httpMock
+        .expectOne(`${URL_APPAREILS}/jeton-lent`)
+        .flush(null, { status: 204, statusText: 'No Content' });
+      await retrait;
+
+      expect(messaging.deleteToken).toHaveBeenCalled();
+    });
+
+    it('does not declare the device once the session was cleared during registration', async () => {
+      sessionOuverte();
+      const messaging = fauxMessaging('granted');
+      const jeton = enAttente<{ token: string }>();
+      messaging.getToken.and.returnValue(jeton.promesse);
+      const service = demarrer(messaging);
+      const reprise = service.reprendreAuDemarrage();
+      await laisserPasser();
+
+      authTokenService.clear();
+      jeton.resoudre({ token: 'jeton-tardif' });
+      await reprise;
+
+      expect(httpMock.match(URL_APPAREILS)).toEqual([]);
+    });
+
+    /**
+     * Un retrait abandonné au délai continue en arrière-plan. Si un autre compte s'est
+     * connecté entre-temps, sa requête ne doit pas partir : elle porterait le jeton de session
+     * du nouveau compte et lui retirerait l'appareil.
+     */
+    it('drops a late removal once another account has logged in', async () => {
+      sessionOuverte();
+      const messaging = fauxMessaging('granted');
+      const jeton = enAttente<{ token: string }>();
+      messaging.getToken.and.returnValue(jeton.promesse);
+      const service = demarrer(messaging);
+
+      await service.retirerAvantDeconnexion();
+      authTokenService.clear();
+      authTokenService.store({ accessToken: 'h.e30.s', refreshToken: 'autre', expiresIn: 900 });
+      jeton.resoudre({ token: 'jeton-fcm' });
+      await laisserPasser();
+
+      expect(httpMock.match(() => true)).toEqual([]);
+    });
+
+    /**
+     * Régression relevée en relecture : jeton d'accès expiré, DELETE refusé en 401, le
+     * renouvellement part et traîne au-delà du délai. La déconnexion se poursuit et efface la
+     * session — puis la réponse du renouvellement arrivait et la réécrivait. Au lancement
+     * suivant, la personne d'après retrouvait le compte précédent.
+     */
+    it('does not let a slow session renewal resurrect the session after logout', async () => {
+      sessionOuverte();
+      const messaging = fauxMessaging('granted', 'tok');
+      const service = demarrer(messaging, { avecIntercepteur: true });
+
+      const retrait = service.retirerAvantDeconnexion();
+      await laisserPasser();
+      httpMock
+        .expectOne(`${URL_APPAREILS}/tok`)
+        .flush('expired', { status: 401, statusText: 'Unauthorized' });
+      await laisserPasser();
+      const renouvellement = httpMock.expectOne(`${environment.apiUrl}/auth/refresh`);
+      await retrait;
+      authTokenService.clear(); // HomePage.logout
+
+      renouvellement.flush({ data: { accessToken: 'NEW', refreshToken: 'NEW-R', expiresIn: 900 } });
+      await laisserPasser();
+
+      expect(authTokenService.read()).toBeNull();
+      expect(localStorage.getItem('auth-tokens')).toBeNull();
+      // Et le DELETE n'est pas rejoué avec un jeton de session périmé.
+      expect(httpMock.match(`${URL_APPAREILS}/tok`)).toEqual([]);
     });
   });
 });

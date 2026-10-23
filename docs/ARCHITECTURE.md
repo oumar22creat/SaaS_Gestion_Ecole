@@ -456,6 +456,21 @@ bel et bien dans son tenant, contrairement à une fuite cross-tenant). Création
 réservée à ADMIN/DIRECTION. Recherche : simple `LIKE` insensible à la casse sur le contenu,
 pas de moteur de recherche plein texte pour ce MVP.
 
+**Règles de rôle (complément, correctif de sécurité)** : le contrôleur n'avait aucun
+`@PreAuthorize` — un compte PARENT ou STUDENT ouvrait une conversation avec n'importe quel
+utilisateur, et tout participant d'une annonce (donc tout utilisateur actif) pouvait y
+répondre à l'établissement entier. Désormais, vérifié par `@PreAuthorize` ET dans
+`MessagingService` (rôle relu en base) :
+- **créer une conversation / envoyer un message** : personnel uniquement (ADMIN, DIRECTION,
+  TEACHER, SECRETARY, VIE_SCOLAIRE, ACCOUNTANT — les rôles qui ont l'écran Messagerie sur le
+  web), sinon `403 MESSAGING_NOT_ALLOWED` ;
+- **créer une annonce / écrire dans une annonce** : ADMIN, DIRECTION, sinon
+  `403 ANNOUNCEMENT_NOT_ALLOWED` ;
+- **lire** (liste, fil, messages, accusé de lecture) : tout compte du tenant, comptes famille
+  compris, borné aux conversations dont il est participant — un parent reste destinataire
+  des annonces (cahier §16 « Annonce de l'établissement ») et peut les lire. Le Super-Admin
+  (hors tenant) n'a pas accès.
+
 **Troisième gateway de notification "log seulement"** (`MessageNotificationGateway`, après
 `ParentNotificationGateway` et `HomeworkNotificationGateway`) — la consolidation en un
 registre unique reste le travail explicite de ROADMAP.md 2.5.

@@ -1,5 +1,6 @@
 package com.schoolsaas.messaging;
 
+import com.schoolsaas.auth.Role;
 import com.schoolsaas.auth.User;
 import com.schoolsaas.auth.UserRepository;
 import com.schoolsaas.common.ApiException;
@@ -9,15 +10,33 @@ import com.schoolsaas.messaging.dto.MessageCreateRequest;
 import com.schoolsaas.notification.NotificationDispatcher;
 import com.schoolsaas.notification.NotificationType;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Messagerie interne — cahier-des-charges.md §15, ROADMAP.md 2.4. */
+/**
+ * Messagerie interne — cahier-des-charges.md §15, ROADMAP.md 2.4.
+ *
+ * <p>Règles de rôle (docs/ARCHITECTURE.md ADR-019, complété) : seul le personnel ouvre une
+ * conversation ou y écrit ; seules l'administration et la direction diffusent une annonce, et
+ * seules elles écrivent dans une annonce — sinon n'importe quel destinataire y répondrait à
+ * tout l'établissement. Les comptes famille (PARENT/STUDENT) restent destinataires des
+ * annonces et peuvent les LIRE. Vérifié ici, sur le rôle en base, et pas seulement par le
+ * {@code @PreAuthorize} du contrôleur : la règle tient quel que soit l'appelant.
+ */
 @Service
 public class MessagingService {
+
+    /** Rôles du personnel : ceux qui ont l'écran Messagerie sur le web (nav-links.ts, STAFF). */
+    static final Set<Role> STAFF_ROLES = EnumSet.of(
+            Role.ADMIN, Role.DIRECTION, Role.TEACHER, Role.SECRETARY, Role.VIE_SCOLAIRE, Role.ACCOUNTANT);
+
+    /** Rôles qui engagent l'établissement auprès de tous ses usagers. */
+    static final Set<Role> ANNOUNCER_ROLES = EnumSet.of(Role.ADMIN, Role.DIRECTION);
 
     private final ConversationRepository conversationRepository;
     private final ConversationParticipantRepository participantRepository;
@@ -43,6 +62,13 @@ public class MessagingService {
 
     @Transactional
     public Conversation createConversation(ConversationCreateRequest request, Long creatorUserId) {
+        Role creatorRole = roleOf(creatorUserId);
+        if (!STAFF_ROLES.contains(creatorRole)) {
+            throw ApiException.forbidden("MESSAGING_NOT_ALLOWED", "La messagerie est réservée au personnel de l'établissement");
+        }
+        if (request.announcement() && !ANNOUNCER_ROLES.contains(creatorRole)) {
+            throw ApiException.forbidden("ANNOUNCEMENT_NOT_ALLOWED", "Seuls Admin/Direction peuvent créer une annonce");
+        }
         List<Long> participantIds;
         if (request.announcement()) {
             participantIds = userRepository.findAllByActiveTrue().stream().map(User::getId).toList();
@@ -100,6 +126,15 @@ public class MessagingService {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> ApiException.notFound("CONVERSATION_NOT_FOUND", "Conversation introuvable"));
         requireParticipant(conversationId, senderId);
+        Role senderRole = roleOf(senderId);
+        if (!STAFF_ROLES.contains(senderRole)) {
+            throw ApiException.forbidden("MESSAGING_NOT_ALLOWED", "La messagerie est réservée au personnel de l'établissement");
+        }
+        if (conversation.isAnnouncement() && !ANNOUNCER_ROLES.contains(senderRole)) {
+            // Une annonce compte tous les utilisateurs actifs pour participants : y répondre,
+            // c'est écrire à tout l'établissement, familles comprises.
+            throw ApiException.forbidden("ANNOUNCEMENT_NOT_ALLOWED", "Seuls Admin/Direction peuvent écrire dans une annonce");
+        }
         if (request.attachmentDocumentId() != null && documentRepository.findById(request.attachmentDocumentId()).isEmpty()) {
             throw ApiException.notFound("DOCUMENT_NOT_FOUND", "Document introuvable");
         }
@@ -128,6 +163,13 @@ public class MessagingService {
         ConversationParticipant participant = participantRepository.findByConversationIdAndUserId(conversationId, callerUserId)
                 .orElseThrow(() -> ApiException.forbidden("NOT_A_PARTICIPANT", "Vous ne participez pas à cette conversation"));
         participant.markRead(Instant.now());
+    }
+
+    /** Rôle relu en base (compte du tenant courant) ; un compte introuvable n'a aucun droit. */
+    private Role roleOf(Long userId) {
+        return userRepository.findById(userId)
+                .map(User::getRole)
+                .orElseThrow(() -> ApiException.forbidden("MESSAGING_NOT_ALLOWED", "Compte introuvable"));
     }
 
     private void requireParticipant(Long conversationId, Long userId) {

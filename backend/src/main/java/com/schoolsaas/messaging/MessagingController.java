@@ -13,6 +13,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,10 +24,25 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Messagerie interne — cahier-des-charges.md §15, ROADMAP.md 2.4. */
+/**
+ * Messagerie interne — cahier-des-charges.md §15, ROADMAP.md 2.4.
+ *
+ * <p>Écriture (créer une conversation, envoyer un message) : personnel seulement. Lecture
+ * (liste, fil, messages, accusé de lecture) : tout compte de l'établissement, comptes famille
+ * compris, toujours borné aux conversations dont il est participant — c'est ce qui laisse un
+ * parent lire les annonces qu'il reçoit. Annonces : ADMIN/DIRECTION (règle portée par
+ * {@link MessagingService}). Le Super-Admin, hors tenant, n'a pas accès.
+ */
 @RestController
 @RequestMapping("/api/v1/conversations")
+@PreAuthorize(MessagingController.TENANT_ROLES)
 public class MessagingController {
+
+    static final String STAFF_ROLES =
+            "hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')";
+
+    static final String TENANT_ROLES =
+            "hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT', 'PARENT', 'STUDENT')";
 
     private final MessagingService messagingService;
 
@@ -36,6 +52,7 @@ public class MessagingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize(STAFF_ROLES)
     public ApiResponse<ConversationResponse> create(@Valid @RequestBody ConversationCreateRequest request) {
         if (request.announcement()) {
             requireAnnouncementRole();
@@ -59,6 +76,7 @@ public class MessagingController {
 
     @PostMapping("/{id}/messages")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize(STAFF_ROLES)
     public ApiResponse<MessageResponse> sendMessage(@PathVariable Long id, @Valid @RequestBody MessageCreateRequest request) {
         return ApiResponse.of(MessageResponse.from(messagingService.sendMessage(id, request, currentUserId())));
     }

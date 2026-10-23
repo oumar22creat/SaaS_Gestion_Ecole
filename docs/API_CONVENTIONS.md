@@ -31,6 +31,8 @@
   emploi du temps hors de son périmètre (voir docs/ARCHITECTURE.md ADR-030). Le rôle seul
   (`@PreAuthorize`) ne suffit pas pour les modules pédagogiques : le périmètre se vérifie
   via `TeacherScope`.
+- `403 MESSAGING_NOT_ALLOWED` / `403 ANNOUNCEMENT_NOT_ALLOWED` : écriture dans la messagerie
+  par un compte famille, ou annonce par un rôle autre qu'ADMIN/DIRECTION (ADR-019).
 
 ## Pagination
 - Paramètres query : `?page=1&pageSize=20`

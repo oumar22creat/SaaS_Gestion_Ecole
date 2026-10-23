@@ -73,6 +73,14 @@ public class LessonService {
         return lessonRepository.findAll(pageable);
     }
 
+    /** Séances des seules classes données (liste vue par un enseignant). */
+    public Page<Lesson> listForClasses(java.util.Collection<Long> schoolClassIds, Pageable pageable) {
+        if (schoolClassIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return lessonRepository.findAllBySchoolClassIdIn(schoolClassIds, pageable);
+    }
+
     @Transactional
     public Lesson update(Long id, LessonRequest request) {
         validateReferences(request);

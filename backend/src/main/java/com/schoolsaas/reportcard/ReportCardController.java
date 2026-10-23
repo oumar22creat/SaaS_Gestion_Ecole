@@ -2,6 +2,7 @@ package com.schoolsaas.reportcard;
 
 import com.schoolsaas.common.ApiException;
 import com.schoolsaas.common.ApiResponse;
+import com.schoolsaas.teacher.TeacherScope;
 import com.schoolsaas.reportcard.dto.GenerateReportCardsRequest;
 import com.schoolsaas.reportcard.dto.ReportCardEntryResponse;
 import com.schoolsaas.reportcard.dto.ReportCardEntryUpdateRequest;
@@ -37,7 +38,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Bulletins scolaires — cahier-des-charges.md §12, ROADMAP.md 2.1. */
+/**
+ * Bulletins scolaires — cahier-des-charges.md §12, ROADMAP.md 2.1.
+ *
+ * <p>Un enseignant n'accède qu'aux bulletins des classes de son périmètre ({@link TeacherScope},
+ * ADR-030) ; l'appréciation d'une matière n'est modifiable que par qui l'enseigne à la classe.
+ */
 @RestController
 @RequestMapping("/api/v1/report-cards")
 @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER')")
@@ -50,6 +56,7 @@ public class ReportCardController {
     private final SchoolClassService schoolClassService;
     private final SubjectRepository subjectRepository;
     private final TenantRepository tenantRepository;
+    private final TeacherScope teacherScope;
 
     public ReportCardController(
             ReportCardService reportCardService,
@@ -58,7 +65,8 @@ public class ReportCardController {
             StudentService studentService,
             SchoolClassService schoolClassService,
             SubjectRepository subjectRepository,
-            TenantRepository tenantRepository) {
+            TenantRepository tenantRepository,
+            TeacherScope teacherScope) {
         this.reportCardService = reportCardService;
         this.pdfExporter = pdfExporter;
         this.tenantLogoService = tenantLogoService;
@@ -66,18 +74,20 @@ public class ReportCardController {
         this.schoolClassService = schoolClassService;
         this.subjectRepository = subjectRepository;
         this.tenantRepository = tenantRepository;
+        this.teacherScope = teacherScope;
     }
 
     @PostMapping("/generate")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<List<ReportCardResponse>> generate(@Valid @RequestBody GenerateReportCardsRequest request) {
+        teacherScope.requireClass(request.schoolClassId());
         List<ReportCardResponse> data = reportCardService.generate(request).stream().map(this::toResponse).toList();
         return ApiResponse.of(data);
     }
 
     @GetMapping("/{id}")
     public ApiResponse<ReportCardResponse> getById(@PathVariable Long id) {
-        return ApiResponse.of(toResponse(reportCardService.getById(id)));
+        return ApiResponse.of(toResponse(requireReportCard(id)));
     }
 
     @GetMapping
@@ -87,8 +97,10 @@ public class ReportCardController {
             @RequestParam(required = false) String periodLabel) {
         List<ReportCard> reportCards;
         if (studentId != null) {
+            teacherScope.requireStudent(studentId);
             reportCards = reportCardService.listForStudent(studentId);
         } else if (schoolClassId != null && periodLabel != null) {
+            teacherScope.requireClass(schoolClassId);
             reportCards = reportCardService.listForClassAndPeriod(schoolClassId, periodLabel);
         } else {
             throw ApiException.badRequest(
@@ -99,18 +111,21 @@ public class ReportCardController {
 
     @PutMapping("/{id}")
     public ApiResponse<ReportCardResponse> update(@PathVariable Long id, @RequestBody ReportCardUpdateRequest request) {
+        requireReportCard(id);
         return ApiResponse.of(toResponse(reportCardService.update(id, request)));
     }
 
     @PutMapping("/{id}/entries/{subjectId}")
     public ApiResponse<ReportCardEntryResponse> updateEntry(
             @PathVariable Long id, @PathVariable Long subjectId, @RequestBody ReportCardEntryUpdateRequest request) {
+        ReportCard reportCard = reportCardService.getById(id);
+        teacherScope.requireClassSubject(reportCard.getSchoolClassId(), subjectId);
         return ApiResponse.of(ReportCardEntryResponse.from(reportCardService.updateEntry(id, subjectId, request)));
     }
 
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> exportPdf(@PathVariable Long id) {
-        ReportCard reportCard = reportCardService.getById(id);
+        ReportCard reportCard = requireReportCard(id);
         List<ReportCardEntry> entries = reportCardService.listEntries(id);
         Map<Long, Subject> subjectsById = subjectRepository
                 .findAllById(entries.stream().map(ReportCardEntry::getSubjectId).toList())
@@ -146,6 +161,7 @@ public class ReportCardController {
     @GetMapping("/class/{schoolClassId}/pdf")
     public ResponseEntity<byte[]> exportClassPdf(
             @PathVariable Long schoolClassId, @RequestParam String periodLabel) {
+        teacherScope.requireClass(schoolClassId);
         List<ReportCard> reportCards = reportCardService.listForClassAndPeriod(schoolClassId, periodLabel);
         Map<Long, Subject> subjectsById = subjectRepository.findAll().stream()
                 .collect(Collectors.toMap(Subject::getId, s -> s));
@@ -185,6 +201,12 @@ public class ReportCardController {
                 .toLowerCase(java.util.Locale.ROOT)
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("(^-|-$)", "");
+    }
+
+    private ReportCard requireReportCard(Long id) {
+        ReportCard reportCard = reportCardService.getById(id);
+        teacherScope.requireClass(reportCard.getSchoolClassId());
+        return reportCard;
     }
 
     private ReportCardResponse toResponse(ReportCard reportCard) {

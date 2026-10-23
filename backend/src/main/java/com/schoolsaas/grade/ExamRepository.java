@@ -12,6 +12,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     List<Exam> findAllBySchoolClassId(Long schoolClassId);
 
+    /** Évaluations des classes d'un enseignant, avant filtrage par matière (TeacherScope). */
+    List<Exam> findAllBySchoolClassIdInOrderByIdAsc(java.util.Collection<Long> schoolClassIds);
+
     /**
      * Les évaluations d'une classe dans une matière, bornées à une période et dans l'ordre où
      * elles ont eu lieu. C'est ce que demande un bulletin : « devoir 1 » est le premier devoir

@@ -61,8 +61,10 @@ class LessonTest extends AbstractIntegrationTest {
     @Test
     void createsALessonAndNotifiesOnlyWhenHomeworkIsSet() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Cahier");
+        // Rôle à périmètre établissement entier : ce test porte sur le métier, pas sur le
+        // périmètre enseignant (couvert par teacher/TeacherScopeTest, ADR-030).
         String token = TestAuthSupport.createUserAndLogin(
-                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-lesson@ecole.example", Role.TEACHER);
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-lesson@ecole.example", Role.DIRECTION);
         SchoolClass schoolClass = schoolClassRepository.save(TestAuthSupport.withTenant(new SchoolClass("6ème A", null), tenant.getId()));
         Subject subject = subjectRepository.save(TestAuthSupport.withTenant(new Subject("Maths", "MATH-HW", 3), tenant.getId()));
 
@@ -94,8 +96,10 @@ class LessonTest extends AbstractIntegrationTest {
     @Test
     void listsLessonsForAClassWithinADateRange() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Cahier Liste");
+        // Rôle à périmètre établissement entier : ce test porte sur le métier, pas sur le
+        // périmètre enseignant (couvert par teacher/TeacherScopeTest, ADR-030).
         String token = TestAuthSupport.createUserAndLogin(
-                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-lesson-list@ecole.example", Role.TEACHER);
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-lesson-list@ecole.example", Role.DIRECTION);
         SchoolClass schoolClass = schoolClassRepository.save(TestAuthSupport.withTenant(new SchoolClass("6ème A", null), tenant.getId()));
         Subject subject = subjectRepository.save(TestAuthSupport.withTenant(new Subject("Maths", "MATH-HW2", 3), tenant.getId()));
         lessonRepository.save(TestAuthSupport.withTenant(

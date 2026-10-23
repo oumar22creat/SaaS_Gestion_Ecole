@@ -27,6 +27,10 @@
 - Codes HTTP standards : 400 (validation), 401 (non authentifié), 403 (non autorisé),
   404 (introuvable), 409 (conflit), 422 (règle métier violée), 500 (erreur serveur).
 - Ne jamais renvoyer 200 avec un champ `success: false` — utiliser le vrai code HTTP.
+- `403 OUT_OF_TEACHER_SCOPE` : un enseignant vise une classe, une matière, un élève ou un
+  emploi du temps hors de son périmètre (voir docs/ARCHITECTURE.md ADR-030). Le rôle seul
+  (`@PreAuthorize`) ne suffit pas pour les modules pédagogiques : le périmètre se vérifie
+  via `TeacherScope`.
 
 ## Pagination
 - Paramètres query : `?page=1&pageSize=20`

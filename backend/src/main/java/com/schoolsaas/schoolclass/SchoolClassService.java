@@ -34,6 +34,11 @@ public class SchoolClassService {
         return schoolClassRepository.findAll(pageable);
     }
 
+    /** Classes d'un périmètre enseignant (voir TeacherScope). */
+    public Page<SchoolClass> listByIds(java.util.Collection<Long> ids, Pageable pageable) {
+        return ids.isEmpty() ? Page.empty(pageable) : schoolClassRepository.findAllByIdIn(ids, pageable);
+    }
+
     @Transactional
     public SchoolClass update(Long id, SchoolClassRequest request) {
         validateHeadTeacher(request.headTeacherId());

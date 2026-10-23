@@ -55,6 +55,11 @@ public class TimetableEntryService {
         return timetableEntryRepository.findAllByTeacherId(teacherId);
     }
 
+    /** Créneaux de plusieurs fiches enseignant (un compte peut en avoir plusieurs, voir TeacherScope). */
+    public List<TimetableEntry> listForTeachers(java.util.Collection<Long> teacherIds) {
+        return teacherIds.isEmpty() ? List.of() : timetableEntryRepository.findAllByTeacherIdIn(teacherIds);
+    }
+
     public List<TimetableEntry> listAll() {
         return timetableEntryRepository.findAll();
     }

@@ -57,8 +57,10 @@ class GradeTest extends AbstractIntegrationTest {
     @Test
     void computesExamStatisticsIgnoringAbsentStudents() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Notes");
+        // Rôle à périmètre établissement entier : ce test porte sur le métier, pas sur le
+        // périmètre enseignant (couvert par teacher/TeacherScopeTest, ADR-030).
         String token = TestAuthSupport.createUserAndLogin(
-                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-grade@ecole.example", Role.TEACHER);
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-grade@ecole.example", Role.DIRECTION);
         SchoolClass schoolClass = schoolClassRepository.save(TestAuthSupport.withTenant(new SchoolClass("6ème A", null), tenant.getId()));
         Subject subject = subjectRepository.save(TestAuthSupport.withTenant(new Subject("Maths", "MATH", 2), tenant.getId()));
         Student s1 = studentRepository.save(TestAuthSupport.withTenant(new Student("G1", "Ada", "L", null, null, schoolClass.getId()), tenant.getId()));
@@ -109,8 +111,10 @@ class GradeTest extends AbstractIntegrationTest {
     @Test
     void weightsTheStudentAverageByExamCoefficient() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Notes Coeff");
+        // Rôle à périmètre établissement entier : ce test porte sur le métier, pas sur le
+        // périmètre enseignant (couvert par teacher/TeacherScopeTest, ADR-030).
         String token = TestAuthSupport.createUserAndLogin(
-                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-grade2@ecole.example", Role.TEACHER);
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-grade2@ecole.example", Role.DIRECTION);
         SchoolClass schoolClass = schoolClassRepository.save(TestAuthSupport.withTenant(new SchoolClass("6ème A", null), tenant.getId()));
         Subject subject = subjectRepository.save(TestAuthSupport.withTenant(new Subject("Maths", "MATH2", 2), tenant.getId()));
         Student student = studentRepository.save(TestAuthSupport.withTenant(new Student("G4", "Ada", "L", null, null, null), tenant.getId()));

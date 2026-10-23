@@ -1,6 +1,7 @@
 package com.schoolsaas.timetable;
 
 import com.schoolsaas.common.PagedList;
+import com.schoolsaas.teacher.TeacherScope;
 import com.schoolsaas.common.ApiResponse;
 import com.schoolsaas.timetable.dto.TimetableEntryRequest;
 import com.schoolsaas.timetable.dto.TimetableEntryResponse;
@@ -25,15 +26,21 @@ import org.springframework.web.bind.annotation.RestController;
  * Vues par classe/enseignant (cahier §9) via les paramètres {@code schoolClassId}/
  * {@code teacherId} plutôt que des endpoints dédiés — la vue journalière/hebdomadaire reste
  * un simple filtrage côté client des créneaux renvoyés.
+ *
+ * <p>Un enseignant ne consulte que SON emploi du temps ({@link TeacherScope}, ADR-030) : sans
+ * filtre, il reçoit ses créneaux ; un {@code schoolClassId} restreint ses créneaux à cette
+ * classe ; un {@code teacherId} qui n'est pas le sien est refusé en 403.
  */
 @RestController
 @RequestMapping("/api/v1/timetable-entries")
 public class TimetableEntryController {
 
     private final TimetableEntryService timetableEntryService;
+    private final TeacherScope teacherScope;
 
-    public TimetableEntryController(TimetableEntryService timetableEntryService) {
+    public TimetableEntryController(TimetableEntryService timetableEntryService, TeacherScope teacherScope) {
         this.timetableEntryService = timetableEntryService;
+        this.teacherScope = teacherScope;
     }
 
     @PostMapping
@@ -46,7 +53,9 @@ public class TimetableEntryController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER')")
     public ApiResponse<TimetableEntryResponse> getById(@PathVariable Long id) {
-        return ApiResponse.of(TimetableEntryResponse.from(timetableEntryService.getById(id)));
+        TimetableEntry entry = timetableEntryService.getById(id);
+        teacherScope.requireOwnTeacher(entry.getTeacherId());
+        return ApiResponse.of(TimetableEntryResponse.from(entry));
     }
 
     @GetMapping
@@ -56,7 +65,16 @@ public class TimetableEntryController {
             @RequestParam(required = false) Long schoolClassId,
             @RequestParam(required = false) Long teacherId) {
         List<TimetableEntry> entries;
-        if (schoolClassId != null) {
+        var perimeter = teacherScope.currentPerimeter();
+        if (perimeter.isPresent()) {
+            if (teacherId != null) {
+                teacherScope.requireOwnTeacher(teacherId);
+            }
+            entries = timetableEntryService.listForTeachers(perimeter.get().teacherIds()).stream()
+                    .filter(entry -> teacherId == null || entry.getTeacherId().equals(teacherId))
+                    .filter(entry -> schoolClassId == null || entry.getSchoolClassId().equals(schoolClassId))
+                    .toList();
+        } else if (schoolClassId != null) {
             entries = timetableEntryService.listForClass(schoolClassId);
         } else if (teacherId != null) {
             entries = timetableEntryService.listForTeacher(teacherId);

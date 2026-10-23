@@ -141,8 +141,10 @@ class SmsTest extends AbstractIntegrationTest {
     @Test
     void anAbsenceTextsTheGuardiansWithTheStudentName() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École SMS Absence");
+        // Rôle à périmètre établissement entier : ce test porte sur le métier, pas sur le
+        // périmètre enseignant (couvert par teacher/TeacherScopeTest, ADR-030).
         String token = TestAuthSupport.createUserAndLogin(
-                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "prof-sms@ecole.example", Role.TEACHER);
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "prof-sms@ecole.example", Role.VIE_SCOLAIRE);
         TenantContext.set(tenant.getId());
 
         SchoolClass schoolClass = schoolClassRepository.save(

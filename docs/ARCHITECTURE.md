@@ -239,7 +239,8 @@ ajoutables plus tard sans réécriture) :
 **Hors périmètre 1.5 (explicitement différé)** : portail élève/parent (lier `User` à
 `Student`/`Parent`), photo/dossier administratif/pièces justificatives (module `document/`,
 Phase 2), historique des changements de classe, permissions granulaires par enseignant sur
-"ses" classes (un enseignant avec accès à un module a accès à tout le tenant pour l'instant).
+"ses" classes (un enseignant avec accès à un module a accès à tout le tenant pour l'instant —
+**remplacé par ADR-030** : périmètre enseignant appliqué côté serveur).
 
 ### ADR-011 — Emploi du temps (décidé, Phase 1.6)
 **Décision** : un seul entité `TimetableEntry` (package `timetable`, avec `Room`) représente
@@ -758,6 +759,51 @@ restreint (même mécanisme que `TenantRegistrationRlsTest`) et vérifie login *
 de bout en bout — invisible avec le superutilisateur Testcontainers par défaut (RLS toujours
 contourné, ADR-001 Piège 4), donc un test dédié était nécessaire pour ne pas régresser
 silencieusement.
+
+### ADR-030 — Périmètre enseignant côté serveur (décidé, correctif de sécurité)
+**Problème** : `@PreAuthorize` vérifiait le rôle TEACHER, jamais l'affectation. Un enseignant
+lisait et saisissait l'appel, les notes, les bulletins et le cahier de textes de n'importe
+quelle classe de son établissement, et consultait l'emploi du temps de n'importe quel
+collègue (`?teacherId=`), simplement en changeant un identifiant dans la requête.
+
+**Décision** : un composant unique, `teacher/TeacherScope`, calcule le périmètre de
+l'enseignant connecté et l'applique dans les contrôleurs `attendance`, `grade` (évaluations,
+notes, moyennes), `reportcard`, `timetable`, `homework` et dans la liste des classes. Refus
+en **403 `OUT_OF_TEACHER_SCOPE`** (format d'erreur standard de API_CONVENTIONS.md). Seul le
+rôle TEACHER est restreint : ADMIN, DIRECTION, VIE_SCOLAIRE (et les autres rôles déjà admis
+par `@PreAuthorize`) gardent l'établissement entier. Une ressource d'un autre tenant reste
+invisible (404 ou liste vide) par le filtre Hibernate/RLS, avant tout contrôle de périmètre.
+
+**Rattachement compte → fiche** : `users` (TEACHER) n'a pas de clé vers `teachers` (ADR-010).
+Le lien se fait par l'**e-mail**, insensible à la casse, sur les fiches **actives** du tenant
+courant (pas de migration). Un compte sans fiche correspondante a un **périmètre vide**
+(fail-closed). Conséquence d'exploitation : l'e-mail de la fiche enseignant doit être celui
+du compte de connexion. Une colonne `teachers.user_id` serait plus robuste (à trancher avec
+agent-bdd si le rapprochement par e-mail pose problème).
+
+**Sources d'affectation** (union) : `class_subject_assignments` (classe, matière) ;
+`timetable_entries` (un créneau classe/matière/enseignant vaut affectation — le guide de
+configuration ne passe pas par l'écran d'affectation) ; `school_classes.head_teacher_id`
+(professeur principal : accès à la CLASSE, pas aux matières qu'il n'enseigne pas).
+
+**Règles par module** :
+- Appel : classe du périmètre, en lecture et en écriture ; dans une feuille d'appel, chaque
+  élève doit appartenir à la classe envoyée. Historique d'un élève : élève d'une classe du
+  périmètre.
+- Évaluations / notes / moyennes : couple (classe, matière) enseigné, en lecture et en
+  écriture ; chaque note saisie doit viser un élève de la classe de l'évaluation. La liste
+  `GET /exams` ne renvoie que les évaluations de ces couples.
+- Bulletins : classe du périmètre (lecture, génération, appréciation générale, PDF) ;
+  l'appréciation d'une matière (`PUT /report-cards/{id}/entries/{subjectId}`) exige le couple.
+- Emploi du temps : uniquement SES créneaux. Sans filtre → ses créneaux ; `schoolClassId` →
+  ses créneaux dans cette classe ; `teacherId` différent du sien → 403 ; créneau d'un
+  collègue par identifiant → 403.
+- Cahier de textes : LECTURE pour les classes du périmètre (toutes matières, pour équilibrer
+  la charge de devoirs) ; ÉCRITURE (création, modification, suppression) pour le couple.
+- Liste des classes (`GET /classes`) : un enseignant ne reçoit que ses classes.
+
+**Hors périmètre de ce correctif** (signalé, non traité) : `GET /students` (liste d'élèves par
+classe) et le module `discipline` restent au périmètre établissement pour un TEACHER.
 
 ## Points ouverts (à trancher avant d'y arriver, pas maintenant)
 - **Fournisseur mobile money pour les frais de scolarité (ROADMAP.md 3.3, ADR-024)** — reste

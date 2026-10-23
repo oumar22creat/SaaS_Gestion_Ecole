@@ -62,8 +62,10 @@ class AttendanceTest extends AbstractIntegrationTest {
     @Test
     void submitsARollCallAndNotifiesTheParentForAnAbsentStudent() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Appel");
+        // Rôle à périmètre établissement entier : ce test porte sur le métier, pas sur le
+        // périmètre enseignant (couvert par teacher/TeacherScopeTest, ADR-030).
         String token = TestAuthSupport.createUserAndLogin(
-                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-attendance@ecole.example", Role.TEACHER);
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-attendance@ecole.example", Role.VIE_SCOLAIRE);
         SchoolClass schoolClass = schoolClassRepository.save(TestAuthSupport.withTenant(new SchoolClass("6ème A", null), tenant.getId()));
         Student present = studentRepository.save(TestAuthSupport.withTenant(new Student("A1", "Léa", "Martin", null, null, null), tenant.getId()));
         Student absent = studentRepository.save(TestAuthSupport.withTenant(new Student("A2", "Tom", "Dupont", null, null, null), tenant.getId()));
@@ -107,8 +109,10 @@ class AttendanceTest extends AbstractIntegrationTest {
     @Test
     void updatingARecordKeepsAHistoryOfThePreviousState() throws Exception {
         Tenant tenant = TestAuthSupport.createActiveTenant(tenantRepository, "École Historique");
+        // Rôle à périmètre établissement entier : ce test porte sur le métier, pas sur le
+        // périmètre enseignant (couvert par teacher/TeacherScopeTest, ADR-030).
         String token = TestAuthSupport.createUserAndLogin(
-                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-history@ecole.example", Role.TEACHER);
+                mockMvc, objectMapper, userRepository, passwordEncoder, tenant, "teacher-history@ecole.example", Role.VIE_SCOLAIRE);
         SchoolClass schoolClass = schoolClassRepository.save(TestAuthSupport.withTenant(new SchoolClass("6ème A", null), tenant.getId()));
         Student student = studentRepository.save(TestAuthSupport.withTenant(new Student("H1", "Léa", "Martin", null, null, null), tenant.getId()));
 

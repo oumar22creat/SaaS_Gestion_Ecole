@@ -1,6 +1,7 @@
 package com.schoolsaas.timetable;
 
 import java.time.DayOfWeek;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,4 +16,7 @@ public interface TimetableEntryRepository extends JpaRepository<TimetableEntry, 
     List<TimetableEntry> findAllBySchoolClassId(Long schoolClassId);
 
     List<TimetableEntry> findAllByTeacherId(Long teacherId);
+
+    /** Créneaux d'un ensemble de fiches enseignant (périmètre enseignant, voir TeacherScope). */
+    List<TimetableEntry> findAllByTeacherIdIn(Collection<Long> teacherIds);
 }

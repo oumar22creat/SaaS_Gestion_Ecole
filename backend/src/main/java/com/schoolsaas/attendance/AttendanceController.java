@@ -5,6 +5,7 @@ import com.schoolsaas.attendance.dto.AttendanceRecordRequest;
 import com.schoolsaas.attendance.dto.AttendanceRecordResponse;
 import com.schoolsaas.attendance.dto.RollCallRequest;
 import com.schoolsaas.common.ApiResponse;
+import com.schoolsaas.teacher.TeacherScope;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,21 +22,32 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Feuille d'appel, motifs/justificatifs/historique — cahier-des-charges.md §10, ROADMAP.md 1.7. */
+/**
+ * Feuille d'appel, motifs/justificatifs/historique — cahier-des-charges.md §10, ROADMAP.md 1.7.
+ *
+ * <p>Un enseignant n'accède qu'aux classes de son périmètre ({@link TeacherScope}, ADR-030),
+ * en lecture comme en écriture ; la direction et la vie scolaire voient tout l'établissement.
+ */
 @RestController
 @RequestMapping("/api/v1/attendance")
 @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'VIE_SCOLAIRE')")
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
+    private final TeacherScope teacherScope;
 
-    public AttendanceController(AttendanceService attendanceService) {
+    public AttendanceController(AttendanceService attendanceService, TeacherScope teacherScope) {
         this.attendanceService = attendanceService;
+        this.teacherScope = teacherScope;
     }
 
     @PostMapping("/roll-call")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<List<AttendanceRecordResponse>> submitRollCall(@Valid @RequestBody RollCallRequest request) {
+        teacherScope.requireClass(request.schoolClassId());
+        // La classe seule ne suffit pas : sans ce contrôle, un enseignant pourrait glisser dans
+        // l'appel de SA classe un élève d'une autre classe et modifier sa présence du jour.
+        request.entries().forEach(entry -> teacherScope.requireStudentInClass(entry.studentId(), request.schoolClassId()));
         List<AttendanceRecordResponse> data =
                 attendanceService.submitRollCall(request).stream().map(AttendanceRecordResponse::from).toList();
         return ApiResponse.of(data);
@@ -43,7 +55,9 @@ public class AttendanceController {
 
     @GetMapping("/{id}")
     public ApiResponse<AttendanceRecordResponse> getById(@PathVariable Long id) {
-        return ApiResponse.of(AttendanceRecordResponse.from(attendanceService.getById(id)));
+        AttendanceRecord record = attendanceService.getById(id);
+        teacherScope.requireClass(record.getSchoolClassId());
+        return ApiResponse.of(AttendanceRecordResponse.from(record));
     }
 
     @GetMapping
@@ -55,8 +69,10 @@ public class AttendanceController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         List<AttendanceRecord> records;
         if (schoolClassId != null && date != null) {
+            teacherScope.requireClass(schoolClassId);
             records = attendanceService.listForClassAndDate(schoolClassId, date);
         } else if (studentId != null && from != null && to != null) {
+            teacherScope.requireStudent(studentId);
             records = attendanceService.listHistoryForStudent(studentId, from, to);
         } else {
             throw com.schoolsaas.common.ApiException.badRequest(
@@ -67,11 +83,13 @@ public class AttendanceController {
 
     @PutMapping("/{id}")
     public ApiResponse<AttendanceRecordResponse> update(@PathVariable Long id, @Valid @RequestBody AttendanceRecordRequest request) {
+        teacherScope.requireClass(attendanceService.getById(id).getSchoolClassId());
         return ApiResponse.of(AttendanceRecordResponse.from(attendanceService.update(id, request)));
     }
 
     @GetMapping("/{id}/history")
     public ApiResponse<List<AttendanceRecordChangeResponse>> history(@PathVariable Long id) {
+        teacherScope.requireClass(attendanceService.getById(id).getSchoolClassId());
         return ApiResponse.of(attendanceService.listChanges(id).stream().map(AttendanceRecordChangeResponse::from).toList());
     }
 }

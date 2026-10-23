@@ -1,6 +1,7 @@
 package com.schoolsaas.schoolclass;
 
 import com.schoolsaas.common.ApiResponse;
+import com.schoolsaas.teacher.TeacherScope;
 import com.schoolsaas.schoolclass.dto.SchoolClassRequest;
 import com.schoolsaas.schoolclass.dto.SchoolClassResponse;
 import jakarta.validation.Valid;
@@ -32,9 +33,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class SchoolClassController {
 
     private final SchoolClassService schoolClassService;
+    private final TeacherScope teacherScope;
 
-    public SchoolClassController(SchoolClassService schoolClassService) {
+    public SchoolClassController(SchoolClassService schoolClassService, TeacherScope teacherScope) {
         this.schoolClassService = schoolClassService;
+        this.teacherScope = teacherScope;
     }
 
     @PostMapping
@@ -52,7 +55,13 @@ public class SchoolClassController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTION', 'TEACHER', 'SECRETARY', 'VIE_SCOLAIRE', 'ACCOUNTANT')")
     public ApiResponse<List<SchoolClassResponse>> list(Pageable pageable) {
-        Page<SchoolClass> page = schoolClassService.list(pageable);
+        // Un enseignant ne reçoit que SES classes (ADR-030) : c'est la liste qui alimente le
+        // choix de classe de la feuille d'appel et de la saisie des notes. Lui proposer toutes
+        // les classes, c'était lui proposer des écrans qui finiraient en 403.
+        var perimeter = teacherScope.currentPerimeter();
+        Page<SchoolClass> page = perimeter.isPresent()
+                ? schoolClassService.listByIds(perimeter.get().classIds(), pageable)
+                : schoolClassService.list(pageable);
         List<SchoolClassResponse> data = page.map(SchoolClassResponse::from).getContent();
         return ApiResponse.of(data, new ApiResponse.PageMeta(page.getNumber() + 1, page.getSize(), page.getTotalElements()));
     }

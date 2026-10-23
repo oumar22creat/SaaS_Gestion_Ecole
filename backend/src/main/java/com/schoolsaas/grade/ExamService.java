@@ -4,6 +4,8 @@ import com.schoolsaas.common.ApiException;
 import com.schoolsaas.grade.dto.ExamRequest;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.subject.SubjectRepository;
+import com.schoolsaas.teacher.TeacherScope;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,16 @@ public class ExamService {
 
     public Page<Exam> list(Pageable pageable) {
         return examRepository.findAll(pageable);
+    }
+
+    /** Évaluations des seuls couples (classe, matière) d'un périmètre enseignant. */
+    public List<Exam> listWithin(TeacherScope.Perimeter perimeter) {
+        if (perimeter.classIds().isEmpty()) {
+            return List.of();
+        }
+        return examRepository.findAllBySchoolClassIdInOrderByIdAsc(perimeter.classIds()).stream()
+                .filter(exam -> perimeter.canAccessClassSubject(exam.getSchoolClassId(), exam.getSubjectId()))
+                .toList();
     }
 
     @Transactional

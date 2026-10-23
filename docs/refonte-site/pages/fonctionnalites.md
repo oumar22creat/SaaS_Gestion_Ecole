@@ -209,7 +209,7 @@ Futur (SPEC §9) : écrans parents.
 | Élément | Texte |
 |---|---|
 | `h2` | 8 rôles, chacun son périmètre. |
-| Chapô | Les droits sont vérifiés sur le serveur, pas dans le navigateur. Un compte ne voit que ce que son rôle autorise. |
+| Chapô | Les droits de chaque rôle sont vérifiés sur le serveur, pas dans le navigateur. Un enseignant fait l'appel et saisit les notes, la comptabilité gère les règlements, la direction voit l'ensemble. |
 
 Tableau `<table class="roles-table">` dans `.table-scroll` (`role="region"`, `aria-label="Tableau : rôles et périmètres"`, distinct du nom de la section), `<caption class="sr-only">Les 8 rôles et ce que chacun voit</caption>`,
 colonnes « Rôle » (`th scope="row"`) · « Où » · « Ce qu'il voit » :
@@ -218,10 +218,10 @@ colonnes « Rôle » (`th scope="row"`) · « Où » · « Ce qu'il voit » :
 |---|---|---|
 | Administrateur | Web | Les paramètres de l'école, les comptes du personnel et l'abonnement. |
 | Direction | Web | L'ensemble de l'école : scolarité, finances, statistiques. |
-| Secrétariat | Web | Le dossier scolaire et financier des élèves, les documents officiels. |
+| Secrétariat | Web | Le dossier scolaire des élèves et des familles, les comptes parents, les documents officiels. |
 | Comptabilité | Web | Les frais de scolarité, les règlements, les reçus et les impayés. |
 | Vie scolaire | Web | Les absences, les retards et la discipline. |
-| Enseignant | Web et application | Ses classes : appel, notes, cahier de textes. |
+| Enseignant | Web et application | L'appel, les notes et le cahier de textes. |
 | Parent | Application | Le dossier de ses enfants. |
 | Élève | Application | Son propre dossier. |
 

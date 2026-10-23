@@ -82,11 +82,14 @@ Légende : « Photo d'illustration : école d'Amanya, Ghana (Wikimedia Commons, 
 
 Trois cartes « situation » (`.cards-3`, `<article class="card">`) :
 
-| Citation (`.card-problem`) | Texte | Pastille |
+Intitulé de problème en `h3 class="card-problem"` (pas de guillemets, aucune attribution : ce ne
+sont pas des citations), sous le `h2` de la section.
+
+| Intitulé `h3.card-problem` | Texte | Pastille |
 |---|---|---|
-| « Trois semaines pour sortir les bulletins. » | Les notes saisies pendant le trimestre alimentent directement le bulletin : moyennes, coefficients, rang et absences de la période. Il sort en PDF, à l'en-tête de votre école. | — |
-| « Le cahier d'appel a encore disparu. » | L'enseignant fait l'appel sur son téléphone, toute la classe sur un seul écran. Les familles concernées sont prévenues dès que l'absence est saisie. | — |
-| « Qui a payé ce trimestre ? » | Grille des frais par classe, échéanciers, facture par élève. Les impayés sont réunis sur un seul écran, et chaque famille voit ce qu'elle a réglé. | `.tag-plan` « Plans Standard et Premium » |
+| Les bulletins prennent des semaines | Les notes saisies pendant le trimestre alimentent directement le bulletin : moyennes, coefficients, rang et absences de la période. Il sort en PDF, à l'en-tête de votre école. | — |
+| Le cahier d'appel se perd | L'enseignant fait l'appel sur son téléphone, toute la classe sur un seul écran. Les familles concernées sont prévenues dès que l'absence est saisie. | — |
+| Qui a payé ce trimestre ? | Grille des frais par classe, échéanciers, facture par élève. Les impayés sont réunis sur un seul écran, et chaque famille voit ce qu'elle a réglé. | `.tag-plan` « Plans Standard et Premium » |
 
 Responsive : 320 / 375 / 768 : titre, paragraphe, photo (16/10), puis cartes en une colonne
 (768 : une colonne aussi, cartes plus aérées). 1280 : en haut, titre + paragraphe à gauche
@@ -190,7 +193,7 @@ Responsive : < 760 px une colonne ; au-delà 3 colonnes.
 | Icône | `h3` | Texte |
 |---|---|---|
 | `i-shield` | Un espace par école | Aucune autre école ne peut voir vos données. L'isolation est imposée par la base de données elle-même. |
-| `i-users` | Chacun son périmètre | Un enseignant voit ses classes, la comptabilité les règlements, la direction l'ensemble. |
+| `i-users` | Chacun son périmètre | Un enseignant fait l'appel et saisit les notes, la comptabilité gère les règlements, la direction voit l'ensemble. |
 | `i-lock` | Connexions protégées | HTTPS obligatoire, mots de passe jamais stockés en clair, sauvegardes chiffrées, actions sensibles journalisées. |
 | `i-export` | Vos données vous suivent | Si vous arrêtez, vous pouvez demander l'export de vos données avant leur suppression. |
 

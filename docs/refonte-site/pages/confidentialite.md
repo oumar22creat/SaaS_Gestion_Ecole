@@ -33,7 +33,7 @@ page commun. Fond papier sur toute la page.
 
 Ordre :
 
-1. `h1` « Politique de confidentialité » + date `.maj` « En vigueur au 23 octobre 2026. »
+1. `h1` « Politique de confidentialité » + date `.updated` « En vigueur au 23 octobre 2026. »
 2. Paragraphe d'introduction (inchangé).
 3. Encadré « L'école reste maîtresse de ses données… » en `.notice` (filet vert ; plus d'or).
 4. **Sommaire ajouté** (`.toc`, `<nav aria-label="Sommaire">`), une pastille par section :
@@ -63,7 +63,7 @@ Mise en forme :
   collecté »). Fini le `white-space: nowrap` actuel.
 - En-têtes de tableau fond `--paper-2`, texte `--ink` ; lignes paires fond `--surface`.
 - Liens `--green` soulignés (plus d'or sur fond clair).
-- Le bloc `<style>` inline actuel est **supprimé** (CSP) : tout passe dans `site.v2.css`
+- Le bloc `<style>` inline actuel est **supprimé** (CSP) : tout passe dans `site.vN.css` (actuellement `site.v3.css`)
   (classe `.legal`).
 - Plus aucun chargement de Google Fonts ni de Phosphor.
 

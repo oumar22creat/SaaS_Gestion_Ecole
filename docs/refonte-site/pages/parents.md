@@ -113,7 +113,7 @@ Futur (SPEC §9) : rail de 3 écrans parents sous les cartes.
 |---|---|
 | Surtitre | Confidentialité |
 | `h2` | Les données de votre enfant restent à l'école. |
-| Paragraphe 1 | L'école de votre enfant dispose de son propre espace. Aucune autre école ne peut voir ses données. À l'intérieur de l'école, chacun voit uniquement ce qui le concerne : un enseignant voit ses classes, la comptabilité les règlements. Vous, vous voyez le dossier de vos enfants. |
+| Paragraphe 1 | L'école de votre enfant dispose de son propre espace. Aucune autre école ne peut voir ses données. À l'intérieur de l'école, chacun a un rôle et des droits précis : un enseignant fait l'appel et saisit les notes, la comptabilité gère les règlements. Vous, vous voyez le dossier de vos enfants. |
 | Paragraphe 2 | Aucune donnée n'est vendue, louée, ni utilisée à des fins publicitaires. |
 | Liens `.more` | Comment les données sont protégées → `/securite` · Lire la politique de confidentialité → `/confidentialite.html` |
 

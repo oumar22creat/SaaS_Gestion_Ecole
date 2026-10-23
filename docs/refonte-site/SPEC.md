@@ -120,7 +120,7 @@ agent-tests vérifie que chaque `href` se décode en exactement le texte de la c
 
 ## 4. Tokens de design
 
-À déclarer une seule fois dans `:root` de `/assets/site.v1.css`. Les valeurs reprennent la
+À déclarer une seule fois dans `:root` de `/assets/site.vN.css` (actuellement `site.v3.css`). Les valeurs reprennent la
 palette de l'application (`docs/DESIGN.md` : vert `#0f5c4c`, or `#c9a227`, navigation
 `#0b231e`, Inter / Outfit). La charte Moov Africa ne s'applique pas à ce produit.
 
@@ -244,7 +244,7 @@ horizontalement, à l'intérieur de leur propre conteneur (§6.12, §6.16).
 ## 6. Composants
 
 Les noms de classes reprennent ceux de la maquette quand ils existent. Chaque composant est
-défini une fois dans `site.v1.css`.
+défini une fois dans `site.vN.css` (actuellement `site.v3.css`).
 
 ### 6.1 En-tête commun (`.topbar`), identique sur les 8 pages
 
@@ -272,7 +272,7 @@ Structure (dans cet ordre dans le DOM) :
      (`/login`), **Écrire sur WhatsApp** (message de la page, §3.2), **E-mail** (`mailto:`).
    - Panneau : `position: absolute; right: 0; top: calc(100% + 10px); width: min(320px, calc(100vw - 2rem))`,
      fond `--night`, bordure `--night-2`, rayon 16 px, `--shadow-menu`, liens de 48 px de haut.
-   - Fonctionne sans JS (natif). Amélioration par `site.v1.js` : fermeture par Échap (le focus
+   - Fonctionne sans JS (natif). Amélioration par `site.vN.js` (actuellement `site.v2.js`) : fermeture par Échap (le focus
      revient sur le `summary`), par clic hors du panneau et au clic sur un lien.
 
 Comportement par largeur :
@@ -386,7 +386,7 @@ Base `.card` : fond `--surface`, bordure `1px --line`, rayon 16 px, padding 24 p
 
 | Variante | Contenu |
 |---|---|
-| `.card` « situation » | `p.card-problem` (Outfit 600, 20 px, `--ink`, filet gauche or 3 px, `padding-left: 14px`) + paragraphe `--ink-2`. Pastille facultative (§6.13). |
+| `.card` « situation » | `h3.card-problem` (intitulé de problème, sans guillemets ni attribution) (Outfit 600, 20 px, `--ink`, filet gauche or 3 px, `padding-left: 14px`) + paragraphe `--ink-2`. Pastille facultative (§6.13). |
 | `.role` « public » | Icône 32 px verte, `h3` + pastille plateforme, liste `.ticks`. |
 | `.module` | Icône 32 px verte, `h3` (`margin: 16px 0 6px`), paragraphe 15,5 px `--ink-2`, pastille de plan facultative. |
 | `.feature` (parents) | Idem `.module`. |
@@ -704,17 +704,17 @@ Captures à produire (rappel) : tableau de bord web direction, bulletin PDF, sui
 ### 10.1 Fichiers et poids
 
 - `landing/` : 8 pages HTML, `robots.txt`, `sitemap.xml`, `favicon.ico`, `apple-touch-icon.png`,
-  `assets/site.v1.css`, `assets/site.v1.js`, `assets/{photos,captures,fonts,brand,badges,og}/`.
+  `assets/site.vN.css` (actuellement v3), `assets/site.vN.js` (actuellement v2), `assets/{photos,captures,fonts,brand,badges,og}/`.
   `styles.css` et `main.js` actuels supprimés une fois toutes les pages migrées.
 - Pas de framework, pas de compilation. En-tête, pied de page et sprite **copiés à l'identique**
   dans chaque page, encadrés par `<!-- DÉBUT EN-TÊTE COMMUN v1 -->` / `<!-- FIN EN-TÊTE COMMUN v1 -->`
   (idem pied et sprite) pour faciliter les mises à jour ; seuls changent `aria-current` et le
   message WhatsApp.
-- Versionnement par nom de fichier : `site.v1.css` devient `site.v2.css` à chaque modification,
+- Versionnement par nom de fichier : `site.vN.css` devient `site.vN+1.css` à chaque modification (ancien fichier supprimé),
   et toutes les pages sont mises à jour dans le même commit.
 - Aucun attribut `style=""`, aucun script inline exécutable (CSP). Les blocs
   `<script type="application/ld+json">` sont autorisés (non exécutés).
-- `site.v1.js` (`defer`, < 2 Ko) : uniquement le comportement du menu mobile (§6.1).
+- `site.vN.js` (actuellement `site.v2.js`, `defer`, < 2 Ko) : uniquement le comportement du menu mobile (§6.1).
 - Budgets (transfert compressé, premier chargement) : premier écran < 150 Ko ; accueil complet
   < 500 Ko ; JS < 10 Ko ; aucune ressource tierce.
 - `loading="lazy"` sur toute image sous la ligne de flottaison ; `fetchpriority="high"` sur la
@@ -734,8 +734,8 @@ Captures à produire (rappel) : tableau de bord web direction, bulletin PDF, sui
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/outfit-600.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/site.v1.css">
-<script src="/assets/site.v1.js" defer></script>
+<link rel="stylesheet" href="/assets/site.v3.css">
+<script src="/assets/site.v2.js" defer></script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="School Manager">
 <meta property="og:locale" content="fr_FR">

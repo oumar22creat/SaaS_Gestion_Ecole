@@ -22,7 +22,7 @@ vérifiées ; **rien d'inventé**.
 ## Contenu (texte définitif)
 
 **`h1`** : Mentions légales
-**Date `.maj`** : « En vigueur au [date de mise en ligne]. » La date réelle de mise en
+**Date `.updated`** : « En vigueur au [date de mise en ligne]. » La date réelle de mise en
 production, au format « 2 novembre 2026 », est écrite par agent-frontend au moment du
 déploiement. Jamais de crochets en production.
 
@@ -31,15 +31,11 @@ déploiement. Jamais de crochets en production.
 > Le site schoolmanager.tech et la plateforme School Manager sont édités par **LOGILAB**,
 > Bamako, Mali.
 
-Puis, **en commentaire HTML, non affiché** :
-
-```html
-<!-- À compléter par Oumar : décommenter chaque ligne une fois la valeur connue. Ne jamais afficher une ligne vide.
-<p>Forme juridique : …</p>
-<p>RCCM : …</p>
-<p>NIF : …</p>
--->
-```
+> **Note interne (à compléter par Oumar, ne figure pas dans la page publique)** : ajouter
+> sous ce paragraphe, une ligne `<p>` par valeur, uniquement une fois la valeur connue (ne
+> jamais afficher une ligne vide) : « Forme juridique : … », « RCCM : … », « NIF : … ».
+> Aucun commentaire HTML de ce type ne doit être laissé dans `landing/mentions-legales.html`
+> (il serait lisible dans le code source de la page).
 
 Puis, affiché :
 

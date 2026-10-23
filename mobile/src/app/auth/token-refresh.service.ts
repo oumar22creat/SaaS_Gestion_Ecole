@@ -6,8 +6,10 @@ import { ApiResponse } from '../core/api-response.model';
 import { AuthTokenService, TokenPair } from './auth-token.service';
 
 /**
- * Renouvellement silencieux du jeton d'accès — identique à
- * web/src/app/auth/token-refresh.service.ts.
+ * Renouvellement silencieux du jeton d'accès — dérivé de
+ * web/src/app/auth/token-refresh.service.ts, mais plus identique : le mobile ne stocke pas une
+ * réponse arrivée après la fermeture ou le remplacement de la session (voir
+ * {@link SessionChangeeError}). Le web garde l'ancien comportement.
  *
  * <p>Le jeton d'accès vit quinze minutes — durée volontairement courte, c'est ce qui limite
  * les dégâts s'il fuite. Sans renouvellement, l'utilisateur était renvoyé à l'écran de

@@ -31,8 +31,11 @@ function isRefreshCall(req: HttpRequest<unknown>): boolean {
 }
 
 /**
- * Identique à web/src/app/core/auth.interceptor.ts : pose l'en-tête Authorization et renouvelle
- * silencieusement la session à l'expiration du jeton d'accès.
+ * Pose l'en-tête Authorization et renouvelle silencieusement la session à l'expiration du
+ * jeton d'accès. Dérivé de web/src/app/core/auth.interceptor.ts, mais <b>plus identique</b> :
+ * le mobile ne ferme la session que si le serveur refuse le renouvellement (400/401/403) —
+ * pas sur coupure réseau ni sur échec de la requête rejouée —, une seule fois pour plusieurs
+ * requêtes, et invalide alors le jeton push. Le web garde l'ancien comportement.
  *
  * <p>L'enjeu est plus fort ici qu'ailleurs : un enseignant qui fait l'appel se retrouvait
  * renvoyé à l'écran de connexion au bout d'un quart d'heure, devant sa classe.

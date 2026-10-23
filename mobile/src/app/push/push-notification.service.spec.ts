@@ -312,8 +312,8 @@ describe('PushNotificationService', () => {
 
       jeton.resoudre({ token: 'jeton-lent' });
       await laisserPasser();
-      httpMock.expectOne(URL_APPAREILS).flush(null, { status: 204, statusText: 'No Content' });
-      await laisserPasser();
+      // La déclaration de la reprise n'a pas lieu : le compte est en train de partir.
+      expect(httpMock.match({ method: 'POST', url: URL_APPAREILS })).toEqual([]);
       httpMock
         .expectOne(`${URL_APPAREILS}/jeton-lent`)
         .flush(null, { status: 204, statusText: 'No Content' });
@@ -357,6 +357,49 @@ describe('PushNotificationService', () => {
       await laisserPasser();
 
       expect(httpMock.match(() => true)).toEqual([]);
+    });
+
+    /**
+     * Pendant `deleteToken()`, la session existe encore. Firebase peut émettre un jeton neuf à
+     * ce moment-là : il ne doit pas être redéclaré pour le compte qui s'en va.
+     */
+    it('does not declare a token renewed while the token is being deleted', async () => {
+      sessionOuverte();
+      const messaging = fauxMessaging('granted');
+      const service = demarrer(messaging);
+      const reprise = service.reprendreAuDemarrage();
+      await laisserPasser();
+      httpMock.expectOne(URL_APPAREILS).flush(null, { status: 204, statusText: 'No Content' });
+      await reprise;
+      const ecouteur = messaging.addListener.calls.mostRecent().args[1];
+      messaging.deleteToken.and.callFake(async () => {
+        ecouteur({ token: 'jeton-emis-pendant-la-suppression' } as TokenReceivedEvent);
+      });
+
+      const retrait = service.retirerAvantDeconnexion();
+      await laisserPasser();
+      httpMock
+        .expectOne(`${URL_APPAREILS}/jeton-fcm`)
+        .flush(null, { status: 204, statusText: 'No Content' });
+      await retrait;
+      await laisserPasser();
+
+      expect(messaging.deleteToken).toHaveBeenCalled();
+      expect(authTokenService.isAuthenticated()).toBeTrue();
+      expect(httpMock.match({ method: 'POST', url: URL_APPAREILS })).toEqual([]);
+    });
+
+    it('declares again after the next login', async () => {
+      sessionOuverte();
+      const messaging = fauxMessaging('granted');
+      const service = demarrer(messaging);
+      await service.retirerAvantDeconnexion();
+      expect(httpMock.match(() => true).length).toBe(1);
+
+      const connexion = service.enregistrerApresConnexion();
+      await laisserPasser();
+      httpMock.expectOne(URL_APPAREILS).flush(null, { status: 204, statusText: 'No Content' });
+      await expectAsync(connexion).toBeResolved();
     });
 
     /**

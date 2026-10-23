@@ -93,6 +93,14 @@ export class PushNotificationService {
   private ecouteurPose = false;
   /** Enregistrement en cours, que la déconnexion attend pour retirer le bon jeton. */
   private enregistrementEnCours: Promise<void> | null = null;
+  /*
+   * Levé dès le début de la déconnexion, baissé seulement à la connexion suivante (ou au
+   * lancement). Pendant le retrait, la session existe encore — elle doit, pour authentifier
+   * le DELETE —, si bien que le contrôle de session seul laisserait passer une déclaration :
+   * un `tokenReceived` émis pendant `deleteToken()`, ou une reprise dont `getToken()` aboutit
+   * en retard, redéclarerait au serveur un jeton valide pour le compte qui s'en va.
+   */
+  private retraitEnCours = false;
 
   /**
    * Demande la permission, récupère le jeton et le déclare au serveur.
@@ -106,6 +114,7 @@ export class PushNotificationService {
    * ne doit empêcher un enseignant de faire l'appel.
    */
   async enregistrerApresConnexion(): Promise<void> {
+    this.retraitEnCours = false;
     await this.enregistrer(true);
   }
 
@@ -120,6 +129,7 @@ export class PushNotificationService {
     if (!this.authTokenService.isAuthenticated()) {
       return;
     }
+    this.retraitEnCours = false;
     await this.enregistrer(false);
   }
 
@@ -142,6 +152,7 @@ export class PushNotificationService {
    * suivante obtiendra un jeton neuf.
    */
   async retirerAvantDeconnexion(): Promise<void> {
+    this.retraitEnCours = true;
     const messaging = this.messaging;
     if (!messaging) {
       return;
@@ -255,9 +266,11 @@ export class PushNotificationService {
     /*
      * Revérifié ici, juste avant d'envoyer : entre la lecture du jeton et cet appel, la
      * déconnexion a pu effacer la session. La déclaration partirait alors sans
-     * authentification — ou, après la connexion d'un autre compte, au mauvais nom.
+     * authentification — ou, après la connexion d'un autre compte, au mauvais nom. Et
+     * pendant un retrait, la session existe encore mais le compte s'en va (voir
+     * `retraitEnCours`).
      */
-    if (!this.authTokenService.isAuthenticated()) {
+    if (this.retraitEnCours || !this.authTokenService.isAuthenticated()) {
       return;
     }
     this.jetonAppareil.set(jeton);

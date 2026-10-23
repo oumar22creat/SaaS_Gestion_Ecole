@@ -324,8 +324,16 @@ Code : `mobile/src/app/push/push-notification.service.ts`, côté serveur
 | **Connexion** | demande la permission (seul moment où elle l'est), `getToken()`, `POST /api/v1/device-tokens`, abonnement à `tokenReceived` |
 | **Lancement avec une session conservée** | si la permission est **déjà** accordée : même chemin, sans jamais la redemander (`reprendreAuDemarrage`, déclenché depuis `app.config.ts` sans bloquer le démarrage). Refusée ou jamais tranchée : rien |
 | **Renouvellement par Firebase** (`tokenReceived`) | redéclaré au serveur, **seulement si une session est ouverte** |
-| **Déconnexion** | jeton pris en mémoire, sinon redemandé à `getToken()` ; `DELETE /api/v1/device-tokens/{token}` **avant** l'effacement de la session (le JWT est nécessaire) ; puis `deleteToken()` chez Firebase. Chaque étape est bornée à 3 s : hors ligne, la déconnexion se fait quand même |
-| **Session perdue** (rafraîchissement refusé par le serveur) | plus de requête authentifiée possible : `deleteToken()` seul (intercepteur HTTP) |
+| **Déconnexion** | attend un enregistrement encore en cours, prend le jeton en mémoire ou le redemande à `getToken()`, envoie `DELETE /api/v1/device-tokens/{token}` **avant** l'effacement de la session (le JWT est nécessaire) — le tout plafonné à 3 s ; puis `deleteToken()` chez Firebase, plafonné à 2 s. Hors ligne, la déconnexion aboutit donc en 5 s au plus ; le bouton est désactivé pendant ce temps |
+| **Session perdue** (le serveur refuse le renouvellement : 400/401/403) | plus de requête authentifiée possible : `deleteToken()` seul (intercepteur HTTP), une seule fois même si plusieurs requêtes échouent ensemble. Une coupure réseau pendant le renouvellement ne ferme **pas** la session |
+
+Deux gardes empêchent une réponse tardive de défaire la déconnexion :
+
+- un renouvellement du jeton d'accès qui répond après l'effacement de la session n'est pas
+  stocké (`AuthTokenService.generation()`, contrôlée par `TokenRefreshService`) — sans cela,
+  la personne suivante rouvrait l'application sur le compte précédent ;
+- aucune déclaration (`POST`) ne part hors session, et un retrait abandonné au délai ne part
+  pas si un autre compte s'est connecté entre-temps.
 
 Côté serveur :
 

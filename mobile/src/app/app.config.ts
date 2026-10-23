@@ -27,6 +27,7 @@ import {
   timeOutline,
 } from 'ionicons/icons';
 import { TenantBrandingService } from './branding/tenant-branding.service';
+import { PushNotificationService } from './push/push-notification.service';
 import { authInterceptor } from './core/auth.interceptor';
 import { routes } from './app.routes';
 
@@ -64,6 +65,14 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => inject(TenantBrandingService).init()),
     provideAppInitializer(() => {
       addIcons(APP_ICONS);
+    }),
+    /*
+     * Réenregistre l'appareil quand une session a survécu à la fermeture de l'application.
+     * Sans attendre : le démarrage ne doit pas dépendre du réseau, et une salle de classe
+     * mal couverte ne doit pas retarder l'affichage de l'accueil.
+     */
+    provideAppInitializer(() => {
+      void inject(PushNotificationService).reprendreAuDemarrage();
     }),
   ],
 };

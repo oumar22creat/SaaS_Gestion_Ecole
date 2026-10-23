@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { AuthTokenService } from '../auth/auth-token.service';
+import { PushNotificationService } from '../push/push-notification.service';
 import { authInterceptor } from './auth.interceptor';
 
 /** Laisse la chaîne de promesses du rafraîchissement se dérouler entièrement. */
@@ -82,6 +83,8 @@ describe('authInterceptor', () => {
 
   it('gives up and redirects to /login when the renewal fails too', async () => {
     authTokenService.store({ accessToken: 'perime', refreshToken: 'revoque', expiresIn: 900 });
+    const push = TestBed.inject(PushNotificationService);
+    spyOn(push, 'invaliderLocalement').and.resolveTo();
 
     httpClient.get(`${environment.apiUrl}/students`).subscribe({ error: () => undefined });
     httpMock.expectOne(`${environment.apiUrl}/students`).flush('expired', { status: 401, statusText: 'Unauthorized' });
@@ -92,6 +95,9 @@ describe('authInterceptor', () => {
 
     expect(authTokenService.read()).toBeNull();
     expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
+    // Plus de requête authentifiée possible : le jeton d'appareil est au moins invalidé chez
+    // Firebase, pour que ce téléphone cesse de recevoir les notifications du compte perdu.
+    expect(push.invaliderLocalement).toHaveBeenCalled();
   });
 
   /** La session doit survivre à la fermeture de l'application : un téléphone a un seul porteur. */

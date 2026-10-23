@@ -1,10 +1,11 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { Injector, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, from, switchMap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthTokenService } from '../auth/auth-token.service';
 import { TokenRefreshService } from '../auth/token-refresh.service';
+import { PushNotificationService } from '../push/push-notification.service';
 import { ApiErrorBody } from './api-response.model';
 
 /** Le code métier, pas le seul statut : un 403 ordinaire reste un défaut de droits. */
@@ -28,6 +29,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authTokenService = inject(AuthTokenService);
   const tokenRefreshService = inject(TokenRefreshService);
   const router = inject(Router);
+  const injector = inject(Injector);
 
   const isApiRequest = req.url.startsWith(environment.apiUrl);
   const tokens = authTokenService.read();
@@ -52,6 +54,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             next(req.clone({ setHeaders: { Authorization: `Bearer ${renouveles.accessToken}` } })),
           ),
           catchError(() => {
+            /*
+             * Session perdue : plus aucune requête authentifiée ne peut retirer l'appareil du
+             * compte. On invalide au moins son jeton chez Firebase, pour que les
+             * notifications de ce compte cessent d'arriver sur ce téléphone. Résolu à la
+             * demande : le service push dépend lui-même de HttpClient.
+             */
+            void injector.get(PushNotificationService).invaliderLocalement();
             authTokenService.clear();
             void router.navigateByUrl('/login');
             return throwError(() => error);

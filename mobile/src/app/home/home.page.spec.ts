@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { NavController } from '@ionic/angular';
 import { AuthTokenService } from '../auth/auth-token.service';
+import { PushNotificationService } from '../push/push-notification.service';
 import { HomePage } from './home.page';
 
 function jwtWithRole(role: string): string {
@@ -46,6 +47,24 @@ describe('HomePage', () => {
     // navigateRoot et non navigateByUrl : la pile d'Ionic doit être vidée, sans quoi les
     // écrans du compte précédent restent montés derrière l'écran de connexion.
     expect(navController.navigateRoot).toHaveBeenCalledWith('/login');
+  });
+
+  /**
+   * Le retrait de l'appareil part avec le jeton de session : effacé avant, la requête serait
+   * refusée et l'appareil resterait rattaché au compte qui s'en va.
+   */
+  it('removes the device before clearing the session', async () => {
+    const fixture = render('TEACHER');
+    let sessionPendantLeRetrait: unknown = 'non appelé';
+    spyOn(TestBed.inject(PushNotificationService), 'retirerAvantDeconnexion').and.callFake(async () => {
+      sessionPendantLeRetrait = authTokenService.read();
+    });
+
+    await fixture.componentInstance.logout();
+
+    expect(sessionPendantLeRetrait).not.toBeNull();
+    expect(sessionPendantLeRetrait).not.toBe('non appelé');
+    expect(authTokenService.read()).toBeNull();
   });
 
   /**

@@ -1,9 +1,47 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
-import { Capacitor } from '@capacitor/core';
-import { FirebaseMessaging } from '@capacitor-firebase/messaging';
-import { firstValueFrom } from 'rxjs';
+import { Injectable, InjectionToken, inject, signal } from '@angular/core';
+import { Capacitor, PluginListenerHandle } from '@capacitor/core';
+import { FirebaseMessaging, TokenReceivedEvent } from '@capacitor-firebase/messaging';
+import { firstValueFrom, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AuthTokenService } from '../auth/auth-token.service';
+
+/**
+ * Ce que le service attend de Firebase Messaging — le sous-ensemble réellement utilisé.
+ *
+ * <p>Un port plutôt que l'objet du greffon en direct : ce dernier est un `Proxy` Capacitor,
+ * sur lequel on ne peut pas poser d'espion, et les cas qui comptent (permission refusée,
+ * réseau coupé à la déconnexion) ne se vérifient pas sur un vrai téléphone à chaque build.
+ */
+export interface MessagingPort {
+  checkPermissions(): Promise<{ receive: string }>;
+  requestPermissions(): Promise<{ receive: string }>;
+  getToken(): Promise<{ token: string }>;
+  deleteToken(): Promise<void>;
+  addListener(
+    eventName: 'tokenReceived',
+    listener: (event: TokenReceivedEvent) => void,
+  ): Promise<PluginListenerHandle>;
+}
+
+/** `null` hors d'un vrai téléphone : le web n'a pas de jeton d'appareil. */
+export const PUSH_MESSAGING = new InjectionToken<MessagingPort | null>('PUSH_MESSAGING', {
+  providedIn: 'root',
+  factory: () =>
+    Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('FirebaseMessaging')
+      ? (FirebaseMessaging as unknown as MessagingPort)
+      : null,
+});
+
+/**
+ * Attente maximale de chaque étape réseau de la déconnexion. Au-delà, on abandonne : un
+ * enseignant hors couverture doit pouvoir se déconnecter, et le jeton est de toute façon
+ * invalidé côté Firebase juste après (voir {@link PushNotificationService#retirerAvantDeconnexion}).
+ */
+export const PUSH_DELAI_MAX_MS = new InjectionToken<number>('PUSH_DELAI_MAX_MS', {
+  providedIn: 'root',
+  factory: () => 3000,
+});
 
 /**
  * Enregistre l'appareil auprès du serveur pour recevoir les notifications push.
@@ -14,7 +52,7 @@ import { environment } from '../../environments/environment';
  * l'appareil s'enregistrait, puis Firebase rejetait le jeton au premier envoi et la
  * passerelle le purgeait comme un appareil désinstallé.
  *
- * <p>Deux règles gouvernent ce service, et elles viennent du terrain plutôt que de la
+ * <p>Trois règles gouvernent ce service, et elles viennent du terrain plutôt que de la
  * technique.
  *
  * <p>La permission n'est demandée qu'<b>après</b> la connexion, jamais au premier
@@ -22,23 +60,26 @@ import { environment } from '../../environments/environment';
  * ce que fait l'application refuse — et un refus ne se redemande pas : il faut aller le
  * changer dans les réglages du téléphone, ce que personne ne fait.
  *
- * <p>Le jeton est retiré à la déconnexion. Sur un téléphone partagé — celui d'une école,
- * celui d'un foyer — un enseignant se déconnecte, un parent se connecte, et les
- * notifications du premier ne doivent pas continuer d'arriver sur un écran que lit
- * désormais le second.
+ * <p>L'appareil est réenregistré à chaque lancement quand une session survit. La session est
+ * gardée dans `localStorage` (voir AuthTokenService) : sans cette reprise, le jeton n'était
+ * connu qu'en mémoire après une connexion, et une déconnexion faite après une simple
+ * réouverture de l'application ne retirait rien.
+ *
+ * <p>Le jeton est retiré à la déconnexion, puis invalidé chez Firebase. Sur un téléphone
+ * partagé — celui d'une école, celui d'un foyer — un enseignant se déconnecte, un parent se
+ * connecte, et les notifications du premier ne doivent pas continuer d'arriver sur un écran
+ * que lit désormais le second.
  */
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService {
   private readonly http = inject(HttpClient);
+  private readonly authTokenService = inject(AuthTokenService);
+  private readonly messaging = inject(PUSH_MESSAGING);
+  private readonly delaiMaxMs = inject(PUSH_DELAI_MAX_MS);
 
-  /** Dernier jeton enregistré, pour savoir quoi retirer à la déconnexion. */
+  /** Dernier jeton déclaré au serveur, pour savoir quoi retirer à la déconnexion. */
   private readonly jetonAppareil = signal<string | null>(null);
   private ecouteurPose = false;
-
-  /** Vrai seulement sur un vrai téléphone : le web n'a pas de jeton d'appareil. */
-  private disponible(): boolean {
-    return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('FirebaseMessaging');
-  }
 
   /**
    * Demande la permission, récupère le jeton et le déclare au serveur.
@@ -52,47 +93,110 @@ export class PushNotificationService {
    * ne doit empêcher un enseignant de faire l'appel.
    */
   async enregistrerApresConnexion(): Promise<void> {
-    if (!this.disponible()) {
-      return;
-    }
-    try {
-      const permission = await FirebaseMessaging.checkPermissions();
-      const accordee =
-        permission.receive === 'granted'
-          ? permission
-          : await FirebaseMessaging.requestPermissions();
-      if (accordee.receive !== 'granted') {
-        return;
-      }
-
-      const { token } = await FirebaseMessaging.getToken();
-      await this.declarerAuServeur(token);
-      await this.suivreLesRenouvellements();
-    } catch (erreur) {
-      // Journalisé et non avalé : sans cette trace, un push qui n'arrive jamais ne laisse
-      // aucune piste — c'est ce qui nous a coûté plusieurs jours.
-      console.error("Enregistrement push impossible", erreur);
-    }
+    await this.enregistrer(true);
   }
 
   /**
-   * Retire l'appareil du compte courant. À appeler avant d'effacer les jetons de session,
-   * sinon la requête part sans en-tête d'authentification et le serveur la refuse.
+   * Reprise au lancement de l'application, quand une session a survécu à sa fermeture.
+   *
+   * <p>Même chemin qu'après la connexion, à une différence près : la permission n'est
+   * jamais demandée ici. Si elle a été refusée, on n'insiste pas — la redemander à chaque
+   * ouverture serait le meilleur moyen d'obtenir un refus définitif.
+   */
+  async reprendreAuDemarrage(): Promise<void> {
+    if (!this.authTokenService.isAuthenticated()) {
+      return;
+    }
+    await this.enregistrer(false);
+  }
+
+  /**
+   * Retire l'appareil du compte courant, puis invalide son jeton chez Firebase.
+   *
+   * <p>À appeler <b>avant</b> d'effacer la session : la requête de retrait a besoin du jeton
+   * d'authentification, sans lequel le serveur la refuse.
+   *
+   * <p>Le jeton est redemandé à Firebase s'il n'est pas en mémoire — c'est le cas après un
+   * redémarrage de l'application, lorsque la reprise n'a pas abouti (hors ligne au
+   * lancement). Chaque étape est bornée par {@link PUSH_DELAI_MAX_MS} : hors couverture, la
+   * déconnexion se fait quand même.
+   *
+   * <p>{@code deleteToken()} vient en dernier et en filet de sécurité : même si le retrait
+   * n'a pas atteint le serveur, le jeton qui y reste ne désigne plus rien. Firebase répondra
+   * {@code UNREGISTERED} au prochain envoi et la passerelle oubliera la ligne. La connexion
+   * suivante obtiendra un jeton neuf.
    */
   async retirerAvantDeconnexion(): Promise<void> {
-    const jeton = this.jetonAppareil();
+    const messaging = this.messaging;
+    if (!messaging) {
+      return;
+    }
+    try {
+      await this.retirerDuServeur(messaging);
+    } catch (erreur) {
+      console.warn("Retrait de l'appareil non transmis au serveur", erreur);
+    }
+    await this.invaliderLocalement();
+  }
+
+  /**
+   * Invalide le jeton chez Firebase sans prévenir le serveur — pour une session déjà perdue
+   * (rafraîchissement refusé), où aucune requête authentifiée n'est plus possible.
+   */
+  async invaliderLocalement(): Promise<void> {
+    const messaging = this.messaging;
+    this.jetonAppareil.set(null);
+    if (!messaging) {
+      return;
+    }
+    try {
+      await avecDelai(messaging.deleteToken(), this.delaiMaxMs);
+    } catch (erreur) {
+      console.warn('Invalidation du jeton Firebase impossible', erreur);
+    }
+  }
+
+  private async enregistrer(demanderPermission: boolean): Promise<void> {
+    const messaging = this.messaging;
+    if (!messaging) {
+      return;
+    }
+    try {
+      const permission = await messaging.checkPermissions();
+      let accordee = permission.receive === 'granted';
+      if (!accordee && demanderPermission) {
+        accordee = (await messaging.requestPermissions()).receive === 'granted';
+      }
+      if (!accordee) {
+        return;
+      }
+
+      const { token } = await messaging.getToken();
+      await this.declarerAuServeur(token);
+      await this.suivreLesRenouvellements(messaging);
+    } catch (erreur) {
+      // Journalisé et non avalé : sans cette trace, un push qui n'arrive jamais ne laisse
+      // aucune piste — c'est ce qui nous a coûté plusieurs jours.
+      console.error('Enregistrement push impossible', erreur);
+    }
+  }
+
+  private async retirerDuServeur(messaging: MessagingPort): Promise<void> {
+    /*
+     * Sans condition sur la permission : sur Android, un jeton FCM existe même sans le droit
+     * d'afficher, et l'utilisateur a pu retirer ce droit après s'être enregistré — la ligne
+     * serveur, elle, est toujours là.
+     */
+    const jeton =
+      this.jetonAppareil() ?? (await avecDelai(messaging.getToken(), this.delaiMaxMs))?.token;
     if (!jeton) {
       return;
     }
-    this.jetonAppareil.set(null);
-    try {
-      await firstValueFrom(
-        this.http.delete(`${environment.apiUrl}/device-tokens/${encodeURIComponent(jeton)}`),
-      );
-    } catch {
-      // Le serveur réaffecte de toute façon un jeton déjà connu au compte qui l'enregistre :
-      // un retrait manqué ne laisse pas l'appareil rattaché à l'ancien compte très longtemps.
-    }
+    await firstValueFrom(
+      this.http
+        .delete(`${environment.apiUrl}/device-tokens/${encodeURIComponent(jeton)}`)
+        .pipe(timeout(this.delaiMaxMs)),
+    );
   }
 
   /**
@@ -100,12 +204,19 @@ export class PushNotificationService {
    * inactivité prolongée. Sans ce suivi, l'appareil deviendrait injoignable sans que rien ne
    * le signale, et seul un nouveau cycle connexion/déconnexion le rétablirait.
    */
-  private async suivreLesRenouvellements(): Promise<void> {
+  private async suivreLesRenouvellements(messaging: MessagingPort): Promise<void> {
     if (this.ecouteurPose) {
       return;
     }
     this.ecouteurPose = true;
-    await FirebaseMessaging.addListener('tokenReceived', (evenement) => {
+    await messaging.addListener('tokenReceived', (evenement) => {
+      /*
+       * Hors session, on ne déclare rien. `deleteToken()` à la déconnexion pousse Firebase à
+       * émettre un jeton neuf : il appartiendra au prochain compte connecté, pas au précédent.
+       */
+      if (!this.authTokenService.isAuthenticated()) {
+        return;
+      }
       void this.declarerAuServeur(evenement.token);
     });
   }
@@ -122,5 +233,18 @@ export class PushNotificationService {
     } catch (erreur) {
       console.error("Déclaration de l'appareil refusée par le serveur", erreur);
     }
+  }
+}
+
+/** Rend `undefined` si la promesse n'a pas abouti dans le délai ; ne l'annule pas. */
+async function avecDelai<T>(promesse: Promise<T>, delaiMs: number): Promise<T | undefined> {
+  let minuteur: ReturnType<typeof setTimeout> | undefined;
+  const expiration = new Promise<undefined>((resolve) => {
+    minuteur = setTimeout(() => resolve(undefined), delaiMs);
+  });
+  try {
+    return await Promise.race([promesse, expiration]);
+  } finally {
+    clearTimeout(minuteur);
   }
 }

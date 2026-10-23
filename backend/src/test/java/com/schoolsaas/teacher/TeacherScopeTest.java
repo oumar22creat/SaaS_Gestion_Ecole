@@ -80,6 +80,7 @@ class TeacherScopeTest extends AbstractIntegrationTest {
     @Autowired private ExamRepository examRepository;
     @Autowired private ReportCardRepository reportCardRepository;
     @Autowired private LessonRepository lessonRepository;
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     private Tenant tenant;
     private SchoolClass c1;
@@ -371,6 +372,74 @@ class TeacherScopeTest extends AbstractIntegrationTest {
         perform(get("/api/v1/timetable-entries"), orphan)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    // ---------------------------------------------------------------- Rattachement compte / fiche
+
+    @Test
+    void anInactiveTeacherRecordGivesNoPerimeter() throws Exception {
+        teacherIn.setActive(false);
+        teacherRepository.save(teacherIn);
+        perform(get("/api/v1/attendance").param("schoolClassId", c1.getId().toString()).param("date", "2026-09-14"), tokenIn)
+                .andExpect(status().isForbidden());
+        perform(get("/api/v1/timetable-entries"), tokenIn)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    @Test
+    void twoActiveRecordsWithTheSameEmailAreRefusedRatherThanMerged() throws Exception {
+        // Homonyme d'adresse (casse et espaces différents) : l'union donnerait au compte les
+        // classes de l'autre fiche. Refus par défaut.
+        Teacher duplicate = teacherRepository.save(TestAuthSupport.withTenant(new Teacher("Ina", "Doublon", "x@x.example", null), tenant.getId()));
+        jdbcTemplate.update("UPDATE teachers SET email = ? WHERE id = ?", "  " + inEmail.toUpperCase() + " ", duplicate.getId());
+
+        perform(get("/api/v1/attendance").param("schoolClassId", c1.getId().toString()).param("date", "2026-09-14"), tokenIn)
+                .andExpect(status().isForbidden());
+        perform(get("/api/v1/classes"), tokenIn)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    @Test
+    void legacyEmailsWithSpacesAndCaseStillMatch() throws Exception {
+        // Données antérieures à la normalisation à l'enregistrement : jamais réécrites, la
+        // comparaison normalise donc les deux côtés.
+        String legacy = "Legacy.Prof-" + UUID.randomUUID().toString().substring(0, 6) + "@Ecole.Example";
+        Teacher legacyTeacher = teacherRepository.save(TestAuthSupport.withTenant(new Teacher("Lé", "Gacy", "tmp@x.example", null), tenant.getId()));
+        jdbcTemplate.update("UPDATE teachers SET email = ? WHERE id = ?", "  " + legacy + "  ", legacyTeacher.getId());
+        assignmentRepository.save(TestAuthSupport.withTenant(new ClassSubjectAssignment(c2.getId(), s1.getId(), legacyTeacher.getId()), tenant.getId()));
+        com.schoolsaas.auth.User account = TestAuthSupport.createUser(userRepository, passwordEncoder, tenant, "tmp-" + legacy.toLowerCase(), Role.TEACHER);
+        jdbcTemplate.update("UPDATE users SET email = ? WHERE id = ?", legacy.toUpperCase(), account.getId());
+        String token = TestAuthSupport.login(mockMvc, objectMapper, tenant, legacy.toUpperCase());
+
+        perform(get("/api/v1/attendance").param("schoolClassId", c2.getId().toString()).param("date", "2026-09-14"), token)
+                .andExpect(status().isOk());
+        perform(get("/api/v1/attendance").param("schoolClassId", c1.getId().toString()).param("date", "2026-09-14"), token)
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void emailsAreNormalizedWhenTeacherRecordsAndAccountsAreSaved() throws Exception {
+        perform(post("/api/v1/teachers").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"firstName\":\"Nora\",\"lastName\":\"Mal\",\"email\":\"Nora.Mal@Ecole.EXAMPLE\"}"), tokenDirection)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.email").value("nora.mal@ecole.example"));
+        org.assertj.core.api.Assertions.assertThat(
+                        new com.schoolsaas.auth.User("  Ada@Ecole.EXAMPLE ", "h", "Ada", "L", Role.TEACHER).getEmail())
+                .isEqualTo("ada@ecole.example");
+    }
+
+    @Test
+    void aPerimeterComingOnlyFromATimetableSlotIsEnough() throws Exception {
+        // « out » n'a aucune affectation, seulement un créneau en (C2, S2).
+        perform(post("/api/v1/attendance/roll-call").contentType(MediaType.APPLICATION_JSON)
+                .content(rollCallBody(c2.getId(), studentC2.getId(), "2026-09-16")), tokenOut)
+                .andExpect(status().isCreated());
+        perform(post("/api/v1/exams").contentType(MediaType.APPLICATION_JSON).content(examBody(c2.getId(), s2.getId())), tokenOut)
+                .andExpect(status().isCreated());
+        perform(post("/api/v1/exams").contentType(MediaType.APPLICATION_JSON).content(examBody(c2.getId(), s1.getId())), tokenOut)
+                .andExpect(status().isForbidden());
     }
 
     // ---------------------------------------------------------------- Isolation tenant

@@ -14,10 +14,13 @@ public interface TeacherRepository extends JpaRepository<Teacher, Long> {
     long countByActiveTrue();
 
     /**
-     * Fiches actives portant cette adresse : c'est le rattachement compte enseignant / fiche
-     * enseignant utilisé par TeacherScope (aucune colonne user_id sur `teachers`).
+     * Fiches actives portant cette adresse, comparée sous forme canonique des deux côtés
+     * (trim + minuscules) : c'est le rattachement compte enseignant / fiche enseignant utilisé
+     * par TeacherScope (aucune colonne user_id sur `teachers`). Le paramètre doit déjà être
+     * normalisé (EmailNormalizer).
      */
-    List<Teacher> findAllByEmailIgnoreCaseAndActiveTrue(String email);
+    @Query("SELECT t FROM Teacher t WHERE t.active = true AND LOWER(TRIM(t.email)) = :normalizedEmail")
+    List<Teacher> findActiveByNormalizedEmail(@Param("normalizedEmail") String normalizedEmail);
 
     /** Recherche libre sur nom, prénom et e-mail. */
     @Query("""

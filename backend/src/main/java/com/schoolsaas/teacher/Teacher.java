@@ -1,5 +1,6 @@
 package com.schoolsaas.teacher;
 
+import com.schoolsaas.common.EmailNormalizer;
 import com.schoolsaas.common.TenantScopedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -37,7 +38,7 @@ public class Teacher extends TenantScopedEntity {
     public Teacher(String firstName, String lastName, String email, String phone) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
+        this.email = EmailNormalizer.normalize(email);
         this.phone = phone;
         this.active = true;
         this.createdAt = Instant.now();
@@ -63,8 +64,9 @@ public class Teacher extends TenantScopedEntity {
         return email;
     }
 
+    /** Normalisée (trim + minuscules) : c'est la clé de rattachement au compte, voir TeacherScope. */
     public void setEmail(String email) {
-        this.email = email;
+        this.email = EmailNormalizer.normalize(email);
     }
 
     public String getPhone() {

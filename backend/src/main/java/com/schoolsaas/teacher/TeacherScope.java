@@ -3,6 +3,7 @@ package com.schoolsaas.teacher;
 import com.schoolsaas.auth.AuthenticatedPrincipal;
 import com.schoolsaas.auth.Role;
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.common.EmailNormalizer;
 import com.schoolsaas.schoolclass.ClassSubjectAssignment;
 import com.schoolsaas.schoolclass.ClassSubjectAssignmentRepository;
 import com.schoolsaas.schoolclass.SchoolClass;
@@ -14,7 +15,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -38,9 +38,10 @@ import org.springframework.web.context.request.RequestContextHolder;
  * établissements reste assuré en amont par le filtre Hibernate et la RLS (ADR-001).
  *
  * <p><b>Rattachement compte / fiche</b> : un compte {@code users} de rôle TEACHER n'a pas de
- * clé vers la fiche {@code teachers} (ADR-010). Le lien se fait par l'adresse e-mail, insensible
- * à la casse, sur les fiches ACTIVES de l'établissement courant. Un compte sans fiche
- * correspondante a un périmètre vide : il est refusé partout (fail-closed).
+ * clé vers la fiche {@code teachers} (ADR-010). Le lien se fait par l'adresse e-mail, comparée
+ * sous forme canonique des deux côtés (trim + minuscules, {@link EmailNormalizer}), sur les
+ * fiches ACTIVES de l'établissement courant. Aucune fiche, ou plusieurs fiches actives pour la
+ * même adresse : périmètre vide, le compte est refusé partout (fail-closed).
  *
  * <p><b>Sources d'affectation</b> (union) :
  * <ul>
@@ -173,15 +174,21 @@ public class TeacherScope {
         return studentRepository.findById(studentId).map(s -> s.getSchoolClassId()).orElse(null);
     }
 
-    private Perimeter perimeterFor(String email) {
-        Set<Long> teacherIds = email == null
-                ? Set.of()
-                : teacherRepository.findAllByEmailIgnoreCaseAndActiveTrue(email).stream()
-                        .map(Teacher::getId)
-                        .collect(Collectors.toUnmodifiableSet());
-        if (teacherIds.isEmpty()) {
+    private Perimeter perimeterFor(String principalEmail) {
+        String email = EmailNormalizer.normalize(principalEmail);
+        List<Teacher> matches = email == null ? List.of() : teacherRepository.findActiveByNormalizedEmail(email);
+        if (matches.size() > 1) {
+            // Deux fiches actives pour une même adresse : impossible de savoir laquelle est ce
+            // compte. Refus par défaut plutôt qu'union — l'union donnerait au compte les classes
+            // d'un homonyme. À corriger dans les fiches enseignant (adresse unique par personne).
+            log.warn("Rattachement enseignant ambigu : {} fiches actives pour le même e-mail (ids {}), périmètre vide",
+                    matches.size(), matches.stream().map(Teacher::getId).sorted().toList());
             return new Perimeter(Set.of(), Set.of(), Set.of());
         }
+        if (matches.isEmpty()) {
+            return new Perimeter(Set.of(), Set.of(), Set.of());
+        }
+        Set<Long> teacherIds = Set.of(matches.get(0).getId());
 
         Set<String> pairs = new HashSet<>();
         Set<Long> classIds = new HashSet<>();

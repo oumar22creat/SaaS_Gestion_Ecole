@@ -60,7 +60,10 @@ public class AuthService {
         TenantContext.set(tenant.getId());
         try {
             tenantSessionConfigurer.applyTenant(tenant.getId());
+            // Adresse telle que saisie d'abord (comptes antérieurs à la normalisation, jamais
+            // réécrits), puis sous sa forme canonique (comptes créés depuis, voir EmailNormalizer).
             User user = userRepository.findByEmail(email)
+                    .or(() -> userRepository.findByEmail(com.schoolsaas.common.EmailNormalizer.normalize(email)))
                     .filter(User::isActive)
                     .orElseThrow(AuthService::invalidCredentials);
             if (!passwordEncoder.matches(password, user.getPasswordHash())) {

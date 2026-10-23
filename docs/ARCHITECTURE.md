@@ -790,11 +790,16 @@ par `@PreAuthorize`) gardent l'établissement entier. Une ressource d'un autre t
 invisible (404 ou liste vide) par le filtre Hibernate/RLS, avant tout contrôle de périmètre.
 
 **Rattachement compte → fiche** : `users` (TEACHER) n'a pas de clé vers `teachers` (ADR-010).
-Le lien se fait par l'**e-mail**, insensible à la casse, sur les fiches **actives** du tenant
-courant (pas de migration). Un compte sans fiche correspondante a un **périmètre vide**
-(fail-closed). Conséquence d'exploitation : l'e-mail de la fiche enseignant doit être celui
-du compte de connexion. Une colonne `teachers.user_id` serait plus robuste (à trancher avec
-agent-bdd si le rapprochement par e-mail pose problème).
+Le lien se fait par l'**e-mail**, comparé sous forme canonique des deux côtés (trim +
+minuscules, `common/EmailNormalizer`), sur les fiches **actives** du tenant courant (pas de
+migration). **Fail-closed** : aucun rapprochement, ou **plusieurs fiches actives** pour la même
+adresse (journalisé en `WARN` avec leurs ids), donne un **périmètre vide** — jamais l'union, qui
+donnerait au compte les classes d'un homonyme. Les nouvelles adresses sont normalisées à
+l'enregistrement (`User`, `Teacher`) ; les lignes existantes ne sont pas réécrites, et la
+connexion essaie l'adresse telle que saisie puis sa forme canonique. Conséquence
+d'exploitation : l'e-mail de la fiche enseignant doit être celui du compte, et unique parmi
+les fiches actives. Une colonne `teachers.user_id` serait plus robuste (à trancher avec
+agent-bdd).
 
 **Sources d'affectation** (union) : `class_subject_assignments` (classe, matière) ;
 `timetable_entries` (un créneau classe/matière/enseignant vaut affectation — le guide de

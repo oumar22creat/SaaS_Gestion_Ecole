@@ -41,7 +41,8 @@ public class User extends TenantScopedEntity {
     }
 
     public User(String email, String passwordHash, String firstName, String lastName, Role role) {
-        this.email = email;
+        // Forme canonique (trim + minuscules) : voir EmailNormalizer et ADR-030.
+        this.email = com.schoolsaas.common.EmailNormalizer.normalize(email);
         this.passwordHash = passwordHash;
         this.firstName = firstName;
         this.lastName = lastName;

@@ -46,7 +46,7 @@ public class UserService {
         }
         // L'unicité de l'e-mail est par établissement (cahier-des-charges.md §21) : la requête
         // ci-dessous est déjà restreinte au tenant courant par le filtre Hibernate global.
-        if (userRepository.existsByEmail(request.email())) {
+        if (userRepository.existsByEmail(com.schoolsaas.common.EmailNormalizer.normalize(request.email()))) {
             throw ApiException.conflict("EMAIL_ALREADY_USED", "Cet e-mail est déjà utilisé dans l'établissement");
         }
         return userRepository.save(new User(
@@ -69,7 +69,7 @@ public class UserService {
         if (role != Role.PARENT && role != Role.STUDENT) {
             throw ApiException.unprocessable("ROLE_NOT_ASSIGNABLE", "Ce rôle n'est pas un rôle de famille");
         }
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(com.schoolsaas.common.EmailNormalizer.normalize(email))) {
             throw ApiException.conflict("EMAIL_ALREADY_USED", "Cet e-mail est déjà utilisé dans l'établissement");
         }
         return userRepository.save(

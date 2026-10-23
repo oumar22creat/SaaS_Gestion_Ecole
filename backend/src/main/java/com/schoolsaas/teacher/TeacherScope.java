@@ -2,8 +2,13 @@ package com.schoolsaas.teacher;
 
 import com.schoolsaas.auth.AuthenticatedPrincipal;
 import com.schoolsaas.auth.Role;
+import com.schoolsaas.auth.User;
 import com.schoolsaas.common.ApiException;
 import com.schoolsaas.common.EmailNormalizer;
+import com.schoolsaas.parent.Parent;
+import com.schoolsaas.parent.ParentRepository;
+import com.schoolsaas.parent.StudentParent;
+import com.schoolsaas.parent.StudentParentRepository;
 import com.schoolsaas.schoolclass.ClassSubjectAssignment;
 import com.schoolsaas.schoolclass.ClassSubjectAssignmentRepository;
 import com.schoolsaas.schoolclass.SchoolClass;
@@ -13,10 +18,13 @@ import com.schoolsaas.student.StudentRepository;
 import com.schoolsaas.timetable.TimetableEntry;
 import com.schoolsaas.timetable.TimetableEntryRepository;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -69,18 +77,24 @@ public class TeacherScope {
     private final TimetableEntryRepository timetableEntryRepository;
     private final SchoolClassRepository schoolClassRepository;
     private final StudentRepository studentRepository;
+    private final ParentRepository parentRepository;
+    private final StudentParentRepository studentParentRepository;
 
     public TeacherScope(
             TeacherRepository teacherRepository,
             ClassSubjectAssignmentRepository assignmentRepository,
             TimetableEntryRepository timetableEntryRepository,
             SchoolClassRepository schoolClassRepository,
-            StudentRepository studentRepository) {
+            StudentRepository studentRepository,
+            ParentRepository parentRepository,
+            StudentParentRepository studentParentRepository) {
         this.teacherRepository = teacherRepository;
         this.assignmentRepository = assignmentRepository;
         this.timetableEntryRepository = timetableEntryRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.studentRepository = studentRepository;
+        this.parentRepository = parentRepository;
+        this.studentParentRepository = studentParentRepository;
     }
 
     /**
@@ -173,6 +187,54 @@ public class TeacherScope {
         currentPerimeter().ifPresent(p -> {
             if (classId == null || !p.headClassIds().contains(classId)) {
                 deny("bulletins de la classe " + classId + " (professeur principal requis)");
+            }
+        });
+    }
+
+    /**
+     * Messagerie : un enseignant n'écrit qu'aux familles de ses classes. Un compte ÉLÈVE doit
+     * être rattaché à un élève d'une classe du périmètre ; un compte PARENT, à au moins un
+     * enfant d'une classe du périmètre. Les comptes du personnel ne sont pas concernés. Quatre
+     * requêtes au plus pour toute la liste.
+     */
+    public void requireReachableFamilies(Collection<User> recipients) {
+        currentPerimeter().ifPresent(p -> {
+            Set<Long> studentAccounts = recipients.stream()
+                    .filter(u -> u.getRole() == Role.STUDENT).map(User::getId).collect(Collectors.toSet());
+            Set<Long> parentAccounts = recipients.stream()
+                    .filter(u -> u.getRole() == Role.PARENT).map(User::getId).collect(Collectors.toSet());
+            Set<Long> reachable = new HashSet<>();
+            if (!studentAccounts.isEmpty()) {
+                for (Student student : studentRepository.findAllByUserIdIn(studentAccounts)) {
+                    if (p.canAccessClass(student.getSchoolClassId())) {
+                        reachable.add(student.getUserId());
+                    }
+                }
+            }
+            if (!parentAccounts.isEmpty()) {
+                Map<Long, Long> accountByParent = parentRepository.findAllByUserIdIn(parentAccounts).stream()
+                        .collect(Collectors.toMap(Parent::getId, Parent::getUserId));
+                if (!accountByParent.isEmpty()) {
+                    List<StudentParent> links = studentParentRepository.findAllByParentIdIn(accountByParent.keySet());
+                    Map<Long, Long> classByStudent = new HashMap<>();
+                    for (Student child : studentRepository.findAllById(
+                            links.stream().map(StudentParent::getStudentId).collect(Collectors.toSet()))) {
+                        if (child.getSchoolClassId() != null) {
+                            classByStudent.put(child.getId(), child.getSchoolClassId());
+                        }
+                    }
+                    for (StudentParent link : links) {
+                        if (p.canAccessClass(classByStudent.get(link.getStudentId()))) {
+                            reachable.add(accountByParent.get(link.getParentId()));
+                        }
+                    }
+                }
+            }
+            Set<Long> refused = new HashSet<>(studentAccounts);
+            refused.addAll(parentAccounts);
+            refused.removeAll(reachable);
+            if (!refused.isEmpty()) {
+                deny("destinataires famille " + refused.stream().sorted().toList() + " hors de ses classes");
             }
         });
     }

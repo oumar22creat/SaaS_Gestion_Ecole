@@ -33,6 +33,8 @@
   via `TeacherScope`.
 - `403 MESSAGING_NOT_ALLOWED` / `403 ANNOUNCEMENT_NOT_ALLOWED` : écriture dans la messagerie
   par un compte famille, ou annonce par un rôle autre qu'ADMIN/DIRECTION (ADR-019).
+- `422 TOO_MANY_RECIPIENTS` / `422 USER_INACTIVE` : conversation de plus de 30 destinataires,
+  ou destinataire désactivé (ADR-019).
 
 ## Pagination
 - Paramètres query : `?page=1&pageSize=20`

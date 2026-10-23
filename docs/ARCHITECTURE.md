@@ -480,6 +480,17 @@ répondre à l'établissement entier. Désormais, vérifié par `@PreAuthorize` 
   compris, borné aux conversations dont il est participant — un parent reste destinataire
   des annonces (cahier §16 « Annonce de l'établissement ») et peut les lire. Le Super-Admin
   (hors tenant) n'a pas accès.
+- **destinataires d'une conversation ordinaire** : dédupliqués, **30 au plus**
+  (`MessagingService.MAX_RECIPIENTS`, créateur non compté — la taille d'une classe ; au-delà
+  c'est une diffusion, donc une annonce), tous existants (`404 USER_NOT_FOUND`) et actifs
+  (`422 USER_INACTIVE`), chargés en une requête ; dépassement → `422 TOO_MANY_RECIPIENTS`.
+  Sans ce plafond, tout membre du personnel faisait une « annonce déguisée » en listant tous
+  les comptes. Pour un **enseignant**, les comptes famille visés doivent relever de ses
+  classes (`TeacherScope.requireReachableFamilies` : élève d'une classe du périmètre, parent
+  d'au moins un tel élève), sinon `403 OUT_OF_TEACHER_SCOPE`.
+- **Parents et élèves en lecture seule : décision d'Oumar, provisoire.** À rouvrir quand
+  l'écran messagerie parent du mobile sera construit (le cahier des charges prévoit la
+  messagerie côté parent) : il faudra alors décider à qui un parent peut écrire.
 
 **Troisième gateway de notification "log seulement"** (`MessageNotificationGateway`, après
 `ParentNotificationGateway` et `HomeworkNotificationGateway`) — la consolidation en un
@@ -835,6 +846,8 @@ configuration ne passe pas par l'écran d'affectation) ; `school_classes.head_te
   collègue par identifiant → 403.
 - Cahier de textes : LECTURE pour les classes du périmètre (toutes matières, pour équilibrer
   la charge de devoirs) ; ÉCRITURE (création, modification, suppression) pour le couple.
+- Messagerie : un enseignant n'ouvre une conversation qu'avec les familles de ses classes
+  (voir ADR-019).
 - Classes : `GET /classes` ne renvoie que ses classes ; `GET /classes/{id}` hors périmètre → 403.
 - Élèves : `GET /students` (avec ou sans recherche) ne renvoie que les élèves de ses classes ;
   `GET /students/{id}` et `/photo` d'un autre élève → 403.

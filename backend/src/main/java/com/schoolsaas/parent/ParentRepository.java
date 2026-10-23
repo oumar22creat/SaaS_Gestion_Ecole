@@ -1,5 +1,7 @@
 package com.schoolsaas.parent;
 
+import java.util.Collection;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +12,9 @@ public interface ParentRepository extends JpaRepository<Parent, Long> {
 
     /** Fiche rattachée à un compte de connexion (portail parent/élève). */
     java.util.Optional<Parent> findByUserId(Long userId);
+
+    /** Fiches rattachées à un ensemble de comptes (destinataires de messagerie, ADR-030). */
+    List<Parent> findAllByUserIdIn(Collection<Long> userIds);
 
     /**
      * Recherche libre sur nom, prénom, e-mail et téléphone. Le téléphone compte autant que le

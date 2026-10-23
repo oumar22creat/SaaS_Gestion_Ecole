@@ -9,8 +9,11 @@ import com.schoolsaas.messaging.dto.ConversationCreateRequest;
 import com.schoolsaas.messaging.dto.MessageCreateRequest;
 import com.schoolsaas.notification.NotificationDispatcher;
 import com.schoolsaas.notification.NotificationType;
+import com.schoolsaas.teacher.TeacherScope;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.springframework.data.domain.Page;
@@ -38,12 +41,21 @@ public class MessagingService {
     /** Rôles qui engagent l'établissement auprès de tous ses usagers. */
     static final Set<Role> ANNOUNCER_ROLES = EnumSet.of(Role.ADMIN, Role.DIRECTION);
 
+    /**
+     * Plafond de destinataires d'une conversation ordinaire (créateur non compté) : la taille
+     * d'une classe. Au-delà, c'est une diffusion, donc une annonce, réservée à la direction —
+     * sans ce plafond, n'importe quel membre du personnel faisait une « annonce déguisée » en
+     * listant tous les comptes de l'établissement.
+     */
+    public static final int MAX_RECIPIENTS = 30;
+
     private final ConversationRepository conversationRepository;
     private final ConversationParticipantRepository participantRepository;
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
     private final NotificationDispatcher notificationDispatcher;
+    private final TeacherScope teacherScope;
 
     public MessagingService(
             ConversationRepository conversationRepository,
@@ -51,13 +63,15 @@ public class MessagingService {
             MessageRepository messageRepository,
             UserRepository userRepository,
             DocumentRepository documentRepository,
-            NotificationDispatcher notificationDispatcher) {
+            NotificationDispatcher notificationDispatcher,
+            TeacherScope teacherScope) {
         this.conversationRepository = conversationRepository;
         this.participantRepository = participantRepository;
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
         this.documentRepository = documentRepository;
         this.notificationDispatcher = notificationDispatcher;
+        this.teacherScope = teacherScope;
     }
 
     @Transactional
@@ -73,19 +87,7 @@ public class MessagingService {
         if (request.announcement()) {
             participantIds = userRepository.findAllByActiveTrue().stream().map(User::getId).toList();
         } else {
-            if (request.participantUserIds() == null || request.participantUserIds().isEmpty()) {
-                throw ApiException.badRequest(
-                        "PARTICIPANTS_REQUIRED", "Au moins un destinataire est requis", List.of());
-            }
-            for (Long userId : request.participantUserIds()) {
-                if (userRepository.findById(userId).isEmpty()) {
-                    throw ApiException.notFound("USER_NOT_FOUND", "Utilisateur introuvable : " + userId);
-                }
-            }
-            participantIds = new java.util.ArrayList<>(request.participantUserIds());
-            if (!participantIds.contains(creatorUserId)) {
-                participantIds.add(creatorUserId);
-            }
+            participantIds = validatedParticipants(request.participantUserIds(), creatorUserId, creatorRole);
         }
 
         Conversation conversation = conversationRepository.save(new Conversation(request.title(), request.announcement(), creatorUserId));
@@ -163,6 +165,43 @@ public class MessagingService {
         ConversationParticipant participant = participantRepository.findByConversationIdAndUserId(conversationId, callerUserId)
                 .orElseThrow(() -> ApiException.forbidden("NOT_A_PARTICIPANT", "Vous ne participez pas à cette conversation"));
         participant.markRead(Instant.now());
+    }
+
+    /**
+     * Destinataires d'une conversation ordinaire : dédupliqués (un doublon violait la
+     * contrainte UNIQUE et finissait en erreur 500), plafonnés à {@link #MAX_RECIPIENTS},
+     * chargés en une requête, tous existants et actifs ; pour un enseignant, les comptes
+     * famille doivent relever de ses classes (TeacherScope). Le créateur est ajouté à la fin.
+     */
+    private List<Long> validatedParticipants(List<Long> requested, Long creatorUserId, Role creatorRole) {
+        Set<Long> recipients = new LinkedHashSet<>(requested == null ? List.of() : requested);
+        recipients.remove(null);
+        recipients.remove(creatorUserId);
+        if (recipients.isEmpty()) {
+            throw ApiException.badRequest("PARTICIPANTS_REQUIRED", "Au moins un destinataire est requis", List.of());
+        }
+        if (recipients.size() > MAX_RECIPIENTS) {
+            throw ApiException.unprocessable(
+                    "TOO_MANY_RECIPIENTS",
+                    "Une conversation compte au plus " + MAX_RECIPIENTS + " destinataires ; pour s'adresser à tous, "
+                            + "passer par une annonce de la direction");
+        }
+        List<User> users = userRepository.findAllById(recipients);
+        if (users.size() != recipients.size()) {
+            Set<Long> missing = new LinkedHashSet<>(recipients);
+            users.forEach(u -> missing.remove(u.getId()));
+            throw ApiException.notFound("USER_NOT_FOUND", "Utilisateur introuvable : " + missing);
+        }
+        List<Long> inactive = users.stream().filter(u -> !u.isActive()).map(User::getId).toList();
+        if (!inactive.isEmpty()) {
+            throw ApiException.unprocessable("USER_INACTIVE", "Compte désactivé : " + inactive);
+        }
+        if (creatorRole == Role.TEACHER) {
+            teacherScope.requireReachableFamilies(users);
+        }
+        List<Long> participantIds = new ArrayList<>(recipients);
+        participantIds.add(creatorUserId);
+        return participantIds;
     }
 
     /** Rôle relu en base (compte du tenant courant) ; un compte introuvable n'a aucun droit. */

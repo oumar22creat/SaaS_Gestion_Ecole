@@ -29,6 +29,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     Page<Student> findAllBySchoolClassId(Long schoolClassId, Pageable pageable);
 
     /** Élèves d'un ensemble de classes (périmètre enseignant, ADR-030). */
+    /** Fiches élève rattachées à un ensemble de comptes (destinataires de messagerie). */
+    List<Student> findAllByUserIdIn(Collection<Long> userIds);
+
     Page<Student> findAllBySchoolClassIdIn(Collection<Long> schoolClassIds, Pageable pageable);
 
     /** Même recherche libre que {@link #search}, bornée à un ensemble de classes. */

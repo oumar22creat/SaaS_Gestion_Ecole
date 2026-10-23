@@ -5,70 +5,98 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Politique de confidentialité | School Manager</title>
 <meta name="description" content="Quelles données School Manager traite, pourquoi, combien de temps, et comment exercer vos droits.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=4">
-<style>
-  /*
-   * La vitrine est sur fond sombre. La première version de cette page reprenait des surfaces
-   * claires — encadré et en-têtes de tableau en #f6f8f7 — sur lesquelles le texte, hérité du
-   * corps, restait presque blanc : contraste mesuré à 1,02:1, autrement dit illisible. Tout
-   * est donc repris sur les jetons du site.
-   */
-  .legal { max-width: 46rem; margin: 0 auto; padding: 3rem var(--pad) 6rem; color: var(--bone-dim); }
-  .legal h1 { margin-bottom: .35rem; color: var(--bone); font-family: var(--font-display); }
-  .legal h2 { margin-top: 3rem; color: var(--bone); font-family: var(--font-display); font-size: 1.3rem; }
-  .legal h3 { margin-top: 1.75rem; color: var(--bone); font-size: 1.05rem; }
-  .legal p, .legal li { line-height: 1.7; }
-  .legal .maj { color: var(--bone-muted); font-size: .95rem; margin-bottom: 3rem; }
-
-  /* L'or se détache du vert du fond sans rivaliser avec les titres ; le texte courant, lui,
-     reste en gris clair, de sorte qu'un lien se repère sans être souligné partout. */
-  .legal a { color: var(--gold-bright); text-underline-offset: .2em; }
-  .legal a:hover { color: var(--gold); }
-
-  .legal table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: .95rem; }
-  .legal th, .legal td { border: 1px solid var(--line); padding: .7rem .85rem; text-align: left; vertical-align: top; }
-  .legal th { background: var(--surface); color: var(--bone); font-weight: 600; }
-  .legal td { background: transparent; }
-  .legal tbody tr:nth-child(even) td { background: var(--line-soft); }
-
-  .legal .encadre {
-    border-inline-start: 3px solid var(--gold);
-    background: var(--surface);
-    color: var(--bone);
-    padding: 1.1rem 1.35rem;
-    border-radius: 0 12px 12px 0;
-    margin: 1.75rem 0;
-  }
-
-  .legal .retour { display: inline-block; margin-top: 3.5rem; }
-
-  /* Le tableau garde ses colonnes lisibles sur téléphone plutôt que de les écraser. */
-  @media (max-width: 34rem) {
-    .legal { padding-inline: 1.1rem; }
-    .legal table { display: block; overflow-x: auto; white-space: nowrap; }
-    .legal td, .legal th { white-space: normal; min-width: 9rem; }
-  }
-</style>
+<link rel="canonical" href="https://schoolmanager.tech/confidentialite.html">
+<meta name="theme-color" content="#0b231e">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/outfit-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.v1.css">
+<script src="/assets/site.v1.js" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="School Manager">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Politique de confidentialité de School Manager">
+<meta property="og:description" content="Quelles données sont traitées, pourquoi, combien de temps, et comment exercer vos droits.">
+<meta property="og:url" content="https://schoolmanager.tech/confidentialite.html">
+<meta property="og:image" content="https://schoolmanager.tech/assets/og/school-manager-1200x630.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="School Manager, la gestion scolaire des écoles privées du Mali, avec la feuille d'appel de l'application.">
+<meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
-
-<a class="skip-link" href="#main">Aller au contenu principal</a>
-
-<header class="nav">
-  <div class="shell nav-inner">
-    <a class="brand" href="/" aria-label="School Manager, retour à l'accueil">
-      <span class="brand-mark" aria-hidden="true"><i class="ph-bold ph-graduation-cap"></i></span>
-      <span class="brand-word">School Manager</span>
+<!-- DÉBUT SPRITE COMMUN v1 -->
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M4 20l1.2-4.1A8 8 0 1 1 8.3 19z"/><path d="M9 9.2c.2 2.6 2.6 5 5.4 5.6l1.3-1.3-1.9-1-1 .8a4.6 4.6 0 0 1-2.3-2.3l.8-1-1-1.9z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v15H5.5A1.5 1.5 0 0 0 4 20.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v15h5.5a1.5 1.5 0 0 1 1.5 1.5z"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 14l2 2 4-4"/></symbol>
+    <symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="9" cy="7" rx="5" ry="2.5"/><path d="M4 7v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V7M10 16.5c.9 1.2 3 2 5 2 2.8 0 5-1.1 5-2.5v-4c0-1.4-2.2-2.5-5-2.5"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3v-3H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></symbol>
+    <symbol id="i-bus" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="13" rx="2"/><path d="M5 11h14M8 17v2.5M16 17v2.5M8.5 14h.01M15.5 14h.01"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20h16M7 16v-4M12 16V8M17 16v-7"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.5M17.5 14a5.5 5.5 0 0 1 3 5"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M5 14v5h14v-5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-child" viewBox="0 0 24 24"><circle cx="8" cy="7" r="2.75"/><circle cx="16.5" cy="10" r="2.25"/><path d="M3.5 20a4.5 4.5 0 0 1 9 0M12.5 20a4 4 0 0 1 8 0"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3z"/><path d="M9 8h6M9 11.5h6M9 15h4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="7" rx="1.5"/><rect x="4" y="13" width="16" height="7" rx="1.5"/><path d="M8 7.5h.01M8 16.5h.01M12 7.5h5M12 16.5h5"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 12s3.5-6 9-6c1.6 0 3 .5 4.2 1.2M21 12s-3.5 6-9 6c-1.6 0-3-.5-4.2-1.2"/><path d="M10 10.2a2.5 2.5 0 0 0 3.8 3.3M4 20L20 4"/></symbol>
+  </defs>
+</svg>
+<!-- FIN SPRITE COMMUN v1 -->
+<!-- DÉBUT EN-TÊTE COMMUN v1 (seuls changent aria-current et le message WhatsApp) -->
+<a class="skip-link" href="#contenu">Aller au contenu principal</a>
+<header class="topbar">
+  <div class="shell topbar-inner">
+    <a class="brand" href="/">
+      <img src="/assets/brand/icone-72.png" width="36" height="36" alt="">
+      <span class="brand-name">School Manager</span>
     </a>
+    <nav class="nav-desktop" aria-label="Navigation principale">
+      <a href="/fonctionnalites">Fonctionnalités</a>
+      <a href="/tarifs">Tarifs</a>
+      <a href="/parents">Parents</a>
+      <a href="/securite">Sécurité</a>
+    </nav>
+    <div class="topbar-actions">
+      <a class="link-quiet" href="/login">Se connecter</a>
+      <a class="btn btn-gold btn-sm" href="/register">Essai gratuit</a>
+      <details class="nav-mobile">
+        <summary>
+          <svg class="ico ico-open" aria-hidden="true" focusable="false"><use href="#i-menu"/></svg><svg class="ico ico-close" aria-hidden="true" focusable="false"><use href="#i-close"/></svg>
+          <span class="menu-label">Menu</span>
+        </summary>
+        <nav aria-label="Menu">
+          <a href="/fonctionnalites">Fonctionnalités</a>
+          <a href="/tarifs">Tarifs</a>
+          <a href="/parents">Parents</a>
+          <a href="/securite">Sécurité</a>
+          <hr>
+          <a href="/login">Se connecter</a>
+          <a href="https://wa.me/22379827979?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20School%20Manager.%20%28Site%29" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-whatsapp"/></svg> Écrire sur WhatsApp<span class="sr-only"> (WhatsApp, nouvel onglet)</span></a>
+          <a href="mailto:oumarcoulou44@gmail.com"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-mail"/></svg> E-mail</a>
+        </nav>
+      </details>
+    </div>
   </div>
 </header>
+<!-- FIN EN-TÊTE COMMUN v1 -->
 
-<main id="main" class="legal">
-
-<h1>Politique de confidentialité</h1>
+<main id="contenu">
+<article class="legal" aria-labelledby="titre-page">
+<h1 id="titre-page">Politique de confidentialité</h1>
 <p class="maj">En vigueur au 6 octobre 2026.</p>
 
 <p>
@@ -77,13 +105,29 @@
   que vous pouvez exiger.
 </p>
 
-<div class="encadre">
+<div class="notice">
   <strong>L'école reste maîtresse de ses données.</strong> C'est elle qui décide ce qui est saisi
-  et qui y accède ; School Manager n'intervient que pour faire fonctionner le service. Aucune
+  et qui y accède&nbsp;; School Manager n'intervient que pour faire fonctionner le service. Aucune
   donnée n'est vendue, louée, ni utilisée à des fins publicitaires.
 </div>
 
-<h2>1. Qui est responsable</h2>
+<nav class="toc" aria-label="Sommaire">
+  <ul>
+    <li><a href="#responsable">1. Qui est responsable</a></li>
+    <li><a href="#donnees-collectees">2. Ce qui est collecté</a></li>
+    <li><a href="#finalites">3. Pourquoi</a></li>
+    <li><a href="#mineurs">4. Mineurs</a></li>
+    <li><a href="#acces">5. Qui peut voir quoi</a></li>
+    <li><a href="#sous-traitants">6. Sous-traitants</a></li>
+    <li><a href="#durees">7. Combien de temps</a></li>
+    <li><a href="#securite">8. Sécurité</a></li>
+    <li><a href="#droits">9. Vos droits</a></li>
+    <li><a href="#modifications">10. Modifications</a></li>
+    <li><a href="#contact">11. Contact</a></li>
+  </ul>
+</nav>
+
+<h2 id="responsable">1. Qui est responsable</h2>
 <p>
   <strong>Oumar Mory Coulibaly</strong><br>
   Kalaban Coura ACI, Bamako, Mali<br>
@@ -94,8 +138,9 @@
   School Manager les héberge et les traite pour son compte, sur ses instructions.
 </p>
 
-<h2>2. Ce qui est collecté</h2>
+<h2 id="donnees-collectees">2. Ce qui est collecté</h2>
 
+<div class="table-scroll" tabindex="0" role="region" aria-label="Tableau : ce qui est collecté">
 <table>
   <thead>
     <tr><th>Catégorie</th><th>Exemples</th><th>D'où cela vient</th></tr>
@@ -133,6 +178,7 @@
     </tr>
   </tbody>
 </table>
+</div>
 
 <h3>Ce qui n'est pas collecté</h3>
 <p>
@@ -141,7 +187,8 @@
   permission demandée par l'application mobile est l'accès à Internet.
 </p>
 
-<h2>3. Pourquoi, et sur quelle base</h2>
+<h2 id="finalites">3. Pourquoi, et sur quelle base</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Tableau : pourquoi, et sur quelle base">
 <table>
   <thead><tr><th>Finalité</th><th>Base</th></tr></thead>
   <tbody>
@@ -151,31 +198,33 @@
     <tr><td>Sécuriser les accès et tracer les actions sensibles</td><td>Intérêt légitime à protéger des données d'enfants</td></tr>
   </tbody>
 </table>
+</div>
 
-<h2>4. Données concernant des mineurs</h2>
-<p>L'essentiel des données traitées concerne des enfants. Trois règles en découlent :</p>
+<h2 id="mineurs">4. Données concernant des mineurs</h2>
+<p>L'essentiel des données traitées concerne des enfants. Trois règles en découlent&nbsp;:</p>
 <ul>
-  <li>un élève ne voit que son propre dossier, un parent que celui de ses enfants ;</li>
-  <li>aucune donnée d'élève n'est utilisée à d'autres fins que la scolarité ;</li>
+  <li>un élève ne voit que son propre dossier, un parent que celui de ses enfants&nbsp;;</li>
+  <li>aucune donnée d'élève n'est utilisée à d'autres fins que la scolarité&nbsp;;</li>
   <li>les demandes des familles sont traitées par l'établissement, qui connaît l'élève et peut
       vérifier qui demande quoi.</li>
 </ul>
 
-<h2>5. Qui peut voir quoi</h2>
+<h2 id="acces">5. Qui peut voir quoi</h2>
 <p>
-  Chaque établissement est cloisonné : ses données sont inaccessibles aux autres écoles, y
+  Chaque établissement est cloisonné&nbsp;: ses données sont inaccessibles aux autres écoles, y
   compris en cas d'erreur de l'application — l'isolement est appliqué par la base de données
   elle-même, pas seulement par le code.
 </p>
-<p>À l'intérieur d'un établissement, l'accès dépend du rôle :</p>
+<p>À l'intérieur d'un établissement, l'accès dépend du rôle&nbsp;:</p>
 <ul>
-  <li><strong>Direction et secrétariat</strong> : l'ensemble du dossier scolaire et financier ;</li>
-  <li><strong>Enseignant</strong> : ses classes, pour l'appel et les notes ;</li>
-  <li><strong>Parent</strong> : le dossier de ses enfants ;</li>
-  <li><strong>Élève</strong> : son propre dossier.</li>
+  <li><strong>Direction et secrétariat</strong>&nbsp;: l'ensemble du dossier scolaire et financier&nbsp;;</li>
+  <li><strong>Enseignant</strong>&nbsp;: ses classes, pour l'appel et les notes&nbsp;;</li>
+  <li><strong>Parent</strong>&nbsp;: le dossier de ses enfants&nbsp;;</li>
+  <li><strong>Élève</strong>&nbsp;: son propre dossier.</li>
 </ul>
 
-<h2>6. Sous-traitants</h2>
+<h2 id="sous-traitants">6. Sous-traitants</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Tableau : sous-traitants">
 <table>
   <thead><tr><th>Prestataire</th><th>Rôle</th><th>Où</th></tr></thead>
   <tbody>
@@ -183,6 +232,7 @@
     <tr><td>Cloudflare</td><td>Nom de domaine, chiffrement des échanges</td><td>Réseau mondial</td></tr>
   </tbody>
 </table>
+</div>
 <p>
   Aucun autre tiers ne reçoit ces données. Si un opérateur de SMS ou un service de notifications
   est ajouté pour prévenir les familles, ce tableau sera mis à jour avant toute mise en service.
@@ -192,23 +242,25 @@
   d'un cadre de protection au moins équivalent.
 </p>
 
-<h2>7. Combien de temps</h2>
+<h2 id="durees">7. Combien de temps</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Tableau : combien de temps">
 <table>
   <thead><tr><th>Donnée</th><th>Durée</th></tr></thead>
   <tbody>
-    <tr><td>Dossier scolaire de l'élève</td><td>Toute la scolarité, puis 5 ans — un certificat ou un relevé peut être réclamé longtemps après</td></tr>
-    <tr><td>Pièces comptables</td><td>10 ans, obligation légale</td></tr>
+    <tr><td>Dossier scolaire de l'élève</td><td>Toute la scolarité, puis 5&nbsp;ans — un certificat ou un relevé peut être réclamé longtemps après</td></tr>
+    <tr><td>Pièces comptables</td><td>10&nbsp;ans, obligation légale</td></tr>
     <tr><td>Compte d'accès</td><td>Supprimé au départ de l'élève ou de l'agent</td></tr>
-    <tr><td>Journal technique</td><td>12 mois</td></tr>
-    <tr><td>Sauvegardes chiffrées</td><td>30 jours glissants</td></tr>
+    <tr><td>Journal technique</td><td>12&nbsp;mois</td></tr>
+    <tr><td>Sauvegardes chiffrées</td><td>30&nbsp;jours glissants</td></tr>
   </tbody>
 </table>
+</div>
 <p>
-  Si un établissement résilie son abonnement, ses données sont supprimées 90 jours après la fin
+  Si un établissement résilie son abonnement, ses données sont supprimées 90&nbsp;jours après la fin
   du service. Ce délai lui laisse le temps d'en demander l'export.
 </p>
 
-<h2>8. Sécurité</h2>
+<h2 id="securite">8. Sécurité</h2>
 <ul>
   <li>Tous les échanges sont chiffrés — l'application refuse toute connexion en clair.</li>
   <li>Les mots de passe ne sont jamais stockés en clair.</li>
@@ -217,37 +269,80 @@
   <li>Chaque établissement est isolé au niveau de la base de données.</li>
 </ul>
 
-<h2>9. Vos droits</h2>
+<h2 id="droits">9. Vos droits</h2>
 <p>
   Vous pouvez demander à accéder aux données vous concernant, les faire corriger, en demander
   l'effacement, vous opposer à un traitement, ou en obtenir une copie exploitable.
 </p>
 <p>
-  <strong>Adressez-vous d'abord à l'établissement</strong> : c'est lui qui détient le dossier et
+  <strong>Adressez-vous d'abord à l'établissement</strong>&nbsp;: c'est lui qui détient le dossier et
   peut vérifier votre qualité. Si vous n'obtenez pas de réponse, écrivez à
-  <a href="mailto:oumarcoulou44@gmail.com">oumarcoulou44@gmail.com</a> ; une réponse vous sera
-  apportée sous 30 jours.
+  <a href="mailto:oumarcoulou44@gmail.com">oumarcoulou44@gmail.com</a>&nbsp;; une réponse vous sera
+  apportée sous 30&nbsp;jours.
 </p>
 <p>
   Certaines données ne peuvent pas être effacées à la demande tant qu'une obligation légale les
   retient — les pièces comptables, notamment. Cela vous sera dit explicitement, avec le motif.
 </p>
 
-<h2>10. Modifications</h2>
+<h2 id="modifications">10. Modifications</h2>
 <p>
   Toute évolution de ce document est datée en tête de page. Un changement qui touche la nature
   des données collectées ou leurs destinataires est annoncé aux établissements avant d'entrer en
   vigueur.
 </p>
 
-<h2>11. Contact</h2>
+<h2 id="contact">11. Contact</h2>
 <p>
   Oumar Mory Coulibaly — Kalaban Coura ACI, Bamako, Mali<br>
   <a href="mailto:oumarcoulou44@gmail.com">oumarcoulou44@gmail.com</a>
 </p>
-
-<p><a class="retour" href="/">← Retour à l'accueil</a></p>
-
+</article>
 </main>
+
+<!-- DÉBUT PIED DE PAGE COMMUN v1 (seuls changent aria-current et le message WhatsApp) -->
+<footer class="footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div class="footer-about">
+        <p class="footer-brand"><img src="/assets/brand/icone-72.png" width="32" height="32" alt="" loading="lazy"> School Manager</p>
+        <p>Gestion scolaire pour les écoles privées du Mali, sur le web et sur mobile. Édité par LOGILAB, Bamako (Mali).</p>
+        <ul class="footer-contact">
+          <li><a href="https://wa.me/22379827979?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20School%20Manager.%20%28Site%29" target="_blank" rel="noopener">WhatsApp&nbsp;: +223&nbsp;79&nbsp;82&nbsp;79&nbsp;79<span class="sr-only"> (WhatsApp, nouvel onglet)</span></a></li>
+          <li><a href="mailto:oumarcoulou44@gmail.com">E-mail&nbsp;: oumarcoulou44@gmail.com</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="footer-title">Produit</h2>
+        <ul>
+          <li><a href="/fonctionnalites">Fonctionnalités</a></li>
+          <li><a href="/tarifs">Tarifs</a></li>
+          <li><a href="/parents">Parents</a></li>
+          <li><a href="https://apps.apple.com/app/id6822008457" target="_blank" rel="noopener">Télécharger sur l'App Store<span class="sr-only"> (nouvel onglet)</span></a></li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="footer-title">Confiance</h2>
+        <ul>
+          <li><a href="/securite">Sécurité</a></li>
+          <li><a href="/confidentialite.html" aria-current="page">Politique de confidentialité</a></li>
+          <li><a href="/mentions-legales">Mentions légales</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="footer-title">Accès</h2>
+        <ul>
+          <li><a href="/login">Se connecter</a></li>
+          <li><a href="/register">Inscrire mon école</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-base">
+      <p>© 2026 LOGILAB</p>
+      <p>Photos d'illustration&nbsp;: Wikimedia Commons, CC0. <a href="/mentions-legales#credits">Crédits</a></p>
+    </div>
+  </div>
+</footer>
+<!-- FIN PIED DE PAGE COMMUN v1 -->
 </body>
 </html>

@@ -36,7 +36,7 @@ Inter (400, 600) et Outfit (600), sous-ensemble latin des paquets `@fontsource/i
 
 | Fichier | Source | Conditions |
 |---|---|---|
-| `badges/app-store-fr.svg` | Reproduction du badge Apple « Télécharger dans l'App Store » (noir, FR), reprise du site précédent. **À remplacer par le fichier officiel** du kit « App Store Marketing Tools » d'Apple, sous le même nom : Apple interdit de recréer soi-même un badge localisé. | Marque Apple Inc. Usage limité au lien vers la fiche App Store (id6822008457), badge non modifié, sans effet au survol, espace libre autour. |
+| `badges/app-store-fr.svg` | Badge officiel Apple « Télécharger dans l'App Store » (noir, FR), fichier téléchargé le 23/10/2026 depuis le service de badges d'Apple (tools.applemediaservices.com), non modifié. | Marque Apple Inc. Usage limité au lien vers la fiche App Store (id6822008457), badge non modifié, sans effet au survol, espace libre autour. |
 | `badges/google-play-bientot.svg` | Logo Google Play redessiné + texte « Bientôt sur Google Play », extrait sans modification du site précédent. | Google Play et le logo Google Play sont des marques de Google LLC. Non cliquable et atténué tant que l'application Android est en test. À la sortie, remplacer par le badge officiel « Disponible sur Google Play » relié à la fiche. |
 
 ## Marque et image de partage

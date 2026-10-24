@@ -488,6 +488,13 @@ répondre à l'établissement entier. Désormais, vérifié par `@PreAuthorize` 
   les comptes. Pour un **enseignant**, les comptes famille visés doivent relever de ses
   classes (`TeacherScope.requireReachableFamilies` : élève d'une classe du périmètre, parent
   d'au moins un tel élève), sinon `403 OUT_OF_TEACHER_SCOPE`.
+- **Écrire à une famille (décision d'Oumar, option a)** : seuls ADMIN, DIRECTION et TEACHER
+  (ce dernier dans son périmètre, ci-dessus) ouvrent une conversation avec un compte PARENT
+  ou STUDENT. Pour SECRETARY, VIE_SCOLAIRE, ACCOUNTANT (et tout autre rôle du personnel),
+  un seul compte famille parmi les destinataires refuse la conversation entière :
+  `403 FAMILY_MESSAGING_NOT_ALLOWED` (`MessagingService.FAMILY_WRITER_ROLES`). Les annonces
+  restent réservées à ADMIN/DIRECTION. Il n'existe pas d'ajout de participant après
+  création : la règle porte entièrement sur `createConversation`.
 - **Annuaire des destinataires** (`GET /api/v1/conversations/recipients`, décision d'Oumar) :
   la liste vient auparavant de `GET /users`, réservé à ADMIN/DIRECTION — les autres rôles du
   personnel avaient le droit de créer une conversation mais aucun destinataire à choisir.
@@ -498,10 +505,11 @@ répondre à l'établissement entier. Désormais, vérifié par `@PreAuthorize` 
   Contenu aligné sur ce que la création accepte : ADMIN/DIRECTION → tout compte actif
   (personnel et familles) ; TEACHER → personnel + familles de ses classes
   (`TeacherScope.reachableFamilyAccountIds`, même définition que `requireReachableFamilies`) ;
-  SECRETARY/VIE_SCOLAIRE/ACCOUNTANT → personnel seulement. **Point ouvert** : pour ces trois
-  rôles, `createConversation` n'interdit pas encore une famille visée par son id (aucune
-  règle de périmètre) ; l'annuaire ne la propose pas, mais l'écart serveur reste à trancher
-  (resserrer le serveur, ou ouvrir l'annuaire aux familles pour la vie scolaire).
+  SECRETARY/VIE_SCOLAIRE/ACCOUNTANT → personnel seulement. L'annuaire correspond **exactement**
+  à ce que la création accepte (test de concordance `MessagingRecipientsTest`) : l'ancien
+  écart — une famille visée par son id acceptée pour ces trois rôles — est fermé par
+  `FAMILY_MESSAGING_NOT_ALLOWED`. Recherche : jokers LIKE (`%`, `_`, `\`) échappés
+  (`ESCAPE '\'`), terme tronqué à 100 caractères.
 - **Parents et élèves en lecture seule : décision d'Oumar, provisoire.** À rouvrir quand
   l'écran messagerie parent du mobile sera construit (le cahier des charges prévoit la
   messagerie côté parent) : il faudra alors décider à qui un parent peut écrire.

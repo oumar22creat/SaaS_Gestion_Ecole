@@ -2,6 +2,7 @@ package com.schoolsaas.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -26,24 +27,30 @@ import com.schoolsaas.subject.Subject;
 import com.schoolsaas.subject.SubjectRepository;
 import com.schoolsaas.teacher.Teacher;
 import com.schoolsaas.teacher.TeacherRepository;
+import com.schoolsaas.teacher.TeacherScope;
 import com.schoolsaas.tenant.Tenant;
 import com.schoolsaas.tenant.TenantRepository;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
  * Annuaire de la messagerie — {@code GET /api/v1/conversations/recipients} (ADR-019) :
  * liste par rôle, aucun e-mail/téléphone, familles refusées, comptes inactifs et appelant
- * exclus, isolation entre établissements, recherche et pagination.
+ * exclus, isolation entre établissements, recherche et pagination ; concordance entre
+ * l'annuaire et ce que {@code POST /api/v1/conversations} accepte (écriture aux familles
+ * réservée à ADMIN/DIRECTION et à l'enseignant dans son périmètre).
  */
 class MessagingRecipientsTest extends AbstractIntegrationTest {
 
     private static final String URL = "/api/v1/conversations/recipients";
+    private static final String CONVERSATIONS = "/api/v1/conversations";
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
@@ -195,7 +202,80 @@ class MessagingRecipientsTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.meta.total").value(5));
     }
 
+    @Test
+    void searchTreatsLikeWildcardsLiterally() throws Exception {
+        for (String wildcard : new String[] {"%", "_", "\\"}) {
+            mockMvc.perform(get(URL).param("search", wildcard).header("Authorization", "Bearer " + token(admin)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.meta.total").value(0));
+        }
+    }
+
+    @Test
+    void searchTermIsTruncatedAndEscaped() {
+        assertThat(MessagingService.searchTerm(null)).isEmpty();
+        assertThat(MessagingService.searchTerm("  a%b_c\\d  ")).isEqualTo("a\\%b\\_c\\\\d");
+        assertThat(MessagingService.searchTerm("x".repeat(500))).hasSize(MessagingService.MAX_SEARCH_LENGTH);
+    }
+
+    // --- concordance annuaire / création ----------------------------------------------
+
+    @Test
+    void secretaryVieScolaireAndAccountantCannotWriteToFamilies() throws Exception {
+        for (User caller : new User[] {secretary, vieScolaire, accountant}) {
+            String bearer = "Bearer " + token(caller);
+            for (User family : new User[] {parentMine, studentOther}) {
+                mockMvc.perform(post(CONVERSATIONS).header("Authorization", bearer)
+                                .contentType(MediaType.APPLICATION_JSON).content(conversation(family.getId())))
+                        .andExpect(status().isForbidden())
+                        .andExpect(jsonPath("$.error.code").value("FAMILY_MESSAGING_NOT_ALLOWED"));
+            }
+            // Une famille glissée parmi du personnel suffit à refuser toute la conversation.
+            mockMvc.perform(post(CONVERSATIONS).header("Authorization", bearer)
+                            .contentType(MediaType.APPLICATION_JSON).content(conversation(admin.getId(), parentMine.getId())))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.error.code").value("FAMILY_MESSAGING_NOT_ALLOWED"));
+            mockMvc.perform(post(CONVERSATIONS).header("Authorization", bearer)
+                            .contentType(MediaType.APPLICATION_JSON).content(conversation(admin.getId(), teacher.getId())))
+                    .andExpect(status().isCreated());
+        }
+    }
+
+    @Test
+    void everyRecipientListedForAStaffRoleIsAcceptedByCreation() throws Exception {
+        for (User caller : new User[] {admin, direction, teacher, secretary, vieScolaire, accountant}) {
+            String bearer = "Bearer " + token(caller);
+            for (Long id : recipientIds(caller)) {
+                mockMvc.perform(post(CONVERSATIONS).header("Authorization", bearer)
+                                .contentType(MediaType.APPLICATION_JSON).content(conversation(id)))
+                        .andExpect(status().isCreated());
+            }
+        }
+    }
+
+    @Test
+    void aTeacherCanWriteToTheListedRecipientsButNotToAFamilyOutsideTheList() throws Exception {
+        Set<Long> listed = recipientIds(teacher);
+        String bearer = "Bearer " + token(teacher);
+        mockMvc.perform(post(CONVERSATIONS).header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON).content(conversation(listed.toArray(Long[]::new))))
+                .andExpect(status().isCreated());
+
+        assertThat(listed).doesNotContain(parentOther.getId(), studentOther.getId());
+        for (User outside : new User[] {parentOther, studentOther}) {
+            mockMvc.perform(post(CONVERSATIONS).header("Authorization", bearer)
+                            .contentType(MediaType.APPLICATION_JSON).content(conversation(parentMine.getId(), outside.getId())))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.error.code").value(TeacherScope.DENIED_CODE));
+        }
+    }
+
     // --- outils -------------------------------------------------------------------------
+
+    private static String conversation(Long... participantIds) {
+        String ids = java.util.Arrays.stream(participantIds).map(String::valueOf).collect(Collectors.joining(","));
+        return "{\"title\":\"Sujet\",\"announcement\":false,\"participantUserIds\":[" + ids + "]}";
+    }
 
     private Set<Long> recipientIds(User caller) throws Exception {
         String body = mockMvc.perform(get(URL).param("size", "200").header("Authorization", "Bearer " + token(caller)))

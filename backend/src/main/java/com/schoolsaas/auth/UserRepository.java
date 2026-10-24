@@ -32,8 +32,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE u.active = true
               AND u.id <> :selfId
               AND (u.role IN :roles OR u.id IN :extraIds)
-              AND (LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :term, '%'))
-                OR LOWER(CONCAT(u.lastName, ' ', u.firstName)) LIKE LOWER(CONCAT('%', :term, '%')))
+              AND (LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :term, '%')) ESCAPE '\\'
+                OR LOWER(CONCAT(u.lastName, ' ', u.firstName)) LIKE LOWER(CONCAT('%', :term, '%')) ESCAPE '\\')
             ORDER BY LOWER(u.lastName), LOWER(u.firstName), u.id
             """,
             countQuery = """
@@ -41,8 +41,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE u.active = true
               AND u.id <> :selfId
               AND (u.role IN :roles OR u.id IN :extraIds)
-              AND (LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :term, '%'))
-                OR LOWER(CONCAT(u.lastName, ' ', u.firstName)) LIKE LOWER(CONCAT('%', :term, '%')))
+              AND (LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :term, '%')) ESCAPE '\\'
+                OR LOWER(CONCAT(u.lastName, ' ', u.firstName)) LIKE LOWER(CONCAT('%', :term, '%')) ESCAPE '\\')
             """)
     Page<User> findMessagingRecipients(
             @Param("selfId") Long selfId,

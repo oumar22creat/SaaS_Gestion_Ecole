@@ -27,7 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>Règles de rôle (docs/ARCHITECTURE.md ADR-019, complété) : seul le personnel ouvre une
  * conversation ou y écrit ; seules l'administration et la direction diffusent une annonce, et
  * seules elles écrivent dans une annonce — sinon n'importe quel destinataire y répondrait à
- * tout l'établissement. Les comptes famille (PARENT/STUDENT) restent destinataires des
+ * tout l'établissement. Seuls ADMIN, DIRECTION et TEACHER (dans son périmètre) ouvrent une
+ * conversation avec un compte famille. Les comptes famille (PARENT/STUDENT) restent destinataires des
  * annonces et peuvent les LIRE. Vérifié ici, sur le rôle en base, et pas seulement par le
  * {@code @PreAuthorize} du contrôleur : la règle tient quel que soit l'appelant.
  */
@@ -40,6 +41,19 @@ public class MessagingService {
 
     /** Rôles qui engagent l'établissement auprès de tous ses usagers. */
     static final Set<Role> ANNOUNCER_ROLES = EnumSet.of(Role.ADMIN, Role.DIRECTION);
+
+    /** Comptes famille : destinataires possibles, jamais auteurs (ADR-019). */
+    static final Set<Role> FAMILY_ROLES = EnumSet.of(Role.PARENT, Role.STUDENT);
+
+    /**
+     * Rôles autorisés à ouvrir une conversation avec un compte famille (ADR-019, décision
+     * d'Oumar) : la direction, et l'enseignant dans son périmètre (TeacherScope). Le reste du
+     * personnel (secrétariat, vie scolaire, comptabilité) n'écrit qu'au personnel.
+     */
+    static final Set<Role> FAMILY_WRITER_ROLES = EnumSet.of(Role.ADMIN, Role.DIRECTION, Role.TEACHER);
+
+    /** Longueur maximale du terme de recherche de l'annuaire (au-delà, tronqué). */
+    static final int MAX_SEARCH_LENGTH = 100;
 
     /**
      * Plafond de destinataires d'une conversation ordinaire (créateur non compté) : la taille
@@ -105,10 +119,11 @@ public class MessagingService {
      *   <li>ADMIN / DIRECTION : tout compte actif (personnel et familles) ;</li>
      *   <li>TEACHER : le personnel + les familles de ses classes (même définition que
      *       {@link TeacherScope#requireReachableFamilies}) ;</li>
-     *   <li>SECRETARY / VIE_SCOLAIRE / ACCOUNTANT : le personnel seulement (décision d'Oumar
-     *       pour l'annuaire ; le serveur, lui, ne leur interdit pas encore d'écrire à une
-     *       famille dont ils connaissent l'id — point ouvert, voir ADR-019).</li>
+     *   <li>SECRETARY / VIE_SCOLAIRE / ACCOUNTANT : le personnel seulement — la création leur
+     *       refuse tout compte famille ({@code 403 FAMILY_MESSAGING_NOT_ALLOWED}).</li>
      * </ul>
+     * L'annuaire correspond donc exactement à ce que la création accepte. Recherche sur le nom,
+     * jokers LIKE neutralisés, terme tronqué à {@link #MAX_SEARCH_LENGTH} caractères.
      * Familles (PARENT/STUDENT) : refus {@code 403 MESSAGING_NOT_ALLOWED}.
      */
     public Page<User> listRecipients(Long callerUserId, String search, Pageable pageable) {
@@ -128,8 +143,20 @@ public class MessagingService {
         if (extraIds.isEmpty()) {
             extraIds = Set.of(-1L);
         }
+        return userRepository.findMessagingRecipients(callerUserId, roles, extraIds, searchTerm(search), pageable);
+    }
+
+    /**
+     * Terme de recherche de l'annuaire : rogné, tronqué à {@link #MAX_SEARCH_LENGTH}, jokers
+     * LIKE (antislash, {@code %}, {@code _}) échappés par un antislash — la requête déclare
+     * {@code ESCAPE}. Sans cela, « % » ou « _ » saisis renvoyaient tout l'annuaire.
+     */
+    static String searchTerm(String search) {
         String term = search == null ? "" : search.trim();
-        return userRepository.findMessagingRecipients(callerUserId, roles, extraIds, term, pageable);
+        if (term.length() > MAX_SEARCH_LENGTH) {
+            term = term.substring(0, MAX_SEARCH_LENGTH);
+        }
+        return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     public Conversation getConversationForParticipant(Long conversationId, Long callerUserId) {
@@ -205,8 +232,9 @@ public class MessagingService {
     /**
      * Destinataires d'une conversation ordinaire : dédupliqués (un doublon violait la
      * contrainte UNIQUE et finissait en erreur 500), plafonnés à {@link #MAX_RECIPIENTS},
-     * chargés en une requête, tous existants et actifs ; pour un enseignant, les comptes
-     * famille doivent relever de ses classes (TeacherScope). Le créateur est ajouté à la fin.
+     * chargés en une requête, tous existants et actifs. Comptes famille : réservés à
+     * ADMIN/DIRECTION et à l'enseignant ({@link #FAMILY_WRITER_ROLES}), et pour ce dernier,
+     * limités à ses classes (TeacherScope). Le créateur est ajouté à la fin.
      */
     private List<Long> validatedParticipants(List<Long> requested, Long creatorUserId, Role creatorRole) {
         Set<Long> recipients = new LinkedHashSet<>(requested == null ? List.of() : requested);
@@ -230,6 +258,14 @@ public class MessagingService {
         List<Long> inactive = users.stream().filter(u -> !u.isActive()).map(User::getId).toList();
         if (!inactive.isEmpty()) {
             throw ApiException.unprocessable("USER_INACTIVE", "Compte désactivé : " + inactive);
+        }
+        if (!FAMILY_WRITER_ROLES.contains(creatorRole)) {
+            List<Long> families = users.stream().filter(u -> FAMILY_ROLES.contains(u.getRole())).map(User::getId).toList();
+            if (!families.isEmpty()) {
+                throw ApiException.forbidden(
+                        "FAMILY_MESSAGING_NOT_ALLOWED",
+                        "Seuls la direction et les enseignants peuvent écrire à un parent ou un élève : " + families);
+            }
         }
         if (creatorRole == Role.TEACHER) {
             teacherScope.requireReachableFamilies(users);

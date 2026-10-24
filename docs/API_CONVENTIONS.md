@@ -33,11 +33,14 @@
   via `TeacherScope`.
 - `403 MESSAGING_NOT_ALLOWED` / `403 ANNOUNCEMENT_NOT_ALLOWED` : écriture dans la messagerie
   par un compte famille, ou annonce par un rôle autre qu'ADMIN/DIRECTION (ADR-019).
+- `403 FAMILY_MESSAGING_NOT_ALLOWED` : conversation visant un compte PARENT ou STUDENT ouverte
+  par un rôle autre qu'ADMIN/DIRECTION/TEACHER (secrétariat, vie scolaire, comptabilité) ;
+  l'enseignant reste, lui, borné à ses classes (`OUT_OF_TEACHER_SCOPE`) (ADR-019).
 - `422 TOO_MANY_RECIPIENTS` / `422 USER_INACTIVE` : conversation de plus de 30 destinataires,
   ou destinataire désactivé (ADR-019).
 
 - `GET /api/v1/conversations/recipients` : annuaire de la messagerie, rôles du personnel
-  seulement (familles → `403`). Ne renvoie ni e-mail ni téléphone — règle générale : un
+  seulement (familles → `403`), contenu identique à ce que la création accepte. Ne renvoie ni e-mail ni téléphone — règle générale : un
   annuaire ouvert au-delà de l'administration n'expose que l'identité et le rôle (ADR-019).
 
 ## Pagination

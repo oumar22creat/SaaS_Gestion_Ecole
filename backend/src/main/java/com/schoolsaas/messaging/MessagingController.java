@@ -1,6 +1,7 @@
 package com.schoolsaas.messaging;
 
 import com.schoolsaas.auth.AuthenticatedPrincipal;
+import com.schoolsaas.auth.User;
 import com.schoolsaas.common.ApiException;
 import com.schoolsaas.common.PagedList;
 import com.schoolsaas.common.ApiResponse;
@@ -8,9 +9,11 @@ import com.schoolsaas.messaging.dto.ConversationCreateRequest;
 import com.schoolsaas.messaging.dto.ConversationResponse;
 import com.schoolsaas.messaging.dto.MessageCreateRequest;
 import com.schoolsaas.messaging.dto.MessageResponse;
+import com.schoolsaas.messaging.dto.RecipientResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -67,6 +70,28 @@ public class MessagingController {
         return PagedList.response(PagedList.of(
                 messagingService.listForUser(currentUserId()).stream().map(this::toResponse).toList(),
                 pageable));
+    }
+
+    /** Taille de page maximale de l'annuaire (le sélecteur web en demande 200). */
+    static final int MAX_RECIPIENTS_PAGE_SIZE = 200;
+
+    /**
+     * Annuaire des destinataires possibles (ADR-019) : personnel seulement, sans e-mail ni
+     * téléphone. Recherche optionnelle {@code search} sur le nom, pagination {@code page}/
+     * {@code size} (tri fixe par nom, taille plafonnée). Chemin littéral : prioritaire sur
+     * {@code /{id}}.
+     */
+    @GetMapping("/recipients")
+    @PreAuthorize(STAFF_ROLES)
+    public ApiResponse<List<RecipientResponse>> recipients(
+            @RequestParam(required = false) String search, Pageable pageable) {
+        Pageable bounded = PageRequest.of(
+                pageable.isPaged() ? pageable.getPageNumber() : 0,
+                pageable.isPaged() ? Math.min(pageable.getPageSize(), MAX_RECIPIENTS_PAGE_SIZE) : MAX_RECIPIENTS_PAGE_SIZE);
+        Page<User> page = messagingService.listRecipients(currentUserId(), search, bounded);
+        return ApiResponse.of(
+                page.map(RecipientResponse::from).getContent(),
+                new ApiResponse.PageMeta(page.getNumber() + 1, page.getSize(), page.getTotalElements()));
     }
 
     @GetMapping("/{id}")

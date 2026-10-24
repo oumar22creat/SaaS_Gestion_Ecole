@@ -36,6 +36,10 @@
 - `422 TOO_MANY_RECIPIENTS` / `422 USER_INACTIVE` : conversation de plus de 30 destinataires,
   ou destinataire désactivé (ADR-019).
 
+- `GET /api/v1/conversations/recipients` : annuaire de la messagerie, rôles du personnel
+  seulement (familles → `403`). Ne renvoie ni e-mail ni téléphone — règle générale : un
+  annuaire ouvert au-delà de l'administration n'expose que l'identité et le rôle (ADR-019).
+
 ## Pagination
 - Paramètres query : `?page=1&pageSize=20`
 - Toujours paginer les listes potentiellement longues (élèves, notes, messages).

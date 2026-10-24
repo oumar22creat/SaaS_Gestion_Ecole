@@ -488,6 +488,20 @@ répondre à l'établissement entier. Désormais, vérifié par `@PreAuthorize` 
   les comptes. Pour un **enseignant**, les comptes famille visés doivent relever de ses
   classes (`TeacherScope.requireReachableFamilies` : élève d'une classe du périmètre, parent
   d'au moins un tel élève), sinon `403 OUT_OF_TEACHER_SCOPE`.
+- **Annuaire des destinataires** (`GET /api/v1/conversations/recipients`, décision d'Oumar) :
+  la liste vient auparavant de `GET /users`, réservé à ADMIN/DIRECTION — les autres rôles du
+  personnel avaient le droit de créer une conversation mais aucun destinataire à choisir.
+  Lecture seule, rôles du personnel (familles → `403`), comptes **actifs** du tenant (filtre
+  Hibernate + RLS), appelant exclu ; chaque entrée = `id`, `firstName`, `lastName`,
+  `displayName`, `role` — **jamais d'e-mail ni de téléphone**. Recherche `search` (nom,
+  insensible à la casse), pagination `page`/`size` (tri fixe par nom, 200 au plus par page).
+  Contenu aligné sur ce que la création accepte : ADMIN/DIRECTION → tout compte actif
+  (personnel et familles) ; TEACHER → personnel + familles de ses classes
+  (`TeacherScope.reachableFamilyAccountIds`, même définition que `requireReachableFamilies`) ;
+  SECRETARY/VIE_SCOLAIRE/ACCOUNTANT → personnel seulement. **Point ouvert** : pour ces trois
+  rôles, `createConversation` n'interdit pas encore une famille visée par son id (aucune
+  règle de périmètre) ; l'annuaire ne la propose pas, mais l'écart serveur reste à trancher
+  (resserrer le serveur, ou ouvrir l'annuaire aux familles pour la vie scolaire).
 - **Parents et élèves en lecture seule : décision d'Oumar, provisoire.** À rouvrir quand
   l'écran messagerie parent du mobile sera construit (le cahier des charges prévoit la
   messagerie côté parent) : il faudra alors décider à qui un parent peut écrire.

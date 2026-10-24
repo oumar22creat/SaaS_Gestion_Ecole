@@ -239,6 +239,34 @@ public class TeacherScope {
         });
     }
 
+    /**
+     * Annuaire de messagerie : ids des comptes famille qu'un enseignant peut viser, avec la
+     * même définition que {@link #requireReachableFamilies} — compte ÉLÈVE d'une fiche élève
+     * d'une classe du périmètre, compte PARENT d'une fiche parent liée à au moins un tel élève.
+     * Vide si l'utilisateur courant n'est pas restreint (non-enseignant) : l'appelant décide
+     * alors seul. Trois requêtes au plus.
+     */
+    public Optional<Set<Long>> reachableFamilyAccountIds() {
+        return currentPerimeter().map(p -> {
+            if (p.classIds().isEmpty()) {
+                return Set.<Long>of();
+            }
+            List<Student> students = studentRepository.findAllBySchoolClassIdIn(p.classIds());
+            Set<Long> accounts = new HashSet<>();
+            students.stream().map(Student::getUserId).filter(java.util.Objects::nonNull).forEach(accounts::add);
+            if (!students.isEmpty()) {
+                Set<Long> parentIds = studentParentRepository
+                        .findAllByStudentIdIn(students.stream().map(Student::getId).collect(Collectors.toSet()))
+                        .stream().map(StudentParent::getParentId).collect(Collectors.toSet());
+                if (!parentIds.isEmpty()) {
+                    parentRepository.findAllById(parentIds).stream()
+                            .map(Parent::getUserId).filter(java.util.Objects::nonNull).forEach(accounts::add);
+                }
+            }
+            return Set.copyOf(accounts);
+        });
+    }
+
     /** Un enseignant ne consulte que son propre emploi du temps. */
     public void requireOwnTeacher(Long teacherId) {
         currentPerimeter().ifPresent(p -> {

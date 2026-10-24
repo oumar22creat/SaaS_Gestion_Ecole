@@ -47,6 +47,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     List<Student> findAllBySchoolClassId(Long schoolClassId);
 
+    /** Toutes les fiches d'un ensemble de classes (annuaire de messagerie d'un enseignant). */
+    List<Student> findAllBySchoolClassIdIn(Collection<Long> schoolClassIds);
+
     long countByActiveTrue();
 
     /** Fiche rattachée à un compte de connexion (portail parent/élève). */

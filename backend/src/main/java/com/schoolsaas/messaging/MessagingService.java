@@ -97,6 +97,41 @@ public class MessagingService {
         return conversation;
     }
 
+    /**
+     * Annuaire des destinataires possibles d'une conversation ordinaire (ADR-019, annuaire) :
+     * comptes actifs du tenant, appelant exclu, alignés sur ce que {@link #createConversation}
+     * accepte de chaque rôle.
+     * <ul>
+     *   <li>ADMIN / DIRECTION : tout compte actif (personnel et familles) ;</li>
+     *   <li>TEACHER : le personnel + les familles de ses classes (même définition que
+     *       {@link TeacherScope#requireReachableFamilies}) ;</li>
+     *   <li>SECRETARY / VIE_SCOLAIRE / ACCOUNTANT : le personnel seulement (décision d'Oumar
+     *       pour l'annuaire ; le serveur, lui, ne leur interdit pas encore d'écrire à une
+     *       famille dont ils connaissent l'id — point ouvert, voir ADR-019).</li>
+     * </ul>
+     * Familles (PARENT/STUDENT) : refus {@code 403 MESSAGING_NOT_ALLOWED}.
+     */
+    public Page<User> listRecipients(Long callerUserId, String search, Pageable pageable) {
+        Role callerRole = roleOf(callerUserId);
+        if (!STAFF_ROLES.contains(callerRole)) {
+            throw ApiException.forbidden("MESSAGING_NOT_ALLOWED", "La messagerie est réservée au personnel de l'établissement");
+        }
+        Set<Role> roles = EnumSet.copyOf(STAFF_ROLES);
+        Set<Long> extraIds = Set.of();
+        if (ANNOUNCER_ROLES.contains(callerRole)) {
+            roles.add(Role.PARENT);
+            roles.add(Role.STUDENT);
+        } else if (callerRole == Role.TEACHER) {
+            extraIds = teacherScope.reachableFamilyAccountIds().orElse(Set.of());
+        }
+        // IN () vide : rejeté par certaines versions de Hibernate/PostgreSQL ; -1 ne désigne aucun compte.
+        if (extraIds.isEmpty()) {
+            extraIds = Set.of(-1L);
+        }
+        String term = search == null ? "" : search.trim();
+        return userRepository.findMessagingRecipients(callerUserId, roles, extraIds, term, pageable);
+    }
+
     public Conversation getConversationForParticipant(Long conversationId, Long callerUserId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> ApiException.notFound("CONVERSATION_NOT_FOUND", "Conversation introuvable"));

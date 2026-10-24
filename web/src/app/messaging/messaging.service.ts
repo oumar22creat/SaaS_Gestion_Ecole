@@ -24,13 +24,20 @@ export interface Message {
   createdAt: string;
 }
 
-export interface StaffUser {
+/**
+ * Entrée de l'annuaire de messagerie (`GET /conversations/recipients`, ADR-019) : identité
+ * et rôle seulement, jamais d'e-mail ni de téléphone.
+ */
+export interface Recipient {
   id: number;
-  email: string;
   firstName: string;
   lastName: string;
+  displayName: string;
   role: string;
 }
+
+/** Plafond serveur d'une conversation ordinaire (`MessagingService.MAX_RECIPIENTS`). */
+export const MAX_RECIPIENTS = 30;
 
 @Injectable({ providedIn: 'root' })
 export class MessagingService {
@@ -82,10 +89,16 @@ export class MessagingService {
     await firstValueFrom(this.http.post(`${environment.apiUrl}/conversations/${id}/read`, {}));
   }
 
-  async listUsers(): Promise<StaffUser[]> {
+  /**
+   * Destinataires possibles pour le compte connecté, déjà filtrés par le serveur selon son
+   * rôle (personnel ; familles de ses classes pour un enseignant ; tout compte pour la
+   * direction). Recherche facultative sur le nom.
+   */
+  async listRecipients(search = ''): Promise<Recipient[]> {
+    const term = search.trim();
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<StaffUser[]>>(`${environment.apiUrl}/users`, {
-        params: PARAMS_REFERENTIEL,
+      this.http.get<ApiResponse<Recipient[]>>(`${environment.apiUrl}/conversations/recipients`, {
+        params: term ? { ...PARAMS_REFERENTIEL, search: term } : PARAMS_REFERENTIEL,
       }),
     );
     return response.data;

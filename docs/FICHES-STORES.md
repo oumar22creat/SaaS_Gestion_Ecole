@@ -387,17 +387,22 @@ backend oublie leur jeton de lui-même.
 
 ### Numéro de version
 
-`versionCode` vaut **2** et `versionName` **1.0**, dans `mobile/android/app/build.gradle`.
-Le `versionCode` 1 est celui du bundle du 22/10/2026 ; le 2 est réservé à la livraison
-suivante (retrait fiable du jeton push à la déconnexion, voir `docs/NOTIFICATIONS-PUSH.md` §8).
+`versionCode` vaut **3** et `versionName` **1.0**, dans `mobile/android/app/build.gradle`.
+- 1 : bundle du 22/10/2026.
+- 2 : retrait fiable du jeton push à la déconnexion (voir `docs/NOTIFICATIONS-PUSH.md` §8).
+- 3 : écran emploi du temps des enseignants corrigé, envoyé en examen (test fermé) le 24/10/2026.
+
 Play refuse un `versionCode` déjà téléversé : l'incrémenter avant chaque nouveau bundle.
 
 ### Versions iOS
 
 - **1.0 (build 35)** : publiée le 22/10/2026.
-- **1.0.1 (build 40)** : correctif du jeton push à la déconnexion, envoyée en examen le
-  23/10/2026. Disponibilité étendue le même jour à 174 pays et régions (tous sauf la Chine
-  continentale, qui exige une licence ICP).
+- **1.0.1 (build 43)** : correctif du jeton push à la déconnexion et de l'écran emploi du
+  temps des enseignants. Le build 40, envoyé en examen le 23/10/2026, a été retiré et
+  remplacé par le build 43 le 24/10/2026 ; approuvée puis publiée le 25/10/2026.
+  Disponibilité : 174 pays et régions (tous sauf la Chine continentale, qui exige une
+  licence ICP).
+- La prochaine livraison iOS doit porter `MARKETING_VERSION` **1.0.2**.
 
 Les builds iOS sont produits par GitHub Actions (`.github/workflows/ios.yml`, lancement manuel
 avec « publier ») : le numéro de build y est **le numéro d'exécution du workflow**

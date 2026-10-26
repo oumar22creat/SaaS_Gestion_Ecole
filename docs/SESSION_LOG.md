@@ -15,6 +15,33 @@ Format d'une entrée :
 
 ---
 
+## [2026-10-23 → 26] — Refonte du site, failles de sécurité, livraisons mobiles
+**Tâche(s) réalisée(s) :**
+- Site vitrine refait (8 pages, fond clair) et mis en ligne, avec une politique de confidentialité corrigée (Firebase) et le badge App Store officiel.
+- Failles corrigées côté serveur :
+  - périmètre enseignant (élèves, discipline, détail de classe) ;
+  - bulletins réservés au professeur principal ;
+  - messagerie : personnel seulement, annonces à la direction, 30 destinataires maximum ;
+  - jeton push retiré à la déconnexion.
+- Lecture du périmètre enseignant (`GET /me/teaching-scope`, ADR-030) et boutons web masqués pour les enseignants.
+- Libellés joints aux créneaux : l'emploi du temps mobile n'appelle plus `/teachers`.
+- Annuaire de la messagerie (`GET /conversations/recipients`) : nouvelle conversation pour tout le personnel.
+- Écrire à une famille est réservé à ADMIN/DIRECTION et à TEACHER (dans son périmètre) : 403 `FAMILY_MESSAGING_NOT_ALLOWED` pour les autres.
+- iOS 1.0.1 (build 43) publiée le 25/10. Android versionCode 3 en examen (test fermé).
+- Communication : 3 publications Facebook programmées (semaine 1).
+
+**Décisions prises (et pourquoi) :**
+- Option (a) d'Oumar : SECRETARY, VIE_SCOLAIRE et ACCOUNTANT n'ouvrent pas de conversation avec une famille. Ils peuvent toujours répondre dans un fil existant où la direction les a inclus (choix d'Oumar : « laisse comme ça »). Ainsi l'annuaire correspond exactement à ce que la création accepte.
+- iOS option B : le build 40 a été retiré de l'examen et remplacé par le 43, pour livrer le correctif de l'emploi du temps sans attendre une autre version.
+
+**Problèmes rencontrés / points de vigilance :**
+- Une version iOS publiée est fermée : la prochaine doit porter `MARKETING_VERSION` 1.0.2.
+- Les déploiements en production demandent un accord explicite d'Oumar à chaque fois.
+- `CorsTest` est parfois instable dans la suite complète (limite de débit Redis).
+- Avant une deuxième vraie école, il faut une migration qui normalise les e-mails, avec index unique.
+
+**Prochaine étape :** Suivre l'examen Android v3 et atteindre 12 testeurs inscrits pendant 14 jours. Faire tester le compte enseignant de démo sur mobile.
+
 ## [2026-10-22] — Google Play : test fermé envoyé en examen
 **Tâche(s) réalisée(s) :** Badge App Store sur la page vitrine (non déployé). Application
 « School Manager » créée sur Play Console (compte personnel Logilab), paquet

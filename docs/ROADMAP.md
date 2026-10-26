@@ -162,6 +162,10 @@ un test de régression qui échoue sans le correctif.
 - [x] Pièces jointes (référencent le module 2.2)
 - [x] Confirmation de lecture
 - [x] Historique et recherche des conversations
+- [x] Annuaire des destinataires (`GET /conversations/recipients`), conforme aux règles de
+      création — 26/10/2026
+- [x] Écrire aux familles réservé à la direction et aux enseignants (dans leur périmètre) ;
+      secrétariat, vie scolaire et comptabilité limités au personnel (ADR-019) — 26/10/2026
 
 ### 2.5 Notifications (infrastructure)
 - [x] Registre centralisé des événements de notification (`NotificationType`,
@@ -296,8 +300,20 @@ Hors périmètre inchangé : QR/NFC, reçus PDF, mobile money gateway, portail p
 ## Publication sur les stores
 
 - [x] Publication sur l'App Store iOS (version 1.0, build 35, le 22/10/2026)
-- [ ] Publication sur Google Play Android — test fermé « Alpha » envoyé en examen le 22/10/2026 ;
-      production après 12 testeurs inscrits pendant 14 jours (compte personnel)
+- [x] Mise à jour iOS 1.0.1 (build 43) : jeton push à la déconnexion, emploi du temps
+      enseignant — publiée le 25/10/2026 dans 174 pays
+- [ ] Publication sur Google Play Android — test fermé « Alpha » : v1 et v2 approuvées,
+      v3 (versionCode 3, emploi du temps) en examen depuis le 24/10/2026 ; production après
+      12 testeurs inscrits pendant 14 jours (compte personnel)
+
+## Sécurité et dette technique (hors phases)
+
+- [x] Périmètre enseignant contrôlé côté serveur (élèves, discipline, classes, bulletins,
+      messagerie) et lecture `GET /me/teaching-scope` (ADR-030) — 24/10/2026
+- [x] Site vitrine refait (8 pages) et politique de confidentialité corrigée — 23/10/2026
+- [ ] Migration de normalisation des e-mails + index unique (avant une deuxième école réelle)
+- [ ] Stabiliser `CorsTest` dans la suite complète (limite de débit Redis)
+- [ ] Limiter à 100 caractères la recherche dans les messages, comme pour l'annuaire
 
 ---
 

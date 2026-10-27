@@ -12,7 +12,7 @@ export interface PlatformSummary {
   cancelledCount: number;
   mrrCents: number;
   arrCents: number;
-  currency: string;
+  currency: string | null;
   churnRate: number | null;
   conversionRate: number | null;
   notificationsSentCount: number;

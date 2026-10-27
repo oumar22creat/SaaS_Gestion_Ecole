@@ -387,10 +387,11 @@ backend oublie leur jeton de lui-même.
 
 ### Numéro de version
 
-`versionCode` vaut **3** et `versionName` **1.0**, dans `mobile/android/app/build.gradle`.
+`versionCode` vaut **4** et `versionName` **1.0.2** (aligné sur iOS depuis le 27/10/2026), dans `mobile/android/app/build.gradle`.
 - 1 : bundle du 22/10/2026.
 - 2 : retrait fiable du jeton push à la déconnexion (voir `docs/NOTIFICATIONS-PUSH.md` §8).
-- 3 : écran emploi du temps des enseignants corrigé, envoyé en examen (test fermé) le 24/10/2026.
+- 3 : écran emploi du temps des enseignants corrigé, approuvé dans le test fermé.
+- 4 (1.0.2) : montants affichés en FCFA, envoyé en examen (test fermé) le 27/10/2026.
 
 Play refuse un `versionCode` déjà téléversé : l'incrémenter avant chaque nouveau bundle.
 
@@ -402,7 +403,8 @@ Play refuse un `versionCode` déjà téléversé : l'incrémenter avant chaque n
   remplacé par le build 43 le 24/10/2026 ; approuvée puis publiée le 25/10/2026.
   Disponibilité : 174 pays et régions (tous sauf la Chine continentale, qui exige une
   licence ICP).
-- La prochaine livraison iOS doit porter `MARKETING_VERSION` **1.0.2**.
+- **1.0.2 (build 46)** : montants affichés en FCFA, envoyée en examen le 27/10/2026.
+- La prochaine livraison iOS doit porter `MARKETING_VERSION` **1.0.3**.
 
 Les builds iOS sont produits par GitHub Actions (`.github/workflows/ios.yml`, lancement manuel
 avec « publier ») : le numéro de build y est **le numéro d'exécution du workflow**

@@ -71,7 +71,7 @@ export interface ScheduleEditDialogData {
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Montant par élève (XOF)</mat-label>
+            <mat-label>Montant par élève (FCFA)</mat-label>
             <input matInput type="number" formControlName="amountCents" />
             <mat-hint>
               Actuellement {{ money(data.schedule.amountCents) }}. Le changer corrige aussi

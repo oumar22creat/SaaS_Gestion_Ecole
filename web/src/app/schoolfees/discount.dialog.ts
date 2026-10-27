@@ -48,7 +48,7 @@ export interface DiscountDialogData {
         </p>
 
         <mat-form-field appearance="outline">
-          <mat-label>Montant de la remise (XOF)</mat-label>
+          <mat-label>Montant de la remise (FCFA)</mat-label>
           <input matInput type="number" formControlName="amountCents" />
           <mat-hint>
             Reste à la charge de la famille : {{ money(remainingAfterDiscount()) }}. Zéro

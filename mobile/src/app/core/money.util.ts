@@ -4,9 +4,19 @@
  * ISO : la même somme doit se lire de la même façon sur le portail de la famille et sur l'écran
  * du comptable.
  */
-const CURRENCY_LABELS: Record<string, string> = { XOF: 'FCFA' };
+export function formatMoney(amountCents: number, currency: string | null | undefined = 'XOF'): string {
+  return `${new Intl.NumberFormat('fr-FR').format(amountCents)} ${currencyLabel(currency)}`;
+}
 
-export function formatMoney(amountCents: number, currency = 'XOF'): string {
-  const label = CURRENCY_LABELS[currency] ?? currency;
-  return `${new Intl.NumberFormat('fr-FR').format(amountCents)} ${label}`;
+/**
+ * Libellé affiché pour un code devise ISO 4217, aligné sur le web et le backend : devise absente
+ * ou vide → FCFA (devise par défaut des écoles), XOF quelle que soit la casse → FCFA, tout autre
+ * code affiché tel quel en majuscules.
+ */
+export function currencyLabel(currency: string | null | undefined): string {
+  const code = (currency ?? '').trim().toUpperCase();
+  if (code === '' || code === 'XOF') {
+    return 'FCFA';
+  }
+  return code;
 }

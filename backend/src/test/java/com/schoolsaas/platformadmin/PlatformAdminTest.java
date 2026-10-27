@@ -231,7 +231,9 @@ class PlatformAdminTest extends AbstractIntegrationTest {
         assertThat(actionRepository.findAllByTenantIdOrderByCreatedAtDesc(tenant.getId()))
                 .anyMatch(action -> action.getAction().equals("CASH_PAYMENT_RECORDED")
                         && action.getDetail().contains("12 mois")
-                        && action.getDetail().contains(String.valueOf(plan.getPriceCents() * 12)));
+                        // Montant lisible « 1 200 000 FCFA » : le code ISO XOF ne s'affiche pas.
+                        && action.getDetail().contains(com.schoolsaas.common.MoneyFormat.format(
+                                (long) plan.getPriceCents() * 12, plan.getCurrency())));
     }
 
     /** Régler en avance ne doit pas faire perdre les jours déjà payés. */

@@ -219,6 +219,6 @@ class SmsTest extends AbstractIntegrationTest {
                 .filter(sms -> sms.getRecipient().equals("+22376000004"))
                 .toList();
         assertThat(sent).hasSize(1);
-        assertThat(sent.getFirst().getBody()).contains("Ibrahim Cissé").contains("2 échéances").contains("100 000 XOF");
+        assertThat(sent.getFirst().getBody()).contains("Ibrahim Cissé").contains("2 échéances").contains("100 000 FCFA");
     }
 }

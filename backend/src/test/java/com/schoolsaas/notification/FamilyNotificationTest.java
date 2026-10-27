@@ -143,6 +143,44 @@ class FamilyNotificationTest extends AbstractIntegrationTest {
         verifyNoMoreInteractions(notificationGateway);
     }
 
+    /**
+     * Le reçu de règlement poussé à la famille affiche « FCFA » (libellé compris au Mali),
+     * jamais le code ISO XOF qui reste stocké en base et échangé avec les opérateurs.
+     */
+    @Test
+    void sendsThePaymentReceiptInFcfa() throws Exception {
+        String echeance = mockMvc.perform(post("/api/v1/school-fees/schedules")
+                        .header("Authorization", "Bearer " + jetonAdmin)
+                        .header(TenantResolver.TENANT_HEADER, tenant.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"schoolClassId\":" + classe.getId() + ",\"label\":\"Trimestre 1\","
+                                + "\"amountCents\":75000,\"dueDate\":\"" + LocalDate.now() + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long echeanceId = objectMapper.readTree(echeance).get("data").get("id").asLong();
+
+        String factures = mockMvc.perform(post("/api/v1/school-fees/schedules/" + echeanceId + "/generate-invoices")
+                        .header("Authorization", "Bearer " + jetonAdmin)
+                        .header(TenantResolver.TENANT_HEADER, tenant.getId()))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long factureId = objectMapper.readTree(factures).get("data").get(0).get("id").asLong();
+
+        mockMvc.perform(post("/api/v1/school-fees/invoices/" + factureId + "/payments")
+                        .header("Authorization", "Bearer " + jetonAdmin)
+                        .header(TenantResolver.TENANT_HEADER, tenant.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountCents\":25000,\"method\":\"CASH\"}"))
+                .andExpect(status().isCreated());
+
+        verify(notificationGateway).send(argThat(event ->
+                event.type() == NotificationType.PAYMENT_RECEIPT
+                        && event.recipientUserIds().contains(compteParent.getId())
+                        && event.body().contains("25 000 FCFA")
+                        && event.body().contains("50 000 FCFA")
+                        && !event.body().contains("XOF")));
+    }
+
     /** Une saisie se corrige plusieurs fois : autant d'alertes apprendraient à les ignorer. */
     @Test
     void staysSilentWhenTheGradeDoesNotChange() throws Exception {

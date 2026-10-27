@@ -1,6 +1,7 @@
 package com.schoolsaas.schoolfees;
 
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.common.MoneyFormat;
 import com.schoolsaas.common.NumberUtils;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.notification.NotificationType;
@@ -21,7 +22,6 @@ import com.schoolsaas.notification.NotificationDispatcher;
 import com.schoolsaas.sms.SmsService;
 import com.schoolsaas.student.Student;
 import com.schoolsaas.student.StudentRepository;
-import java.text.NumberFormat;
 import com.schoolsaas.common.PagedList;
 import com.schoolsaas.schoolfees.dto.FeeScheduleCopyRequest;
 import com.schoolsaas.schoolfees.dto.FeeScheduleCopyResult;
@@ -322,7 +322,8 @@ public class SchoolFeesService {
     }
 
     private static String montant(long centimes) {
-        return centimes + " " + DEFAULT_CURRENCY;
+        // Affichage « 25 000 FCFA » ; DEFAULT_CURRENCY (XOF) reste le code stocké.
+        return MoneyFormat.format(centimes, DEFAULT_CURRENCY);
     }
 
     public FeeReportingResponse reporting(Long schoolClassId, LocalDate from, LocalDate to) {
@@ -619,8 +620,8 @@ public class SchoolFeesService {
             long total = entries.stream().mapToLong(FeeOutstandingEntry::amountRemainingCents).sum();
             String label = entries.size() == 1 ? entries.getFirst().scheduleLabel() : entries.size() + " échéances";
             String message = entries.getFirst().studentName() + " : " + label + " — reste "
-                    + NumberFormat.getIntegerInstance(Locale.FRANCE).format(total).replace('\u202f', ' ')
-                    + " XOF à régler. Merci de vous rapprocher de l'établissement.";
+                    + MoneyFormat.fcfa(total)
+                    + " à régler. Merci de vous rapprocher de l'établissement.";
             smsService.notifyGuardians(studentId, NotificationType.ANNOUNCEMENT, message);
         });
         return byStudent.size();

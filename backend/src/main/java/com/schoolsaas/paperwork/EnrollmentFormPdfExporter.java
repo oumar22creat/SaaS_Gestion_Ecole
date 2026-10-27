@@ -12,6 +12,7 @@ import static com.schoolsaas.officialdoc.OfficialDocumentLayout.rempli;
 import static com.schoolsaas.officialdoc.OfficialDocumentLayout.tronquer;
 
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.common.MoneyFormat;
 import com.schoolsaas.officialdoc.OfficialDocumentLayout;
 import com.schoolsaas.tenant.Tenant;
 import java.awt.Color;
@@ -301,9 +302,8 @@ public class EnrollmentFormPdfExporter {
         };
     }
 
-    /** XOF : franc CFA, devise sans sous-unité — les « centimes » sont donc des francs entiers. */
+    /** Montant affiché avec le libellé lisible de la devise : XOF devient « FCFA ». */
     private String montant(long centimes, String devise) {
-        return String.format(Locale.FRENCH, "%,d", centimes).replace(' ', ' ').replace(' ', ' ')
-                + " " + (devise == null ? "XOF" : devise);
+        return MoneyFormat.format(centimes, devise);
     }
 }

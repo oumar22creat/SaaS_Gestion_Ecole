@@ -9,6 +9,7 @@ import com.schoolsaas.billing.Subscription;
 import com.schoolsaas.billing.SubscriptionRepository;
 import com.schoolsaas.billing.SubscriptionStatus;
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.common.MoneyFormat;
 import com.schoolsaas.platformadmin.dto.CashPaymentRequest;
 import com.schoolsaas.platformadmin.dto.PlanAdminResponse;
 import com.schoolsaas.platformadmin.dto.PlanChangeRequest;
@@ -202,7 +203,7 @@ public class PlatformAdminService {
         tenantRepository.save(tenant);
 
         long amount = (long) plan.getPriceCents() * request.months();
-        String detail = plan.getCode() + " · " + request.months() + " mois · " + amount + " " + plan.getCurrency()
+        String detail = plan.getCode() + " · " + request.months() + " mois · " + MoneyFormat.format(amount, plan.getCurrency())
                 + " → " + FRENCH_DATE.format(newEnd);
         log(tenantId, "CASH_PAYMENT_RECORDED", detail, request.reason());
         return getTenant(tenantId);

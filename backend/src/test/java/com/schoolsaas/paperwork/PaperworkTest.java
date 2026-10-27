@@ -143,6 +143,11 @@ class PaperworkTest extends AbstractIntegrationTest {
                 .andReturn().getResponse().getContentAsByteArray();
 
         assertThat(new String(pdf, 0, 4)).isEqualTo("%PDF");
+        // Le reçu parle aux familles : « FCFA », pas le code ISO XOF stocké en base.
+        try (org.apache.pdfbox.pdmodel.PDDocument document = org.apache.pdfbox.Loader.loadPDF(pdf)) {
+            String texte = new org.apache.pdfbox.text.PDFTextStripper().getText(document);
+            assertThat(texte).contains("20 000 FCFA").doesNotContain("XOF");
+        }
     }
 
     /** Un enseignant n'a pas à délivrer de documents officiels au nom de l'établissement. */
@@ -235,7 +240,7 @@ class PaperworkTest extends AbstractIntegrationTest {
                     .contains("Scolarité 1er trimestre")
                     // 30 000 + 60 000 : l'engagement financier total, écrit noir sur blanc.
                     .contains("TOTAL DÛ POUR L'ANNÉE")
-                    .contains("90 000 XOF")
+                    .contains("90 000 FCFA")
                     .contains("Le responsable légal")
                     .contains("Mme Fatoumata Sidibé");
         }

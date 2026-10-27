@@ -1,6 +1,7 @@
 package com.schoolsaas.paperwork;
 
 import com.schoolsaas.common.ApiException;
+import com.schoolsaas.common.MoneyFormat;
 import com.schoolsaas.schoolclass.SchoolClass;
 import com.schoolsaas.schoolclass.SchoolClassRepository;
 import com.schoolsaas.schoolfees.FeePayment;
@@ -17,7 +18,6 @@ import com.schoolsaas.tenant.Tenant;
 import com.schoolsaas.tenant.TenantContext;
 import com.schoolsaas.tenant.TenantLogoService;
 import com.schoolsaas.tenant.TenantRepository;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -172,15 +172,12 @@ public class PaperworkService {
     }
 
     /**
-     * XOF : devise sans sous-unité, les montants « cents » sont des francs entiers.
-     *
-     * <p>Le séparateur de milliers français produit par Java est une espace fine insécable
-     * (U+202F) que la police standard du PDF ne sait pas encoder : tout reçu d'au moins
-     * 1 000 F échouait à la génération. On normalise vers une espace ordinaire.
+     * Montant affiché « 25 000 FCFA » (code stocké XOF). Le séparateur de milliers est
+     * normalisé en espace ordinaire par {@link MoneyFormat} : l'espace fine insécable
+     * (U+202F) n'est pas encodable par la police standard du PDF.
      */
     private static String money(long amountCents) {
-        String formatted = NumberFormat.getIntegerInstance(Locale.FRANCE).format(amountCents);
-        return formatted.replace('\u202f', ' ').replace('\u00a0', ' ') + " XOF";
+        return MoneyFormat.fcfa(amountCents);
     }
 
     private static String methodLabel(String method) {
